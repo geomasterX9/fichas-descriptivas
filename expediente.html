@@ -144,7 +144,7 @@
             fotoActualSrc = a['fotos-alumnos'] || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
             const puedeEditarFoto = (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO');
-            const puedeVerFoto    = (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO' || rolActivo === 'TRABAJO SOCIAL');
+            const puedeVerFoto    = true; // Todos los roles pueden ver la foto
             const btnFotoHTML = puedeEditarFoto ? `
                 <button class="btn-foto" onclick="document.getElementById('inputFotoAlumno').click()" title="Cambiar foto">📷</button>
             ` : '';
