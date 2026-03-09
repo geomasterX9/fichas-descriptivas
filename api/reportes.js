@@ -2,7 +2,7 @@ const supabase = require('./_supabase');
 const { requireAuth } = require('./_auth');
 const { setSecurityHeaders, sanitize } = require('./_security');
 
-const GRAVEDADES_VALIDAS = ['Leve', 'Moderada', 'Grave'];
+const GRAVEDADES_VALIDAS = ['Positiva', 'Leve', 'Moderada', 'Grave'];
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, OPTIONS', req.headers.origin);
