@@ -85,11 +85,11 @@
 
     <div class="panel">
         <select id="filtro" onchange="actualizarGrafica()" style="float:right; padding:10px; border-radius:8px; cursor:pointer;">
-            <option value="materia">📚 Por Materia</option>
+            <option value="materia">📚 Por Disciplina</option>
             <option value="grado">🏫 Por Grado</option>
             <option value="trimestre" id="optTrimestre" style="display:none;">📅 Por Trimestre</option>
             <option value="comparativo" id="optComparativo" style="display:none;">🔀 Comparativo entre trimestres</option>
-            <option value="gradomateria">🏫 Por Materia y Grado</option>
+            <option value="gradomateria">🏫 Por Disciplina y Grado</option>
         </select>
         <h3>📈 Desempeño Académico Escolar</h3>
         <div class="chart-container">
@@ -217,7 +217,7 @@
             } else if (f === 'gradomateria') {
                 // Barras agrupadas: cada materia con 3 barras (1°, 2°, 3°)
                 const pgm = statsData.porGradoMateria;
-                const coloresGrado = ['#2196F3', '#00BFA5', '#E63946'];
+                const coloresGrado = ['#1565C0', '#FDD835', '#E63946'];
                 myChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -232,7 +232,7 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12 } } },
-                            title: { display: true, text: 'Promedio por materia desglosado por grado', font: { size: 13 } },
+                            title: { display: true, text: 'Promedio por disciplina desglosado por grado', font: { size: 13 } },
                             tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}` } }
                         },
                         scales: {
