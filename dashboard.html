@@ -85,8 +85,10 @@
 
     <div class="panel">
         <select id="filtro" onchange="actualizarGrafica()" style="float:right; padding:10px; border-radius:8px; cursor:pointer;">
-            <option value="materia">Por Disciplina (Colores)</option>
-            <option value="grado">Por Grado</option>
+            <option value="materia">📚 Por Materia</option>
+            <option value="grado">🏫 Por Grado</option>
+            <option value="trimestre" id="optTrimestre" style="display:none;">📅 Por Trimestre</option>
+            <option value="comparativo" id="optComparativo" style="display:none;">🔀 Comparativo entre trimestres</option>
         </select>
         <h3>📈 Desempeño Académico Escolar</h3>
         <div class="chart-container">
@@ -129,6 +131,10 @@
             try {
                 const res = await apiFetch('/api/dashboard?tipo=estadisticas');
                 statsData = await res.json();
+                // Mostrar opciones de trimestre según datos disponibles
+                const trimsCon = statsData.porTrimestre.valores.filter(v => v > 0).length;
+                if (trimsCon >= 1) document.getElementById('optTrimestre').style.display = '';
+                if (trimsCon >= 2) document.getElementById('optComparativo').style.display = '';
                 actualizarGrafica();
             } catch(e) { console.error("Error al cargar gráficas"); }
         };
@@ -146,29 +152,89 @@
         function actualizarGrafica() {
             if(!statsData) return;
             const f = document.getElementById('filtro').value;
-            let labels, valores, colores;
-
-            if(f === 'materia') {
-                labels = statsData.porMateria.labels; 
-                valores = statsData.porMateria.valores;
-                colores = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#4D5360','#82E0AA','#F1948A','#85C1E9'];
-            } else {
-                labels = statsData.porGrado.labels; 
-                valores = statsData.porGrado.valores;
-                colores = ['#4BC0C0', '#FFCE56', '#FF6384']; 
-            }
-
             if(myChart) myChart.destroy();
             const ctx = document.getElementById('graficaAprovechamiento').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ data: valores, backgroundColor: colores, borderRadius: 6 }] },
-                options: { 
-                    maintainAspectRatio: false, // Fija el tamaño según el contenedor
-                    scales: { y: { min: 5, max: 10, ticks: { stepSize: 1 } } }, 
-                    plugins: { legend: { display: false } } 
+
+            if (f === 'comparativo') {
+                // Línea por materia comparando T1, T2, T3
+                const trimsDisp = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
+                const materias  = statsData.porMateria.labels;
+                const colores   = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#4D5360','#82E0AA','#F1948A','#85C1E9'];
+
+                // Dataset por materia
+                const datasets = materias.map((mat, i) => ({
+                    label: mat,
+                    data: statsData.comparativoPorTrimestre
+                          ? statsData.comparativoPorTrimestre[mat] || []
+                          : trimsDisp.map(() => null),
+                    borderColor: colores[i % colores.length],
+                    backgroundColor: colores[i % colores.length] + '22',
+                    fill: false, tension: 0.3, pointRadius: 5
+                }));
+
+                // Línea punteada de promedio general
+                datasets.unshift({
+                    label: 'PROMEDIO GENERAL',
+                    data: statsData.porTrimestre.valores.filter(v => v > 0),
+                    borderColor: '#2c3e50',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    borderDash: [6, 3],
+                    fill: false, tension: 0.3, pointRadius: 6
+                });
+
+                myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: trimsDisp, datasets },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                            title: { display: true, text: 'Comparativo escolar por trimestre', font: { size: 13 } }
+                        },
+                        scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f5f5f5' } } }
+                    }
+                });
+
+            } else if (f === 'trimestre') {
+                // Barras de promedio general por trimestre (solo los que tienen datos)
+                const labels  = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
+                const valores = statsData.porTrimestre.valores.filter(v => v > 0);
+                const colores = ['#36A2EB', '#4BC0C0', '#FFCE56'];
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Promedio', data: valores, backgroundColor: colores, borderRadius: 8 }] },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false },
+                            tooltip: { callbacks: { label: c => ` Promedio: ${c.parsed.y.toFixed(1)}` } }
+                        },
+                        scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 } } }
+                    }
+                });
+
+            } else {
+                // Barras por materia o por grado (comportamiento original)
+                let labels, valores, colores;
+                if(f === 'materia') {
+                    labels  = statsData.porMateria.labels;
+                    valores = statsData.porMateria.valores;
+                    colores = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#4D5360','#82E0AA','#F1948A','#85C1E9'];
+                } else {
+                    labels  = statsData.porGrado.labels;
+                    valores = statsData.porGrado.valores;
+                    colores = ['#4BC0C0','#FFCE56','#FF6384'];
                 }
-            });
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ data: valores, backgroundColor: colores, borderRadius: 6 }] },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: { y: { min: 5, max: 10, ticks: { stepSize: 1 } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
         }
 
         async function abrirModal(tipo) {
