@@ -89,6 +89,8 @@
         .aviso-pie a { font-size:12px; color:var(--muted); text-decoration:underline; }
 
         @media (max-width:480px) { .fila-dos { grid-template-columns:1fr; } .servicios-grid { grid-template-columns:1fr; } }
+        /* Forzar mayúsculas en campos de texto */
+        input[type="text"], textarea { text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -584,7 +586,8 @@
         const numero  = document.getElementById('domicilio_numero').value.trim();
         const domicilio = `${calle} #${numero}, ${colonia}`;
 
-        const juntar = (...partes) => partes.filter(Boolean).join(' ').trim();
+        const juntar = (...partes) => partes.filter(Boolean).join(' ').trim().toUpperCase();
+        const mayus = (v) => (v || '').trim().toUpperCase();
 
         const payload = {
             id_alumno:          alumnoSeleccionado.id_alumno,
