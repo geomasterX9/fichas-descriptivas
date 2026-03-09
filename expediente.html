@@ -251,12 +251,21 @@
             if (datosCalificacionesGlobal.length > 0) {
                 const selector = document.getElementById('selectorGrafica');
                 datosCalificacionesGlobal[0].materias.forEach(m => selector.innerHTML += `<option value="${m.sigla}">📚 ${m.sigla}</option>`);
-                // Mostrar opción comparativo solo si hay 2 o más trimestres
                 if (datosCalificacionesGlobal.length >= 2) {
                     document.getElementById('optComparativo').style.display = '';
                 }
                 renderBoleta();
                 actualizarGrafica();
+            } else {
+                // Sin calificaciones cargadas aún
+                document.getElementById('selectorGrafica').style.display = 'none';
+                document.getElementById('graficaPromedios').style.display = 'none';
+                document.getElementById('contBoleta').innerHTML = `
+                    <div style="text-align:center; padding:30px; color:#94a3b8;">
+                        <div style="font-size:36px; margin-bottom:10px;">📭</div>
+                        <p style="font-weight:600; color:#64748b;">Sin calificaciones registradas</p>
+                        <p style="font-size:13px; margin-top:4px;">Las calificaciones aparecerán aquí una vez que se carguen mediante la herramienta de importación.</p>
+                    </div>`;
             }
         } catch (e) { console.error("Error cargando expediente", e); }
     }
