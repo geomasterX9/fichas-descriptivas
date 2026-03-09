@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
             .from('datos_socioeconomicos')
             .upsert(ficha, { onConflict: 'id_alumno' });
 
-        if (errFicha) return res.status(500).json({ error: errFicha.message, detalle: errFicha.details, hint: errFicha.hint });
+        if (errFicha) return res.status(500).json({ error: 'Error al guardar. Intenta de nuevo.' });
 
         // Marcar ficha como completada
         await supabase
