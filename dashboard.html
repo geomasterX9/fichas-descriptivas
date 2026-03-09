@@ -89,6 +89,7 @@
             <option value="grado">🏫 Por Grado</option>
             <option value="trimestre" id="optTrimestre" style="display:none;">📅 Por Trimestre</option>
             <option value="comparativo" id="optComparativo" style="display:none;">🔀 Comparativo entre trimestres</option>
+            <option value="gradomateria">🏫 Por Materia y Grado</option>
         </select>
         <h3>📈 Desempeño Académico Escolar</h3>
         <div class="chart-container">
@@ -210,6 +211,34 @@
                             tooltip: { callbacks: { label: c => ` Promedio: ${c.parsed.y.toFixed(1)}` } }
                         },
                         scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 } } }
+                    }
+                });
+
+            } else if (f === 'gradomateria') {
+                // Barras agrupadas: cada materia con 3 barras (1°, 2°, 3°)
+                const pgm = statsData.porGradoMateria;
+                const coloresGrado = ['#36A2EB', '#4BC0C0', '#FF6384'];
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: pgm.labels,
+                        datasets: [
+                            { label: '1° Grado', data: pgm.grado1, backgroundColor: coloresGrado[0], borderRadius: 4 },
+                            { label: '2° Grado', data: pgm.grado2, backgroundColor: coloresGrado[1], borderRadius: 4 },
+                            { label: '3° Grado', data: pgm.grado3, backgroundColor: coloresGrado[2], borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12 } } },
+                            title: { display: true, text: 'Promedio por materia desglosado por grado', font: { size: 13 } },
+                            tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}` } }
+                        },
+                        scales: {
+                            y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f5f5f5' } },
+                            x: { ticks: { font: { size: 11 } } }
+                        }
                     }
                 });
 
