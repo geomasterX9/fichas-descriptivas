@@ -3,49 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Ligas - Fichas EST 84</title>
+    <title>Fichas Socioeconómicas - EST 84</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --azul:#1B4F8A; --azul-claro:#eff6ff; --fondo:#f0f4f8; --blanco:#fff; --texto:#1a2332; --muted:#64748b; --borde:#e2e8f0; --verde:#2d9b6f; --verde-claro:#f0fdf6; }
         * { box-sizing:border-box; margin:0; padding:0; }
         body { font-family:'Outfit',sans-serif; background:var(--fondo); color:var(--texto); padding:24px 16px 60px; }
-        .contenedor { max-width:860px; margin:0 auto; }
+        .contenedor { max-width:900px; margin:0 auto; }
         .btn-back { display:inline-flex; align-items:center; gap:8px; background:var(--blanco); border:1px solid var(--borde); border-radius:10px; padding:9px 16px; text-decoration:none; color:var(--muted); font-size:14px; font-weight:600; margin-bottom:20px; }
         .page-header { background:var(--azul); color:white; border-radius:16px; padding:24px; margin-bottom:20px; }
         .page-header h1 { font-size:20px; font-weight:800; margin-bottom:4px; }
         .page-header p { font-size:13px; opacity:0.8; }
-        .controles { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); padding:20px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
-        .ctrl-group { display:flex; flex-direction:column; gap:6px; }
-        .ctrl-group label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
-        select { padding:10px 14px; border:1.5px solid var(--borde); border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); appearance:none; }
-        .btn { padding:10px 18px; border-radius:10px; font-size:14px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; border:none; transition:all 0.2s; }
-        .btn-primary { background:var(--azul); color:white; }
-        .btn-primary:hover { background:#143d6e; }
-        .btn-gen { background:#7c3aed; color:white; }
-        .btn-gen:hover { background:#6d28d9; }
-        .btn-whats { background:#25D366; color:white; }
-        .btn-whats:hover { background:#1da851; }
-        .badge { background:var(--azul-claro); color:var(--azul); border-radius:20px; padding:4px 12px; font-size:13px; font-weight:700; align-self:center; }
-        .tabla-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); overflow:hidden; }
-        table { width:100%; border-collapse:collapse; }
-        th { background:#f8fafc; padding:11px 14px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); border-bottom:1px solid var(--borde); }
-        td { padding:11px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:middle; }
-        tr:last-child td { border-bottom:none; }
-        .chip-estado { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
-        .chip-ok { background:var(--verde-claro); color:var(--verde); }
-        .chip-pend { background:#fef9c3; color:#854d0e; }
-        .chip-sin { background:#f1f5f9; color:var(--muted); }
-        .liga-input { width:100%; padding:7px 10px; border:1.5px solid var(--borde); border-radius:8px; font-size:11px; font-family:monospace; color:var(--muted); background:#f8fafc; }
-        .btn-copiar { padding:6px 12px; border-radius:8px; border:1px solid var(--borde); background:var(--blanco); font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.15s; }
-        .btn-copiar:hover { background:var(--azul-claro); border-color:var(--azul); color:var(--azul); }
-        .btn-copiar.copiado { background:var(--verde-claro); border-color:var(--verde); color:var(--verde); }
-        .empty { text-align:center; padding:40px; color:var(--muted); }
+
+        /* RESUMEN */
         .resumen { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
         .res-card { background:var(--blanco); border:1px solid var(--borde); border-radius:12px; padding:16px; text-align:center; }
         .res-num { font-size:28px; font-weight:800; color:var(--azul); }
         .res-label { font-size:12px; color:var(--muted); margin-top:4px; }
         .res-card.ok .res-num { color:var(--verde); }
         .res-card.pend .res-num { color:#d97706; }
+
+        /* LIGAS POR GRUPO */
+        .grupos-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; margin-bottom:28px; }
+        .grupo-card { background:var(--blanco); border:1px solid var(--borde); border-radius:14px; padding:18px; }
+        .grupo-titulo { font-size:16px; font-weight:800; color:var(--azul); margin-bottom:4px; }
+        .grupo-sub { font-size:12px; color:var(--muted); margin-bottom:14px; }
+        .liga-box { background:#f8fafc; border:1.5px solid var(--borde); border-radius:10px; padding:10px 12px; font-size:11px; font-family:monospace; color:var(--muted); word-break:break-all; margin-bottom:10px; }
+        .grupo-btns { display:flex; gap:8px; }
+        .btn-sm { flex:1; padding:9px; border-radius:9px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; border:none; transition:all 0.15s; text-align:center; }
+        .btn-copiar-liga { background:var(--azul-claro); color:var(--azul); }
+        .btn-copiar-liga:hover { background:#dbeafe; }
+        .btn-copiar-liga.copiado { background:var(--verde-claro); color:var(--verde); }
+        .btn-whats { background:#25D366; color:white; }
+        .btn-whats:hover { background:#1da851; }
+
+        /* TABLA */
+        .seccion-titulo { font-size:16px; font-weight:800; color:var(--texto); margin-bottom:12px; }
+        .controles { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); padding:16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+        .ctrl-group { display:flex; flex-direction:column; gap:5px; }
+        .ctrl-group label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
+        select { padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); }
+        .badge { background:var(--azul-claro); color:var(--azul); border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; align-self:center; }
+        .tabla-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#f8fafc; padding:11px 14px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); border-bottom:1px solid var(--borde); }
+        td { padding:11px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:middle; }
+        tr:last-child td { border-bottom:none; }
+        .chip-ok { background:var(--verde-claro); color:var(--verde); display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+        .chip-pend { background:#fef9c3; color:#854d0e; display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+        .empty { text-align:center; padding:40px; color:var(--muted); }
     </style>
 </head>
 <body>
@@ -53,16 +59,24 @@
     <a href="dashboard.html" class="btn-back">← Volver al Dashboard</a>
 
     <div class="page-header">
-        <h1>📋 Generador de Ligas — Fichas Socioeconómicas</h1>
-        <p>Genera ligas únicas para que los padres llenen la ficha de su hijo desde su celular.</p>
+        <h1>📋 Fichas Socioeconómicas</h1>
+        <p>Comparte la liga de cada grupo en WhatsApp. Los padres buscan a su hijo y llenan la ficha.</p>
     </div>
 
-    <div id="resumen" class="resumen" style="display:none;">
+    <div class="resumen">
         <div class="res-card"><div class="res-num" id="resTotal">—</div><div class="res-label">Total alumnos</div></div>
         <div class="res-card ok"><div class="res-num" id="resCompletas">—</div><div class="res-label">Fichas completadas</div></div>
         <div class="res-card pend"><div class="res-num" id="resPendientes">—</div><div class="res-label">Pendientes</div></div>
     </div>
 
+    <!-- LIGAS POR GRUPO -->
+    <div class="seccion-titulo">🔗 Ligas por grupo</div>
+    <div class="grupos-grid" id="gruposGrid">
+        <div class="empty" style="grid-column:1/-1;">Cargando grupos...</div>
+    </div>
+
+    <!-- TABLA DE SEGUIMIENTO -->
+    <div class="seccion-titulo">📊 Seguimiento individual</div>
     <div class="controles">
         <div class="ctrl-group">
             <label>Grado</label>
@@ -80,16 +94,13 @@
             </select>
         </div>
         <div class="ctrl-group">
-            <label>Ficha</label>
+            <label>Estado ficha</label>
             <select id="filtroFicha" onchange="filtrar()">
                 <option value="">Todos</option>
-                <option value="sin-liga">Sin liga generada</option>
-                <option value="pendiente">Liga enviada, sin completar</option>
                 <option value="completada">Completada ✅</option>
+                <option value="pendiente">Pendiente ⏳</option>
             </select>
         </div>
-        <button class="btn btn-gen" onclick="generarLigas()" id="btnGenerar">⚡ Generar ligas al grupo</button>
-        <button class="btn btn-whats" onclick="copiarMensajeWhatsApp()" id="btnWhats" style="display:none;">📱 Copiar mensaje WhatsApp</button>
         <span class="badge" id="conteo">—</span>
     </div>
 
@@ -98,13 +109,11 @@
             <thead>
                 <tr>
                     <th>Alumno</th>
-                    <th>Grado/Grupo</th>
+                    <th>Grado / Grupo</th>
                     <th>Estado ficha</th>
-                    <th>Liga para padres</th>
-                    <th></th>
                 </tr>
             </thead>
-            <tbody id="cuerpoTabla"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+            <tbody id="cuerpoTabla"><tr><td colspan="3" class="empty">Cargando...</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -112,31 +121,67 @@
 <script src="auth-helper.js"></script>
 <script>
     verificarSesion();
-
-    const BASE_URL = window.location.origin;
-    let todosAlumnos = [];
-    let listaFiltrada = [];
+    const BASE = window.location.origin;
+    let todos = [];
+    let filtrados = [];
 
     window.onload = async () => {
         try {
             const res = await apiFetch('/api/alumnos');
-            todosAlumnos = await res.json();
-            todosAlumnos.sort((a,b) => (a.apellidos+a.nombre).localeCompare(b.apellidos+b.nombre));
+            todos = await res.json();
+            todos.sort((a,b) => (a.apellidos+a.nombre).localeCompare(b.apellidos+b.nombre));
             actualizarResumen();
+            renderGrupos();
             filtrar();
         } catch(e) {
-            document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="5" class="empty">Error al cargar.</td></tr>';
+            document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="3" class="empty">Error al cargar.</td></tr>';
         }
     };
 
     function actualizarResumen() {
-        const total = todosAlumnos.length;
-        const completadas = todosAlumnos.filter(a => a.ficha_completada).length;
-        const pendientes = todosAlumnos.filter(a => a.ficha_token && !a.ficha_completada).length;
-        document.getElementById('resTotal').textContent = total;
-        document.getElementById('resCompletas').textContent = completadas;
-        document.getElementById('resPendientes').textContent = pendientes;
-        document.getElementById('resumen').style.display = 'grid';
+        document.getElementById('resTotal').textContent     = todos.length;
+        document.getElementById('resCompletas').textContent = todos.filter(a => a.ficha_completada).length;
+        document.getElementById('resPendientes').textContent= todos.filter(a => !a.ficha_completada).length;
+    }
+
+    function renderGrupos() {
+        // Extraer grupos únicos
+        const grupos = [...new Set(todos.map(a => `${a.grado}-${a.grupo}`))].sort();
+        const grid = document.getElementById('gruposGrid');
+        if (grupos.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">No hay alumnos.</div>'; return; }
+
+        grid.innerHTML = grupos.map(clave => {
+            const [grado, grupo] = clave.split('-');
+            const liga = `${BASE}/captura_ficha.html?grado=${grado}&grupo=${grupo}`;
+            const total = todos.filter(a => String(a.grado) === grado && a.grupo === grupo).length;
+            const completas = todos.filter(a => String(a.grado) === grado && a.grupo === grupo && a.ficha_completada).length;
+            return `<div class="grupo-card">
+                <div class="grupo-titulo">📚 ${grado}° Grupo "${grupo}"</div>
+                <div class="grupo-sub">${completas} de ${total} fichas completadas</div>
+                <div class="liga-box">${liga}</div>
+                <div class="grupo-btns">
+                    <button class="btn-sm btn-copiar-liga" onclick="copiarLiga(this, '${liga}')">📋 Copiar liga</button>
+                    <button class="btn-sm btn-whats" onclick="copiarWhats('${grado}', '${grupo}', '${liga}')">📱 WhatsApp</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function copiarLiga(btn, liga) {
+        navigator.clipboard.writeText(liga).then(() => {
+            btn.textContent = '✅ Copiada';
+            btn.classList.add('copiado');
+            setTimeout(() => { btn.textContent = '📋 Copiar liga'; btn.classList.remove('copiado'); }, 2000);
+        });
+    }
+
+    function copiarWhats(grado, grupo, liga) {
+        const total = todos.filter(a => String(a.grado) === grado && a.grupo === grupo).length;
+        const pendientes = todos.filter(a => String(a.grado) === grado && a.grupo === grupo && !a.ficha_completada).length;
+        const msg = `🎓 *Escuela Secundaria Técnica No. 84*\n\nEstimados padres de familia del ${grado}° Grado, Grupo "${grupo}":\n\nLes compartimos el enlace para llenar la *Ficha Socioeconómica* de su hijo(a).\n\n👉 ${liga}\n\nAl ingresar, busquen el nombre de su hijo(a) y completen el formulario. Solo pueden llenarlo una vez.\n\n📊 ${total - pendientes} de ${total} fichas completadas.\n\nGracias por su apoyo. 🙏`;
+        navigator.clipboard.writeText(msg).then(() => {
+            alert(`✅ Mensaje copiado. Ya puedes pegarlo en WhatsApp.`);
+        });
     }
 
     function filtrar() {
@@ -144,120 +189,27 @@
         const grupo = document.getElementById('filtroGrupo').value;
         const ficha = document.getElementById('filtroFicha').value;
 
-        listaFiltrada = todosAlumnos.filter(a => {
+        filtrados = todos.filter(a => {
             if (grado && String(a.grado) !== grado) return false;
             if (grupo && a.grupo !== grupo) return false;
-            if (ficha === 'sin-liga'   && a.ficha_token) return false;
-            if (ficha === 'sin-liga'   && a.ficha_completada) return false;
-            if (ficha === 'pendiente'  && (!a.ficha_token || a.ficha_completada)) return false;
             if (ficha === 'completada' && !a.ficha_completada) return false;
+            if (ficha === 'pendiente'  &&  a.ficha_completada) return false;
             return true;
         });
 
-        document.getElementById('conteo').textContent = `${listaFiltrada.length} alumnos`;
-        const tieneGrupo = grado || grupo;
-        document.getElementById('btnGenerar').style.display = tieneGrupo ? 'inline-flex' : 'none';
-        document.getElementById('btnWhats').style.display =
-            listaFiltrada.some(a => a.ficha_token && !a.ficha_completada) ? 'inline-flex' : 'none';
-
-        renderTabla();
-    }
-
-    function renderTabla() {
+        document.getElementById('conteo').textContent = `${filtrados.length} alumnos`;
         const tbody = document.getElementById('cuerpoTabla');
-        if (listaFiltrada.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty">No hay alumnos con esos filtros.</td></tr>';
+        if (filtrados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="empty">No hay alumnos con esos filtros.</td></tr>';
             return;
         }
-        tbody.innerHTML = listaFiltrada.map(a => {
-            const liga = a.ficha_token
-                ? `${BASE_URL}/captura_ficha.html?token=${a.ficha_token}`
-                : null;
-            let chipEstado, ligaHtml;
-            if (a.ficha_completada) {
-                chipEstado = '<span class="chip-estado chip-ok">✅ Completada</span>';
-                ligaHtml = '<span style="color:var(--muted); font-size:12px;">—</span>';
-            } else if (liga) {
-                chipEstado = '<span class="chip-estado chip-pend">⏳ Pendiente</span>';
-                ligaHtml = `<input class="liga-input" value="${liga}" readonly>`;
-            } else {
-                chipEstado = '<span class="chip-estado chip-sin">Sin liga</span>';
-                ligaHtml = '<span style="color:var(--muted); font-size:12px;">Genera la liga primero</span>';
-            }
-            const btnCopiar = liga && !a.ficha_completada
-                ? `<button class="btn-copiar" onclick="copiarLiga(this, '${liga}')">Copiar</button>`
-                : '';
-            return `<tr>
-                <td><strong>${a.apellidos} ${a.nombre}</strong></td>
-                <td>${a.grado}° "${a.grupo}"</td>
-                <td>${chipEstado}</td>
-                <td>${ligaHtml}</td>
-                <td>${btnCopiar}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    async function generarLigas() {
-        const sinLiga = listaFiltrada.filter(a => !a.ficha_token && !a.ficha_completada);
-        if (sinLiga.length === 0) { alert('Todos los alumnos filtrados ya tienen liga generada.'); return; }
-
-        const btn = document.getElementById('btnGenerar');
-        btn.textContent = 'Generando...'; btn.disabled = true;
-
-        for (const a of sinLiga) {
-            const token = generarToken();
-            try {
-                const res = await apiFetch('/api/alumnos', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_alumno: a.id_alumno, ficha_token: token })
-                });
-                if (res && res.ok) {
-                    const idx = todosAlumnos.findIndex(x => x.id_alumno === a.id_alumno);
-                    if (idx !== -1) todosAlumnos[idx].ficha_token = token;
-                }
-            } catch(e) { console.error('Error generando token para', a.id_alumno); }
-        }
-
-        actualizarResumen();
-        filtrar();
-        btn.textContent = `⚡ Generar ligas al grupo`; btn.disabled = false;
-        document.getElementById('btnWhats').style.display = 'inline-flex';
-    }
-
-    function generarToken() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-        return Array.from({length: 24}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    }
-
-    function copiarLiga(btn, liga) {
-        navigator.clipboard.writeText(liga).then(() => {
-            btn.textContent = '✅ Copiada';
-            btn.classList.add('copiado');
-            setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copiado'); }, 2000);
-        });
-    }
-
-    function copiarMensajeWhatsApp() {
-        const pendientes = listaFiltrada.filter(a => a.ficha_token && !a.ficha_completada);
-        if (pendientes.length === 0) { alert('No hay ligas pendientes en la lista actual.'); return; }
-
-        const grado = document.getElementById('filtroGrado').value || '';
-        const grupo = document.getElementById('filtroGrupo').value || '';
-        const desc = grado && grupo ? `${grado}° "${grupo}"` : 'su grupo';
-
-        let mensaje = `🎓 *Escuela Secundaria Técnica No. 84*\n\nEstimados padres de familia del grupo ${desc}:\n\nLes compartimos el enlace para llenar la *Ficha Socioeconómica* de su hijo(a). Por favor complétela lo antes posible.\n\n`;
-
-        pendientes.forEach(a => {
-            const liga = `${BASE_URL}/captura_ficha.html?token=${a.ficha_token}`;
-            mensaje += `👤 *${a.apellidos} ${a.nombre}*\n${liga}\n\n`;
-        });
-
-        mensaje += `⚠️ Cada enlace es único e intransferible.\n📄 Al ingresar encontrará el Aviso de Privacidad.\n\nGracias por su apoyo.`;
-
-        navigator.clipboard.writeText(mensaje).then(() => {
-            alert(`✅ Mensaje copiado con ${pendientes.length} ligas.\n\nYa puedes pegarlo en WhatsApp.`);
-        });
+        tbody.innerHTML = filtrados.map(a => `<tr>
+            <td><strong>${a.apellidos} ${a.nombre}</strong></td>
+            <td>${a.grado}° "${a.grupo}"</td>
+            <td>${a.ficha_completada
+                ? '<span class="chip-ok">✅ Completada</span>'
+                : '<span class="chip-pend">⏳ Pendiente</span>'}</td>
+        </tr>`).join('');
     }
 </script>
 </body>
