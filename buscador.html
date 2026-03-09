@@ -152,7 +152,7 @@
             const matchNombre = `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda);
             const matchGrado = grado === "" || a.grado.toString() === grado;
             const matchGrupo = grupo === "" || a.grupo === grupo;
-            const matchEstatus = estatus === "" || (a.estatus || 'ACTIVO') === estatus;
+            const matchEstatus = estatus === "" || (a.status || 'ACTIVO') === estatus;
             return matchNombre && matchGrado && matchGrupo && matchEstatus;
         });
 
@@ -161,7 +161,7 @@
         contenedor.innerHTML = "";
 
         filtrados.forEach(a => {
-            const esBaja = a.estatus === 'BAJA';
+            const esBaja = a.status === 'BAJA';
             const badgeEstatus = esBaja ? '<span class="badge badge-baja">BAJA</span>' : '<span class="badge badge-activo">ACTIVO</span>';
             
             let htmlAccionesAdmin = "";
@@ -200,12 +200,12 @@
             const res = await apiFetch('/api/alumnos', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_alumno: parseInt(idAlumno), estatus: nuevoEstatus })
+                body: JSON.stringify({ id_alumno: parseInt(idAlumno), status: nuevoEstatus })
             });
 
             if (res && res.ok) {
                 const idx = todosLosAlumnos.findIndex(a => String(a.id_alumno) === String(idAlumno));
-                if (idx !== -1) todosLosAlumnos[idx].estatus = nuevoEstatus;
+                if (idx !== -1) todosLosAlumnos[idx].status = nuevoEstatus;
                 buscarAlumno();
             } else {
                 const err = await res.json();
