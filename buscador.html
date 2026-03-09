@@ -141,6 +141,7 @@
         } catch (e) { console.error("Error al cargar alumnos"); }
     }
 
+
     function buscarAlumno() {
         const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
         const grado = document.getElementById('filtroGrado').value;
@@ -186,6 +187,33 @@
                 </div>
             `;
         });
+    }
+
+    async function actualizarEstatus(idAlumno, nuevoEstatus) {
+        const accion = nuevoEstatus === 'BAJA' ? 'dar de baja' : 'reactivar';
+        const alumno = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumno));
+        const nombre = alumno ? `${alumno.apellidos} ${alumno.nombre}` : `alumno #${idAlumno}`;
+
+        if (!confirm(`¿Confirmas ${accion} a ${nombre}?`)) return;
+
+        try {
+            const res = await apiFetch('/api/alumnos', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: parseInt(idAlumno), estatus: nuevoEstatus })
+            });
+
+            if (res && res.ok) {
+                const idx = todosLosAlumnos.findIndex(a => String(a.id_alumno) === String(idAlumno));
+                if (idx !== -1) todosLosAlumnos[idx].estatus = nuevoEstatus;
+                buscarAlumno();
+            } else {
+                const err = await res.json();
+                alert('Error: ' + err.error);
+            }
+        } catch(e) {
+            alert('Error de conexión con el servidor.');
+        }
     }
 
     function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
