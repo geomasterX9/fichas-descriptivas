@@ -46,6 +46,9 @@
     <div id="btnRegreso" style="display:none; margin-bottom:16px;">
         <a href="inicio.html" style="display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:9px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600;">← Volver al Inicio</a>
     </div>
+    <div id="btnRegresoAdmin" style="display:none; margin-bottom:16px;">
+        <a href="dashboard.html" style="display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:9px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600;">← Volver al Dashboard</a>
+    </div>
     <div class="header-app">
         <div class="titulo-app">
             <h1>Buscador de Expedientes</h1>
@@ -165,6 +168,10 @@
 
         if (rolUsuario === 'ADMINISTRADOR') {
             document.getElementById('btnNuevoAlumno').style.display = 'flex';
+            document.getElementById('btnRegresoAdmin').style.display = 'block';
+        }
+        if (rolUsuario === 'DIRECTIVO') {
+            document.getElementById('btnRegresoAdmin').style.display = 'block';
         }
         if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO') {
             document.getElementById('btnRegreso').style.display = 'block';
