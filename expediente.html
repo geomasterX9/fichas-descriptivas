@@ -150,14 +150,60 @@
             // Ficha socioeconómica
             const resFicha = await apiFetch(`/api/expediente?tipo=ficha&id=${idAlumno}`);
             const f = await resFicha.json();
+            const dat = (v) => esc(v || '—');
+            const fila = (label, val) => `<tr><td style="padding:6px 10px; font-size:12px; color:#64748b; width:40%; border-bottom:1px solid #f1f5f9;">${label}</td><td style="padding:6px 10px; font-size:13px; font-weight:600; border-bottom:1px solid #f1f5f9;">${val}</td></tr>`;
+
             if (f && f.id_alumno) {
                 document.getElementById('contSocio').innerHTML = `
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="tarjeta-dato"><h4>📍 Contacto</h4><p><b>Domicilio:</b> Calle ${esc(f.domicilio_calle || '--')}</p><p><b>Tel:</b> ${esc(f.telefono_casa || '--')}</p></div>
-                        <div class="tarjeta-dato"><h4>👨‍👩‍👧‍👦 Familia</h4><p><b>Vive con:</b> ${esc(f.con_quien_vive || '--')}</p><p><b>Ocupación Papá:</b> ${esc(f.ocupacion_papa || '--')}</p></div>
-                    </div>`;
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+                    <div class="tarjeta-dato">
+                        <h4>👤 Tutor / Responsable</h4>
+                        <table style="width:100%; border-collapse:collapse;">
+                            ${fila('Nombre', dat(f.tutor_nombre))}
+                            ${fila('Parentesco', dat(f.tutor_parentesco))}
+                            ${fila('Teléfono', dat(f.tutor_telefono))}
+                            ${fila('Ocupación', dat(f.tutor_ocupacion))}
+                        </table>
+                    </div>
+
+                    <div class="tarjeta-dato">
+                        <h4>👨‍👩‍👧 Familia</h4>
+                        <table style="width:100%; border-collapse:collapse;">
+                            ${fila('Madre', dat(f.madre_nombre))}
+                            ${fila('Tel. Madre', dat(f.madre_telefono))}
+                            ${fila('Ocupación madre', dat(f.madre_ocupacion))}
+                            ${fila('Padre', dat(f.padre_nombre))}
+                            ${fila('Tel. Padre', dat(f.padre_telefono))}
+                            ${fila('Ocupación padre', dat(f.ocupacion_papa))}
+                            ${fila('Vive con', dat(f.con_quien_vive))}
+                            ${fila('No. hermanos', dat(f.num_hermanos !== null && f.num_hermanos !== undefined ? String(f.num_hermanos) : null))}
+                        </table>
+                    </div>
+
+                    <div class="tarjeta-dato">
+                        <h4>🏠 Domicilio y Vivienda</h4>
+                        <table style="width:100%; border-collapse:collapse;">
+                            ${fila('Domicilio', dat(f.domicilio_calle))}
+                            ${fila('Tel. casa', dat(f.telefono_casa))}
+                            ${fila('Tipo vivienda', dat(f.vivienda_tipo))}
+                            ${fila('Servicios', dat(f.vivienda_servicios))}
+                        </table>
+                    </div>
+
+                    <div class="tarjeta-dato">
+                        <h4>💰 Situación Económica y Salud</h4>
+                        <table style="width:100%; border-collapse:collapse;">
+                            ${fila('Ingreso mensual', dat(f.ingreso_mensual))}
+                            ${fila('Condición médica', dat(f.condicion_salud))}
+                            ${fila('Discapacidad', dat(f.discapacidad))}
+                            ${fila('Observaciones', dat(f.observaciones))}
+                        </table>
+                    </div>
+
+                </div>`;
             } else {
-                document.getElementById('contSocio').innerHTML = '<p style="text-align:center; color:#666;">Sin ficha socioeconómica capturada.</p>';
+                document.getElementById('contSocio').innerHTML = '<p style="text-align:center; color:#666; padding:20px;">Sin ficha socioeconómica capturada.</p>';
             }
 
             // Historial de reportes
