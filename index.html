@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Staff - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --azul: #0061f2; --fondo: #f2f5f9; --blanco: #ffffff; --texto: #2c3e50; }
+        body { font-family: 'Inter', sans-serif; background: var(--fondo); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: var(--texto); }
+        .login-card { background: var(--blanco); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 360px; text-align: center; }
+        .logo-icono { background: var(--azul); color: white; width: 70px; height: 70px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 35px; margin: 0 auto 20px auto; box-shadow: 0 4px 10px rgba(0, 97, 242, 0.3); }
+        h1 { font-size: 22px; margin: 0 0 5px 0; color: #1e293b; }
+        p.subtitulo { font-size: 13px; color: #69707a; margin-bottom: 30px; }
+        .grupo-input { text-align: left; margin-bottom: 20px; }
+        .grupo-input label { display: block; font-size: 12px; font-weight: 700; color: #69707a; margin-bottom: 8px; }
+        .grupo-input input, .grupo-input select { width: 100%; padding: 14px 15px; border: 1px solid #d1d9e6; border-radius: 10px; font-size: 15px; outline: none; box-sizing: border-box; background: #fcfdfd; transition: 0.2s; font-family: 'Inter', sans-serif; cursor: pointer; }
+        .grupo-input input:focus, .grupo-input select:focus { border-color: var(--azul); background: white; box-shadow: 0 0 0 3px rgba(0, 97, 242, 0.1); }
+        .btn-ingresar { background: var(--azul); color: white; width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-ingresar:hover { background: #004494; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 97, 242, 0.2); }
+        .mensaje-error { color: #e74c3c; font-size: 13px; margin-top: 15px; display: none; font-weight: 600; }
+        .footer-login { margin-top: 30px; font-size: 11px; color: #a0aec0; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo-icono">🎓</div>
+        <h1>Gestión Escolar</h1>
+        <p class="subtitulo">Técnica 84 • Plataforma Segura</p>
+
+        <div class="grupo-input">
+            <label>TIPO DE USUARIO</label>
+            <select id="inRol">
+                <option value="ADMINISTRADOR">Administrador</option>
+                <option value="DOCENTE">Docente</option>
+                <option value="PREFECTO">Prefecto</option>
+                <option value="TRABAJO SOCIAL">Trabajo Social</option>
+                <option value="DIRECTIVO">Directivo</option>
+            </select>
+        </div>
+
+        <div class="grupo-input">
+            <label>USUARIO</label>
+            <input type="text" id="inUsuario" placeholder="ej. jmendez" autocomplete="off">
+        </div>
+        
+        <div class="grupo-input">
+            <label>CONTRASEÑA</label>
+            <input type="password" id="inPassword" placeholder="••••••••">
+        </div>
+
+        <button class="btn-ingresar" onclick="iniciarSesion()" id="btnSubmit">
+            Ingresar al Sistema ➔
+        </button>
+
+        <div id="msgError" class="mensaje-error">Usuario, contraseña o rol incorrectos.</div>
+
+        <div class="footer-login">
+            🔒 ACCESO ENCRIPTADO<br>
+            Uso exclusivo para personal autorizado.
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') iniciarSesion();
+        });
+
+        async function iniciarSesion() {
+            const user = document.getElementById('inUsuario').value.trim();
+            const pass = document.getElementById('inPassword').value.trim();
+            const rolSelect = document.getElementById('inRol').value;
+            const msgError = document.getElementById('msgError');
+            const btn = document.getElementById('btnSubmit');
+
+            if (!user || !pass) {
+                msgError.innerText = "Por favor, llena todos los campos.";
+                msgError.style.display = "block";
+                return;
+            }
+
+            btn.innerHTML = "Verificando...";
+            btn.style.opacity = "0.8";
+            msgError.style.display = "none";
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario: user, password: pass, rol: rolSelect })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('nombreActivo', data.nombre_completo);
+                    localStorage.setItem('rolActivo', data.rol);
+                    localStorage.setItem('authToken', data.token);
+                    
+                    btn.innerHTML = "¡Acceso Correcto! ✅";
+                    btn.style.background = "#27ae60"; 
+                    
+                    setTimeout(() => {
+                        const rol = data.rol;
+                        // REDIRECCIÓN POR ROL
+                        if (rol === 'ADMINISTRADOR' || rol === 'DIRECTIVO') {
+                            window.location.href = 'dashboard.html';
+                        } else if (rol === 'TRABAJO SOCIAL') {
+                            window.location.href = 'buscador.html';
+                        } else if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+                            window.location.href = 'inicio.html';
+                        } else {
+                            window.location.href = 'buscador.html';
+                        }
+                    }, 1000); 
+
+                } else {
+                    msgError.innerText = data.error || "Usuario, contraseña o rol incorrectos.";
+                    msgError.style.display = "block";
+                    btn.innerHTML = "Ingresar al Sistema ➔";
+                    btn.style.opacity = "1";
+                    btn.style.background = "var(--azul)"; 
+                }
+            } catch (error) {
+                msgError.innerText = "Error de conexión con el servidor.";
+                msgError.style.display = "block";
+                btn.innerHTML = "Ingresar al Sistema ➔";
+                btn.style.opacity = "1";
+            }
+        }
+    </script>
+</body>
+</html>

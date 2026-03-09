@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --azul: #0061f2; --verde: #10b981; --rojo: #e74c3c; --naranja: #f59e0b; --fondo: #f2f5f9; --blanco: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--fondo); margin: 0; padding: 0; color: #2c3e50; }
+        
+        /* NAVBAR */
+        .navbar { background: var(--blanco); padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .navbar-brand { font-weight: 700; font-size: 18px; color: var(--azul); }
+        .navbar-menu a { text-decoration: none; color: #64748b; font-weight: 600; font-size: 14px; margin-left: 20px; }
+
+        /* KPI CARDS */
+        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 25px; }
+        .tarjeta-kpi { background: var(--blanco); padding: 25px; border-radius: 12px; border-left: 5px solid var(--azul); box-shadow: 0 4px 6px rgba(0,0,0,0.02); cursor: pointer; transition: transform 0.2s; }
+        .tarjeta-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .kpi-titulo { font-size: 13px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .kpi-valor { font-size: 28px; font-weight: 700; margin: 0; }
+
+        /* GRÁFICA CONTROLADA */
+        .panel { background: var(--blanco); padding: 30px; border-radius: 12px; margin: 0 25px; border: 1px solid #e2e8f0; }
+        .chart-container { position: relative; height: 350px; width: 100%; margin-top: 20px; }
+
+        /* MODALES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-contenido { background: white; padding: 30px; border-radius: 12px; width: 95%; max-width: 900px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; }
+        th { background: #f8fafc; color: #64748b; font-weight: 700; }
+        .badge-grupo { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">🎓 EST 84 - Sistema Directivo</div>
+        <div class="navbar-menu">
+            <a href="buscador.html">🔍 Buscar Alumnos</a>
+            <a href="#" onclick="cerrarSesion()" style="color:var(--rojo)">Salir 👋</a>
+        </div>
+    </nav>
+
+    <div class="grid-kpi">
+        <div class="tarjeta-kpi">
+            <div class="kpi-titulo">Total Alumnos</div>
+            <div class="kpi-valor" id="k-alu">--</div>
+        </div>
+        <div class="tarjeta-kpi" style="border-left-color:var(--naranja)" onclick="abrirModal('reportes')">
+            <div class="kpi-titulo">Reportes (Click para ver)</div>
+            <div class="kpi-valor" id="k-rep">--</div>
+        </div>
+        <div class="tarjeta-kpi" style="border-left-color:var(--rojo)" onclick="abrirModal('riesgo')">
+            <div class="kpi-titulo">En Riesgo (Click para ver)</div>
+            <div class="kpi-valor" id="k-rie">--</div>
+        </div>
+        <div class="tarjeta-kpi" style="border-left-color:var(--verde)">
+            <div class="kpi-titulo">Eficiencia Terminal</div>
+            <div class="kpi-valor">98%</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <select id="filtro" onchange="actualizarGrafica()" style="float:right; padding:10px; border-radius:8px; cursor:pointer;">
+            <option value="materia">Por Disciplina (Colores)</option>
+            <option value="grado">Por Grado</option>
+        </select>
+        <h3>📈 Desempeño Académico Escolar</h3>
+        <div class="chart-container">
+            <canvas id="graficaAprovechamiento"></canvas>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="miModal">
+        <div class="modal-contenido">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="m-tit" style="color:var(--azul); margin:0;">Detalles</h2>
+                <button onclick="cerrarModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="m-tab"></table>
+            </div>
+            <button onclick="cerrarModal()" style="margin-top:20px; padding:12px 25px; cursor:pointer; background:var(--azul); color:white; border:none; border-radius:8px; font-weight:bold; width:100%;">Cerrar Ventana</button>
+        </div>
+    </div>
+
+    <script src="auth-helper.js"></script>
+<script>
+        verificarSesion();
+        
+
+        let myChart = null;
+        let statsData = null;
+
+        window.onload = async () => {
+            const nombre = localStorage.getItem('nombreActivo');
+            if(!nombre) window.location.href = 'index.html';
+            
+            await cargarKpis();
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=estadisticas');
+                statsData = await res.json();
+                actualizarGrafica();
+            } catch(e) { console.error("Error al cargar gráficas"); }
+        };
+
+        async function cargarKpis() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=kpis');
+                const d = await res.json();
+                document.getElementById('k-alu').innerText = d.totalAlumnos;
+                document.getElementById('k-rep').innerText = d.totalReportes;
+                document.getElementById('k-rie').innerText = d.alumnosEnRiesgo;
+            } catch(e) { console.error("Error al cargar KPIs"); }
+        }
+
+        function actualizarGrafica() {
+            if(!statsData) return;
+            const f = document.getElementById('filtro').value;
+            let labels, valores, colores;
+
+            if(f === 'materia') {
+                labels = statsData.porMateria.labels; 
+                valores = statsData.porMateria.valores;
+                colores = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#4D5360','#82E0AA','#F1948A','#85C1E9'];
+            } else {
+                labels = statsData.porGrado.labels; 
+                valores = statsData.porGrado.valores;
+                colores = ['#4BC0C0', '#FFCE56', '#FF6384']; 
+            }
+
+            if(myChart) myChart.destroy();
+            const ctx = document.getElementById('graficaAprovechamiento').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ data: valores, backgroundColor: colores, borderRadius: 6 }] },
+                options: { 
+                    maintainAspectRatio: false, // Fija el tamaño según el contenedor
+                    scales: { y: { min: 5, max: 10, ticks: { stepSize: 1 } } }, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+        }
+
+        async function abrirModal(tipo) {
+            const modal = document.getElementById('miModal');
+            const tabla = document.getElementById('m-tab');
+            modal.style.display = 'flex';
+            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center'>Cargando datos...</td></tr>";
+
+            try {
+                if(tipo === 'riesgo') {
+                    // Columnas: Alumno, Grado/Grupo, Promedio, Acción
+                    document.getElementById('m-tit').innerText = "🚨 Alumnos en Riesgo Académico (Promedio ≤ 6)";
+                    const res = await apiFetch('/api/dashboard?tipo=riesgo');
+                    const datos = await res.json();
+                    tabla.innerHTML = `<tr><th>Alumno</th><th>G/G</th><th>Promedio</th><th>Materias reprobadas</th><th>Acción</th></tr>` + 
+                    datos.map(a => `<tr>
+                        <td><b>${a.apellidos} ${a.nombre}</b></td>
+                        <td><span class="badge-grupo">${a.grado}°"${a.grupo}"</span></td>
+                        <td style="color:var(--rojo); font-weight:bold;">${a.promedio}</td>
+                        <td style="font-size:11px;">${a.materiasRiesgo}</td>
+                        <td><a href="expediente.html?id_alumno=${a.id_alumno}" style="color:var(--azul); text-decoration:none; font-weight:bold;">Ver Expediente</a></td>
+                    </tr>`).join('');
+                } else {
+                    // Columnas: Fecha, Alumno, G/G, Gravedad, Motivo
+                    document.getElementById('m-tit').innerText = "📋 Historial General de Reportes";
+                    const res = await apiFetch('/api/dashboard?tipo=reportes');
+                    const datos = await res.json();
+                    tabla.innerHTML = `<tr><th>Fecha</th><th>Alumno</th><th>G/G</th><th>Gravedad</th><th>Motivo</th></tr>` + 
+                    datos.map(r => `<tr>
+                        <td>${r.fecha}</td>
+                        <td><b>${r.nombre_alumno}</b></td>
+                        <td><span class="badge-grupo">${r.grado_grupo}</span></td>
+                        <td style="font-weight:bold;">${r.gravedad}</td>
+                        <td>${r.motivo}</td>
+                    </tr>`).join('');
+                }
+            } catch(e) { 
+                tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; color:var(--rojo)'>Error al cargar la información.</td></tr>"; 
+            }
+        }
+
+        function cerrarModal() { document.getElementById('miModal').style.display = 'none'; }
+        function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+    </script>
+</body>
+</html>

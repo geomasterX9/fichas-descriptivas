@@ -1,0 +1,20 @@
+<script src="auth-helper.js"></script>
+<script>
+        verificarSesion();
+        
+
+    // ... (Lógica de filtros igual)
+    document.getElementById('formFinal').onsubmit = async (e) => {
+        // ... (Preparación de data igual)
+        const res = await apiFetch('/api/expediente?tipo=ficha', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        if(res.ok) { 
+            alert("Ficha socioeconómica guardada."); 
+            window.location.href = 'buscador.html'; // Retorno estandarizado
+        }
+    };
+</script>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Expedientes - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --azul: #0061f2; --fondo: #f2f5f9; --blanco: #ffffff; --texto: #2c3e50; --borde: #d1d9e6; --verde: #10b981; --rojo: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background: var(--fondo); padding: 40px 20px; color: var(--texto); margin: 0; }
+        .contenedor { max-width: 950px; margin: 0 auto; }
+        .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .titulo-app h1 { color: var(--azul); font-size: 28px; margin: 0 0 5px 0; }
+        .titulo-app p { margin: 0; color: #69707a; }
+        .perfil-usuario { background: white; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--borde); }
+        .info-usuario { text-align: right; }
+        .info-usuario b { display: block; font-size: 14px; color: var(--azul); text-transform: capitalize; }
+        .info-usuario span { font-size: 11px; font-weight: 700; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569; }
+        .btn-salir { background: #fee2e2; color: #991b1b; border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-salir:hover { background: var(--rojo); color: white; }
+        .panel-superior { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-alta { background: var(--verde); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+        .panel-filtros { background: var(--blanco); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; }
+        .campo-filtro { flex: 1; min-width: 140px; }
+        .campo-filtro label { display: block; font-size: 11px; font-weight: 700; color: #69707a; margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px 15px; border: 1px solid var(--borde); border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; background-color: #fcfdfd; font-family: inherit; }
+        #resultados { display: flex; flex-direction: column; gap: 15px; }
+        .tarjeta-alumno { background: var(--blanco); padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--azul); }
+        .tarjeta-baja { border-left-color: #94a3b8; opacity: 0.8; background: #f8fafc; }
+        .info-alumno h3 { margin: 0 0 8px 0; font-size: 18px; color: #1e293b; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-right: 5px; }
+        .badge-grado { background: #e0e7ff; color: #3730a3; }
+        .badge-activo { background: #dcfce7; color: #166534; }
+        .badge-baja { background: #f1f5f9; color: #475569; }
+        .acciones-tarjeta { display: flex; align-items: center; gap: 10px; }
+        .btn-abrir { background: var(--azul); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+        .btn-baja-directa { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .btn-reactivar-directa { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor">
+    <div class="header-app">
+        <div class="titulo-app">
+            <h1>Buscador de Expedientes</h1>
+            <p>Escuela Secundaria Técnica 84 | San Luis Potosí, México</p>
+        </div>
+        <div class="perfil-usuario">
+            <div class="info-usuario">
+                <b id="lblUsuario">Usuario</b>
+                <span id="lblRol">ROL</span>
+            </div>
+            <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+        </div>
+    </div>
+
+    <div class="panel-superior">
+        <div id="info-contador" style="font-size: 13px; font-weight: 600; color: #64748b;">Cargando...</div>
+        <button class="btn-alta" id="btnNuevoAlumno" onclick="abrirModal()">+ NUEVO ALUMNO</button>
+    </div>
+
+    <div class="panel-filtros">
+        <div class="campo-filtro" style="flex: 2;">
+            <label>Buscar por nombre</label>
+            <input type="text" id="inputBusqueda" oninput="buscarAlumno()" placeholder="Escribe un apellido o nombre...">
+        </div>
+        <div class="campo-filtro">
+            <label>Grado</label>
+            <select id="filtroGrado" onchange="buscarAlumno()">
+                <option value="">Todos</option>
+                <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+            </select>
+        </div>
+        <div class="campo-filtro">
+            <label>Grupo</label>
+            <select id="filtroGrupo" onchange="buscarAlumno()">
+                <option value="">Todos</option>
+                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+            </select>
+        </div>
+        <div class="campo-filtro">
+            <label>Estatus</label>
+            <select id="filtroEstatus" onchange="buscarAlumno()">
+                <option value="ACTIVO">Activos</option>
+                <option value="BAJA">Bajas</option>
+                <option value="">Ver Todos</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="resultados"></div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+        verificarSesion();
+        
+
+    let todosLosAlumnos = [];
+    let rolUsuario = '';
+
+    const modoReporte = new URLSearchParams(window.location.search).get('modo') === 'reporte';
+
+    window.onload = async () => {
+        const nombre = localStorage.getItem('nombreActivo');
+        rolUsuario = localStorage.getItem('rolActivo');
+
+        if (!nombre || !rolUsuario) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        document.getElementById('lblUsuario').innerText = nombre;
+        document.getElementById('lblRol').innerText = rolUsuario;
+
+        if (rolUsuario === 'ADMINISTRADOR') {
+            document.getElementById('btnNuevoAlumno').style.display = 'flex';
+        }
+
+        // Banner indicador cuando se viene a registrar reporte
+        if (modoReporte) {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:10px 16px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600;text-align:center;';
+            banner.innerHTML = '📋 Selecciona el alumno al que deseas registrarle un reporte';
+            const cont = document.querySelector('.buscador-wrapper') || document.querySelector('main') || document.body;
+            cont.prepend(banner);
+        }
+
+        await cargarDatos();
+    };
+
+    async function cargarDatos() {
+        try {
+            const res = await apiFetch('/api/alumnos');
+            todosLosAlumnos = await res.json();
+            todosLosAlumnos.sort((a, b) => a.apellidos.localeCompare(b.apellidos));
+            buscarAlumno();
+        } catch (e) { console.error("Error al cargar alumnos"); }
+    }
+
+    function buscarAlumno() {
+        const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
+        const grado = document.getElementById('filtroGrado').value;
+        const grupo = document.getElementById('filtroGrupo').value;
+        const estatus = document.getElementById('filtroEstatus').value;
+        
+        const filtrados = todosLosAlumnos.filter(a => {
+            const matchNombre = `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda);
+            const matchGrado = grado === "" || a.grado.toString() === grado;
+            const matchGrupo = grupo === "" || a.grupo === grupo;
+            const matchEstatus = estatus === "" || (a.estatus || 'ACTIVO') === estatus;
+            return matchNombre && matchGrado && matchGrupo && matchEstatus;
+        });
+
+        const contenedor = document.getElementById('resultados');
+        document.getElementById('info-contador').innerText = `${filtrados.length} alumnos encontrados`;
+        contenedor.innerHTML = "";
+
+        filtrados.forEach(a => {
+            const esBaja = a.estatus === 'BAJA';
+            const badgeEstatus = esBaja ? '<span class="badge badge-baja">BAJA</span>' : '<span class="badge badge-activo">ACTIVO</span>';
+            
+            let htmlAccionesAdmin = "";
+            if (rolUsuario === 'ADMINISTRADOR') {
+                htmlAccionesAdmin = esBaja 
+                    ? `<button class="btn-reactivar-directa" onclick="actualizarEstatus('${a.id_alumno}', 'ACTIVO')">REACTIVAR</button>`
+                    : `<button class="btn-baja-directa" onclick="actualizarEstatus('${a.id_alumno}', 'BAJA')">BAJA</button>`;
+            }
+
+            contenedor.innerHTML += `
+                <div class="tarjeta-alumno ${esBaja ? 'tarjeta-baja' : ''}">
+                    <div class="info-alumno">
+                        <h3>${a.apellidos} ${a.nombre}</h3>
+                        <div>
+                            ${badgeEstatus}
+                            <span class="badge badge-grado">${a.grado}° "${a.grupo}"</span>
+                        </div>
+                    </div>
+                    <div class="acciones-tarjeta">
+                        ${htmlAccionesAdmin}
+                        <a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}" class="btn-abrir">${modoReporte ? 'REPORTE' : 'EXPEDIENTE'}</a>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lector PDF SEGE - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --azul: #0061f2; --fondo: #f2f5f9; --blanco: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--fondo); padding: 20px; color: #2c3e50; }
+        .tarjeta { background: var(--blanco); max-width: 600px; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 8px solid var(--azul); }
+        .btn { background: var(--azul); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; font-size: 16px; transition: 0.2s; }
+        .btn:hover { background: #004494; }
+        label { font-size: 13px; font-weight: 700; color: #69707a; display: block; margin-bottom: 5px; }
+        select { padding: 12px; width: 100%; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; background: white; }
+        .zona-archivo { border: 2px dashed var(--azul); padding: 30px; text-align: center; border-radius: 8px; background: #f8faff; margin-top: 10px; }
+        input[type="file"] { display: none; }
+        .custom-file-upload { display: inline-block; padding: 10px 20px; cursor: pointer; background: white; border: 1px solid var(--azul); color: var(--azul); border-radius: 6px; font-weight: 600; }
+        #log { margin-top: 20px; font-size: 14px; padding: 15px; border-radius: 8px; display: none; }
+    </style>
+</head>
+<body>
+
+<div style="max-width: 600px; margin: 0 auto 15px auto;">
+    <a href="dashboard.html" style="text-decoration: none; color: var(--azul); font-weight: 700; font-size: 14px;">🏠 VOLVER AL DASHBOARD</a>
+</div>
+
+<div class="tarjeta">
+    <h1 style="margin-top: 0; font-size: 22px;">Importador Automático de Calificaciones</h1>
+    <p style="color: #69707a; font-size: 14px;">Sube el PDF oficial de la SEGE para sincronizar los promedios de todo el grupo.</p>
+    
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <div style="flex:1"><label>Grado:</label><select id="g"><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select></div>
+        <div style="flex:1"><label>Grupo:</label><select id="gr"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+        <div style="flex:1"><label>Momento:</label><select id="t"><option value="1">Trimestre 1</option><option value="2">Trimestre 2</option><option value="3">Trimestre 3</option></select></div>
+    </div>
+
+    <div class="zona-archivo">
+        <label for="archivoPdf" class="custom-file-upload">📁 Seleccionar PDF de la SEGE</label>
+        <input type="file" id="archivoPdf" accept=".pdf" onchange="mostrarNombreArchivo()">
+        <p id="nombreArchivoText" style="font-size: 13px; color: #666; margin-top: 10px;">Ningún archivo seleccionado</p>
+    </div>
+
+    <button class="btn" onclick="subirYProcesar()">SUBIR Y SINCRONIZAR PROMEDIOS</button>
+    <div id="log"></div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+        verificarSesion();
+        
+
+    function mostrarNombreArchivo() {
+        const input = document.getElementById('archivoPdf');
+        const texto = document.getElementById('nombreArchivoText');
+        if(input.files.length > 0) {
+            texto.innerHTML = "📄 Listo para subir: <b>" + input.files[0].name + "</b>";
+            texto.style.color = "#0061f2";
+        }
+    }
+
+    async function subirYProcesar() {
+        const archivoInput = document.getElementById('archivoPdf');
+        const logBox = document.getElementById('log');
+
+        if(archivoInput.files.length === 0) {
+            alert("Por favor, selecciona un archivo PDF.");
+            return;
+        }
+
+        logBox.style.display = "block";
+        logBox.style.background = "#e8f0fe";
+        logBox.style.color = "#0061f2";
+        logBox.innerHTML = "⏳ Procesando archivo, por favor espera...";
+
+        const formData = new FormData();
+        formData.append('documento', archivoInput.files[0]);
+        formData.append('grado', document.getElementById('g').value);
+        formData.append('grupo', document.getElementById('gr').value);
+        formData.append('trimestre', document.getElementById('t').value);
+
+        try {
+            // CORRECCIÓN: Se usa la ruta exacta definida en server.js
+            const res = await apiFetch('/api/importar-calificaciones', {
+                method: 'POST',
+                body: formData 
+            });
+
+            const data = await res.json();
+
+            if(res.ok) {
+                logBox.style.background = "#e8f5e9";
+                logBox.style.color = "#2e7d32";
+                logBox.innerHTML = `✅ <b>¡Éxito!</b> Las calificaciones se han sincronizado correctamente en la base de datos.`;
+                
+                alert("Sincronización exitosa.");
+            } else {
+                logBox.style.background = "#ffebee";
+                logBox.style.color = "#c62828";
+                logBox.innerHTML = "❌ Error: " + (data.error || "No se pudo procesar el archivo");
+            }
+        } catch (error) {
+            logBox.style.background = "#ffebee";
+            logBox.style.color = "#c62828";
+            logBox.innerHTML = "❌ Error de conexión: Verifica que el servidor (node server.js) esté encendido.";
+        }
+    }
+</script>
+</body>
+</html>

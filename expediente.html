@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fichas Descriptivas - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root { --azul: #0061f2; --rojo: #e74c3c; --verde: #27ae60; --fondo: #f2f5f9; --blanco: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--fondo); padding: 20px; color: #2c3e50; margin: 0; }
+        .contenedor { max-width: 950px; margin: 0 auto; padding: 20px; }
+        .cabecera-expediente { background: var(--azul); color: white; padding: 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; page-break-inside: avoid; break-inside: avoid; }
+        .perfil-header { display: flex; align-items: center; gap: 25px; }
+        .foto-alumno { width: 200px; height: 200px; object-fit: cover; border-radius: 50%; border: 4px solid white; background: #e2e8f0; }
+        .seccion { background: var(--blanco); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); page-break-inside: avoid; break-inside: avoid; }
+        .seccion-header { padding: 15px 20px; font-weight: 700; border-left: 5px solid var(--azul); border-bottom: 1px solid #eee; }
+        .seccion-contenido { padding: 25px; }
+        .tarjeta-dato { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; page-break-inside: avoid; break-inside: avoid; }
+        .tarjeta-dato h4 { margin: 0 0 12px 0; font-size: 13px; color: var(--azul); text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+        .contenedor-boleta { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 20px; page-break-inside: avoid; break-inside: avoid; }
+        .tabla-boleta { width: 100%; border-collapse: collapse; text-align: center; }
+        .tabla-boleta th { background: #f8faff; padding: 12px 6px; font-size: 12px; color: #69707a; border-bottom: 2px solid #e2e8f0; }
+        .tabla-boleta td { padding: 15px 6px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; }
+        .promedio-cell { font-weight: 700; background: #f8faff; border-left: 2px solid #e2e8f0; }
+        .selector-grafica { padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: var(--azul); background: #f8faff; cursor: pointer; margin-bottom: 20px; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+
+        /* Botón cambiar foto */
+        .foto-wrapper { position: relative; display: inline-block; }
+        .btn-foto {
+            position: absolute; bottom: 6px; right: 6px;
+            background: rgba(0,0,0,0.6); color: white;
+            border: none; border-radius: 50%; width: 36px; height: 36px;
+            font-size: 16px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .btn-foto:hover { background: rgba(0,0,0,0.85); }
+        .foto-cargando {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="contenedor">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;" id="controles-superiores">
+        <a href="buscador.html" id="btnRegresar" style="color: var(--azul); text-decoration: none; font-weight: 600; font-size: 14px;">← Regresar al Directorio</a>
+        <button onclick="descargarPDF()" style="background: #334155; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 600; cursor: pointer;">🖨️ Descargar en PDF</button>
+    </div>
+
+    <div id="area-impresion">
+        <div class="cabecera-expediente">
+            <div class="perfil-header" id="perfilDinamico">
+                <div style="padding: 20px;">Cargando expediente...</div>
+            </div>
+        </div>
+
+        <div class="seccion">
+            <div class="seccion-header">I. Datos Socioeconómicos</div>
+            <div class="seccion-contenido" id="contSocio">Buscando ficha...</div>
+        </div>
+
+        <div class="seccion">
+            <div class="seccion-header" style="border-left-color: #f59e0b; color: #b45309;">II. Historial de Observaciones</div>
+            <div class="seccion-contenido">
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <button onclick="window.location.href='captura_reporte.html?id_alumno=' + idAlumno" style="background: var(--azul); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer;">+ REGISTRAR OBSERVACIÓN</button>
+                </div>
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background:#f8f9fa; font-size:11px; color:#69707a; font-weight:700; text-transform:uppercase;">
+                            <th style="padding:10px; text-align:left; border-bottom:2px solid #eee; width:100px;">Fecha</th>
+                            <th style="padding:10px; text-align:left; border-bottom:2px solid #eee; width:80px;">Gravedad</th>
+                            <th style="padding:10px; text-align:left; border-bottom:2px solid #eee;">Motivo</th>
+                            <th style="padding:10px; text-align:left; border-bottom:2px solid #eee;">Reportado por</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaReportes"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="seccion">
+            <div class="seccion-header" style="border-left-color: var(--verde); color: var(--verde);">III. Rendimiento Académico</div>
+            <div class="seccion-contenido">
+                <select id="selectorGrafica" class="selector-grafica" onchange="actualizarGrafica()">
+                    <option value="GENERAL">PROMEDIO GENERAL</option>
+                </select>
+                <canvas id="graficaPromedios" height="100"></canvas>
+                <div class="contenedor-boleta" id="contBoleta"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Input oculto para cambiar foto -->
+<input type="file" id="inputFotoAlumno" accept="image/*" style="display:none" onchange="subirFotoAlumno(this)">
+
+<script src="auth-helper.js"></script>
+<script>
+        verificarSesion();
+        
+
+    const idAlumno = new URLSearchParams(window.location.search).get('id_alumno');
+    const rolActivo = localStorage.getItem('rolActivo');
+    let chartInstance = null;
+    let datosCalificacionesGlobal = [];
+    let fotoActualSrc = '';
+
+    window.onload = async () => {
+        if (!idAlumno) return window.location.href = 'buscador.html';
+
+        if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
+            const btn = document.getElementById('btnRegresar');
+            btn.href = 'dashboard.html';
+            btn.innerText = '← Volver al Dashboard';
+        }
+        await cargarTodo();
+    };
+
+    async function cargarTodo() {
+        try {
+            const resAlu = await apiFetch(`/api/alumno?id=${idAlumno}`);
+            const a = await resAlu.json();
+
+            // Columna real en Supabase se llama 'fotos-alumnos'
+            fotoActualSrc = a['fotos-alumnos'] || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+            const puedeEditarFoto = (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO');
+            const btnFotoHTML = puedeEditarFoto ? `
+                <button class="btn-foto" onclick="document.getElementById('inputFotoAlumno').click()" title="Cambiar foto">📷</button>
+            ` : '';
+
+            document.getElementById('perfilDinamico').innerHTML = `
+                <div class="foto-wrapper" id="fotoWrapper">
+                    <img src="${fotoActualSrc}" class="foto-alumno" id="imgFotoAlumno">
+                    ${btnFotoHTML}
+                </div>
+                <div style="margin-left: 20px;">
+                    <h1>${a.apellidos} ${a.nombre}</h1>
+                    <p>Grado: <b>${a.grado}°</b> | Grupo: <b>"${a.grupo}"</b></p>
+                </div>`;
+
+            // Ficha socioeconómica
+            const resFicha = await apiFetch(`/api/expediente?tipo=ficha&id=${idAlumno}`);
+            const f = await resFicha.json();
+            if (f && f.id_alumno) {
+                document.getElementById('contSocio').innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="tarjeta-dato"><h4>📍 Contacto</h4><p><b>Domicilio:</b> Calle ${f.domicilio_calle || '--'}</p><p><b>Tel:</b> ${f.telefono_casa || '--'}</p></div>
+                        <div class="tarjeta-dato"><h4>👨‍👩‍👧‍👦 Familia</h4><p><b>Vive con:</b> ${f.con_quien_vive || '--'}</p><p><b>Ocupación Papá:</b> ${f.ocupacion_papa || '--'}</p></div>
+                    </div>`;
+            } else {
+                document.getElementById('contSocio').innerHTML = '<p style="text-align:center; color:#666;">Sin ficha socioeconómica capturada.</p>';
+            }
+
+            // Historial de reportes
+            const resRep = await apiFetch(`/api/reportes?id=${idAlumno}`);
+            const reportes = await resRep.json();
+            document.getElementById('listaReportes').innerHTML = reportes.map(r => `
+                <tr>
+                    <td style="padding:10px; border-bottom:1px solid #eee; white-space:nowrap;">${r.fecha}</td>
+                    <td style="font-weight:bold; border-bottom:1px solid #eee;">${r.gravedad}</td>
+                    <td style="border-bottom:1px solid #eee;">${r.motivo}</td>
+                    <td style="border-bottom:1px solid #eee; color:#555; font-size:13px;">${r.nombre_reporta || '—'}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align:center; padding:15px; color:#aaa;">Historial limpio.</td></tr>';
+
+            // Calificaciones y gráfica
+            const resCal = await apiFetch(`/api/expediente?tipo=calificaciones&id=${idAlumno}`);
+            datosCalificacionesGlobal = await resCal.json();
+            if (datosCalificacionesGlobal.length > 0) {
+                const selector = document.getElementById('selectorGrafica');
+                datosCalificacionesGlobal[0].materias.forEach(m => selector.innerHTML += `<option value="${m.sigla}">${m.sigla}</option>`);
+                renderBoleta();
+                actualizarGrafica();
+            }
+        } catch (e) { console.error("Error cargando expediente", e); }
+    }
+
+    async function subirFotoAlumno(input) {
+        const archivo = input.files[0];
+        if (!archivo) return;
+
+        const wrapper = document.getElementById('fotoWrapper');
+        const cargando = document.createElement('div');
+        cargando.className = 'foto-cargando';
+        cargando.innerHTML = '⏳';
+        wrapper.appendChild(cargando);
+
+        const formData = new FormData();
+        formData.append('foto', archivo);
+        formData.append('id_alumno', idAlumno);
+
+        try {
+            const res = await apiFetch('/api/foto-alumno', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.url) {
+                document.getElementById('imgFotoAlumno').src = data.url + '?t=' + Date.now();
+                fotoActualSrc = data.url;
+                cargando.innerHTML = '✅';
+                setTimeout(() => cargando.remove(), 1500);
+            } else {
+                cargando.innerHTML = '❌';
+                setTimeout(() => cargando.remove(), 2000);
+            }
+        } catch (e) {
+            cargando.innerHTML = '❌';
+            setTimeout(() => cargando.remove(), 2000);
+        }
+        input.value = '';
+    }
+
+    function renderBoleta() {
+        const materias = datosCalificacionesGlobal[0].materias;
+        let html = `<table class="tabla-boleta"><thead><tr><th>TRIMESTRE</th>`;
+        materias.forEach(m => html += `<th>${m.sigla}</th>`);
+        html += `<th class="promedio-cell">PROM</th></tr></thead><tbody>`;
+        datosCalificacionesGlobal.forEach(c => {
+            html += `<tr><td><b>Trimestre ${c.trimestre}</b></td>`;
+            c.materias.forEach(m => html += `<td>${m.calif}</td>`);
+            html += `<td class="promedio-cell">${c.promedio_trimestral.toFixed(1)}</td></tr>`;
+        });
+        document.getElementById('contBoleta').innerHTML = html + `</tbody></table>`;
+    }
+
+    function actualizarGrafica() {
+        const filtro = document.getElementById('selectorGrafica').value;
+        const labels = datosCalificacionesGlobal.map(c => `Trim. ${c.trimestre}`);
+        const valores = datosCalificacionesGlobal.map(c =>
+            filtro === 'GENERAL' ? c.promedio_trimestral : (c.materias.find(m => m.sigla === filtro)?.calif || 0)
+        );
+        if (chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('graficaPromedios').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: filtro, data: valores, borderColor: '#0061f2', backgroundColor: 'rgba(0,97,242,0.1)', fill: true, tension: 0.3 }] },
+            options: { scales: { y: { min: 5, max: 10 } } }
+        });
+    }
+
+    async function imagenABase64(url) {
+        try {
+            const res = await apiFetch(url);
+            const blob = await res.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        } catch { return null; }
+    }
+
+    async function descargarPDF() {
+        const nav = document.getElementById('controles-superiores');
+        nav.style.display = 'none';
+
+        const imgEl = document.getElementById('imgFotoAlumno');
+        const srcOriginal = imgEl ? imgEl.src : null;
+        if (imgEl && fotoActualSrc) {
+            const b64 = await imagenABase64(fotoActualSrc);
+            if (b64) imgEl.src = b64;
+        }
+
+        const btnFoto = document.querySelector('.btn-foto');
+        if (btnFoto) btnFoto.style.display = 'none';
+
+        await html2pdf().set({
+            margin: 15,
+            filename: `Expediente_${idAlumno}.pdf`,
+            html2canvas: { scale: 2, useCORS: true, allowTaint: false },
+            jsPDF: { format: 'letter' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        }).from(document.getElementById('area-impresion')).save();
+
+        nav.style.display = 'flex';
+        if (imgEl && srcOriginal) imgEl.src = srcOriginal;
+        if (btnFoto) btnFoto.style.display = 'flex';
+    }
+</script>
+</body>
+</html>
