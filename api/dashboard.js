@@ -32,14 +32,23 @@ module.exports = async (req, res) => {
             if (!calif || !alum) return res.json({});
             const aluGrado = {};
             alum.forEach(a => aluGrado[a.id_alumno] = a.grado);
-            let mats = { 'ESP': [], 'MAT': [], 'SLI': [], 'CIE': [], 'HIS': [], 'GMM': [], 'FCE': [], 'ETE': [], 'EFI': [], 'ART': [], 'ESO': [] };
+            const SIGLAS = ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'];
+            let mats = {}; SIGLAS.forEach(s => mats[s] = []);
             let trimes = { 1: [], 2: [], 3: [] }, grads = { 1: [], 2: [], 3: [] };
+            // porGradoMateria: { 1: { ESP: [], MAT: [], ... }, 2: {...}, 3: {...} }
+            const pgm = { 1: {}, 2: {}, 3: {} };
+            SIGLAS.forEach(s => { pgm[1][s] = []; pgm[2][s] = []; pgm[3][s] = []; });
             calif.forEach(c => {
                 const v = parseFloat(c.promedio_trimestral);
+                const g = aluGrado[c.id_alumno];
                 if (v >= 5 && v <= 10) {
                     if (trimes[c.trimestre]) trimes[c.trimestre].push(v);
-                    if (aluGrado[c.id_alumno]) grads[aluGrado[c.id_alumno]].push(v);
-                    if (c.materias) c.materias.forEach(m => { const cal = parseFloat(m.calif); if (mats[m.sigla] && cal >= 5) mats[m.sigla].push(cal); });
+                    if (g) grads[g].push(v);
+                    if (c.materias) c.materias.forEach(m => {
+                        const cal = parseFloat(m.calif);
+                        if (mats[m.sigla] && cal >= 5) mats[m.sigla].push(cal);
+                        if (g && pgm[g][m.sigla] && cal >= 5) pgm[g][m.sigla].push(cal);
+                    });
                 }
             });
             const prom = arr => arr.length ? parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)) : 0;
@@ -69,7 +78,13 @@ module.exports = async (req, res) => {
                 porTrimestre: { labels: ['T1', 'T2', 'T3'], valores: [prom(trimes[1]), prom(trimes[2]), prom(trimes[3])] },
                 porGrado: { labels: ['1°', '2°', '3°'], valores: [prom(grads[1]), prom(grads[2]), prom(grads[3])] },
                 porMateria: { labels: matSiglas, valores: matSiglas.map(s => prom(mats[s])) },
-                comparativoPorTrimestre
+                comparativoPorTrimestre,
+                porGradoMateria: {
+                    labels: SIGLAS,
+                    grado1: SIGLAS.map(s => prom(pgm[1][s])),
+                    grado2: SIGLAS.map(s => prom(pgm[2][s])),
+                    grado3: SIGLAS.map(s => prom(pgm[3][s]))
+                }
             });
         }
 
