@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista para Fotografías - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --azul: #0061f2; --fondo: #f0f4f8; --blanco: #fff; --borde: #e2e8f0; --texto: #1a2332; --muted: #64748b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); padding: 24px 16px; }
+        .contenedor { max-width: 860px; margin: 0 auto; }
+
+        /* CONTROLES */
+        .controles { background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); padding: 22px; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+        .ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+        .ctrl-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+        select, input { padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--texto); background: var(--blanco); appearance: none; }
+        select:focus, input:focus { outline: none; border-color: var(--azul); }
+        .btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: var(--azul); color: white; }
+        .btn-primary:hover { background: #004ab3; }
+        .btn-print { background: #1e293b; color: white; }
+        .btn-print:hover { background: #0f172a; }
+        .badge { background: #eff6ff; color: var(--azul); border-radius: 20px; padding: 4px 12px; font-size: 13px; font-weight: 700; align-self: center; }
+
+        /* TABLA */
+        .tabla-wrap { background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); overflow: hidden; }
+        .tabla-header { padding: 16px 22px; border-bottom: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
+        .tabla-header h2 { font-size: 16px; font-weight: 800; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); border-bottom: 1px solid var(--borde); }
+        td { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+        .num-orden { width: 48px; height: 48px; border: 2px solid var(--borde); border-radius: 8px; text-align: center; font-size: 15px; font-weight: 700; color: var(--muted); }
+        .chip-id { background: #eff6ff; color: var(--azul); border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 700; display: inline-block; }
+        .chip-foto { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .chip-foto.sin { background: #fef9c3; color: #854d0e; }
+        .chip-foto.con { background: #f0fdf4; color: #166534; }
+        .casilla { width: 22px; height: 22px; border: 2px solid var(--borde); border-radius: 5px; }
+        .empty-state { text-align: center; padding: 50px; color: var(--muted); }
+
+        /* IMPRIMIR */
+        @media print {
+            body { background: white; padding: 0; font-size: 12px; }
+            .controles, .btn-print, .btn-primary, .no-print { display: none !important; }
+            .tabla-wrap { border: none; box-shadow: none; border-radius: 0; }
+            .tabla-header { border-bottom: 2px solid #000; }
+            th { background: #eee; }
+            td { padding: 7px 10px; }
+            .print-title { display: block !important; }
+        }
+        .print-title { display: none; text-align: center; margin-bottom: 12px; }
+        .print-title h2 { font-size: 16px; }
+        .print-title p { font-size: 12px; color: #555; }
+    </style>
+</head>
+<body>
+<div class="contenedor">
+
+    <div style="margin-bottom:16px;" class="no-print">
+        <a href="dashboard.html" style="display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--borde); border-radius:10px; padding:9px 16px; text-decoration:none; color:var(--muted); font-size:14px; font-weight:600;">← Volver al Dashboard</a>
+    </div>
+
+    <!-- CONTROLES -->
+    <div class="controles">
+        <div class="ctrl-group">
+            <label>Grado</label>
+            <select id="filtroGrado" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="1">1°</option>
+                <option value="2">2°</option>
+                <option value="3">3°</option>
+            </select>
+        </div>
+        <div class="ctrl-group">
+            <label>Grupo</label>
+            <select id="filtroGrupo" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+            </select>
+        </div>
+        <div class="ctrl-group">
+            <label>Mostrar</label>
+            <select id="filtroFoto" onchange="filtrar()">
+                <option value="">Todos los alumnos</option>
+                <option value="sin">Sin foto</option>
+                <option value="con">Con foto</option>
+            </select>
+        </div>
+        <div class="ctrl-group">
+            <label>Ordenar por</label>
+            <select id="filtroOrden" onchange="filtrar()">
+                <option value="apellido">Apellido</option>
+                <option value="id">ID</option>
+            </select>
+        </div>
+        <button class="btn btn-primary no-print" onclick="cargarAlumnos()">↻ Actualizar</button>
+        <button class="btn btn-print no-print" onclick="window.print()">🖨️ Imprimir Lista</button>
+        <span class="badge no-print" id="conteo">—</span>
+    </div>
+
+    <!-- TABLA -->
+    <div class="tabla-wrap">
+        <div class="print-title">
+            <h2>EST 84 — Lista para Fotografías</h2>
+            <p id="printSubtitle">Generada el <span id="printFecha"></span></p>
+        </div>
+        <div class="tabla-header">
+            <h2 id="tituloTabla">Lista de Alumnos</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ID</th>
+                    <th>Nombre Completo</th>
+                    <th>Grado / Grupo</th>
+                    <th>Foto actual</th>
+                    <th class="no-print">✓</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+
+    let todosAlumnos = [];
+
+    document.getElementById('printFecha').textContent = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+
+    async function cargarAlumnos() {
+        const tbody = document.getElementById('cuerpoTabla');
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Cargando...</td></tr>';
+        try {
+            const res = await apiFetch('/api/alumnos');
+            todosAlumnos = await res.json();
+            filtrar();
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Error al cargar alumnos.</td></tr>';
+        }
+    }
+
+    function filtrar() {
+        const grado = document.getElementById('filtroGrado').value;
+        const grupo = document.getElementById('filtroGrupo').value;
+        const foto  = document.getElementById('filtroFoto').value;
+        const orden = document.getElementById('filtroOrden').value;
+
+        let lista = [...todosAlumnos];
+        if (grado) lista = lista.filter(a => String(a.grado) === grado);
+        if (grupo) lista = lista.filter(a => a.grupo === grupo);
+        if (foto === 'sin') lista = lista.filter(a => !a['fotos-alumnos']);
+        if (foto === 'con') lista = lista.filter(a =>  a['fotos-alumnos']);
+
+        lista.sort((a, b) => orden === 'id'
+            ? a.id_alumno - b.id_alumno
+            : (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre));
+
+        renderTabla(lista);
+
+        // Actualizar título imprimible
+        let desc = [];
+        if (grado) desc.push(`${grado}° Grado`);
+        if (grupo) desc.push(`Grupo ${grupo}`);
+        if (foto === 'sin') desc.push('Sin foto');
+        if (foto === 'con') desc.push('Con foto');
+        const titulo = desc.length ? desc.join(' · ') : 'Todos los alumnos';
+        document.getElementById('tituloTabla').textContent = titulo;
+        document.getElementById('printSubtitle').innerHTML = `${titulo} &nbsp;|&nbsp; Generada el ${new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'})}`;
+    }
+
+    function renderTabla(lista) {
+        const tbody = document.getElementById('cuerpoTabla');
+        document.getElementById('conteo').textContent = `${lista.length} alumnos`;
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay alumnos con esos filtros.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = lista.map((a, i) => `
+            <tr>
+                <td><strong style="color:var(--muted); font-size:13px;">${i + 1}</strong></td>
+                <td><span class="chip-id">${a.id_alumno}</span></td>
+                <td><strong>${a.apellidos}</strong> ${a.nombre}</td>
+                <td>${a.grado}° "${a.grupo}"</td>
+                <td><span class="chip-foto ${a['fotos-alumnos'] ? 'con' : 'sin'}">${a['fotos-alumnos'] ? '✓ Tiene foto' : '✗ Sin foto'}</span></td>
+                <td class="no-print"><input type="checkbox" class="casilla"></td>
+            </tr>
+        `).join('');
+    }
+
+    window.onload = cargarAlumnos;
+</script>
+</body>
+</html>
