@@ -97,6 +97,50 @@
     <div id="resultados"></div>
 </div>
 
+
+<!-- MODAL NUEVO ALUMNO -->
+<div class="modal-overlay" id="modalNuevoAlumno">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="font-size:18px; font-weight:800; color:#1a2332;">➕ Nuevo Alumno</h2>
+            <button onclick="cerrarModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+        </div>
+        <div style="display:grid; gap:14px;">
+            <div>
+                <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Apellidos <span style="color:#e63946;">*</span></label>
+                <input type="text" id="na_apellidos" placeholder="Apellido paterno y materno" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit; text-transform:uppercase;">
+            </div>
+            <div>
+                <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Nombre(s) <span style="color:#e63946;">*</span></label>
+                <input type="text" id="na_nombre" placeholder="Nombre o nombres" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit; text-transform:uppercase;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Grado <span style="color:#e63946;">*</span></label>
+                    <select id="na_grado" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit;">
+                        <option value="">Selecciona...</option>
+                        <option value="1">1°</option>
+                        <option value="2">2°</option>
+                        <option value="3">3°</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Grupo <span style="color:#e63946;">*</span></label>
+                    <select id="na_grupo" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit;">
+                        <option value="">Selecciona...</option>
+                        <option>A</option><option>B</option><option>C</option>
+                        <option>D</option><option>E</option><option>F</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:22px;">
+            <button onclick="cerrarModal()" style="flex:1; padding:11px; border:1.5px solid #e2e8f0; border-radius:10px; background:white; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; color:#64748b;">Cancelar</button>
+            <button onclick="guardarNuevoAlumno()" id="btnGuardarAlumno" style="flex:2; padding:11px; border:none; border-radius:10px; background:#1B4F8A; color:white; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Guardar Alumno</button>
+        </div>
+    </div>
+</div>
+
 <script src="auth-helper.js"></script>
 <script>
         verificarSesion();
@@ -147,6 +191,54 @@
         } catch (e) { console.error("Error al cargar alumnos"); }
     }
 
+
+
+    function abrirModal() {
+        document.getElementById('na_apellidos').value = '';
+        document.getElementById('na_nombre').value = '';
+        document.getElementById('na_grado').value = '';
+        document.getElementById('na_grupo').value = '';
+        const modal = document.getElementById('modalNuevoAlumno');
+        modal.style.display = 'flex';
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalNuevoAlumno').style.display = 'none';
+    }
+
+    async function guardarNuevoAlumno() {
+        const apellidos = document.getElementById('na_apellidos').value.trim().toUpperCase();
+        const nombre    = document.getElementById('na_nombre').value.trim().toUpperCase();
+        const grado     = document.getElementById('na_grado').value;
+        const grupo     = document.getElementById('na_grupo').value;
+
+        if (!apellidos || !nombre || !grado || !grupo) {
+            alert('Por favor completa todos los campos.');
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardarAlumno');
+        btn.textContent = 'Guardando...'; btn.disabled = true;
+
+        try {
+            const res = await apiFetch('/api/alumnos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apellidos, nombre, grado: parseInt(grado), grupo, status: 'ACTIVO' })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                cerrarModal();
+                await cargarDatos();
+                alert(`✅ Alumno ${apellidos} ${nombre} dado de alta correctamente.`);
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo guardar.'));
+            }
+        } catch(e) {
+            alert('Error de conexión. Intenta de nuevo.');
+        }
+        btn.textContent = 'Guardar Alumno'; btn.disabled = false;
+    }
 
     function buscarAlumno() {
         const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
