@@ -160,7 +160,7 @@
                 // Línea por materia comparando T1, T2, T3
                 const trimsDisp = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
                 const materias  = statsData.porMateria.labels;
-                const colores   = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#4D5360','#82E0AA','#F1948A','#85C1E9'];
+                const colores   = ['#E63946','#2196F3','#FF9800','#00BFA5','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
 
                 // Dataset por materia
                 const datasets = materias.map((mat, i) => ({
@@ -177,10 +177,10 @@
                 datasets.unshift({
                     label: 'PROMEDIO GENERAL',
                     data: statsData.porTrimestre.valores.filter(v => v > 0),
-                    borderColor: '#2c3e50',
+                    borderColor: '#000000',
                     backgroundColor: 'transparent',
                     borderWidth: 3,
-                    borderDash: [6, 3],
+                    borderDash: [8, 4],
                     fill: false, tension: 0.3, pointRadius: 6
                 });
 
@@ -201,7 +201,7 @@
                 // Barras de promedio general por trimestre (solo los que tienen datos)
                 const labels  = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
                 const valores = statsData.porTrimestre.valores.filter(v => v > 0);
-                const colores = ['#36A2EB', '#4BC0C0', '#FFCE56'];
+                const colores = ['#2196F3', '#00BFA5', '#FF9800'];
                 myChart = new Chart(ctx, {
                     type: 'bar',
                     data: { labels, datasets: [{ label: 'Promedio', data: valores, backgroundColor: colores, borderRadius: 8 }] },
@@ -217,7 +217,7 @@
             } else if (f === 'gradomateria') {
                 // Barras agrupadas: cada materia con 3 barras (1°, 2°, 3°)
                 const pgm = statsData.porGradoMateria;
-                const coloresGrado = ['#36A2EB', '#4BC0C0', '#FF6384'];
+                const coloresGrado = ['#2196F3', '#00BFA5', '#E63946'];
                 myChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -248,11 +248,11 @@
                 if(f === 'materia') {
                     labels  = statsData.porMateria.labels;
                     valores = statsData.porMateria.valores;
-                    colores = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#4D5360','#82E0AA','#F1948A','#85C1E9'];
+                    colores = ['#E63946','#2196F3','#FF9800','#00BFA5','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
                 } else {
                     labels  = statsData.porGrado.labels;
                     valores = statsData.porGrado.valores;
-                    colores = ['#4BC0C0','#FFCE56','#FF6384'];
+                    colores = ['#2196F3','#FF9800','#E63946'];
                 }
                 myChart = new Chart(ctx, {
                     type: 'bar',

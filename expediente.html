@@ -291,9 +291,9 @@
             const labels = datosCalificacionesGlobal.map(c => `Trimestre ${c.trimestre}`);
             const materias = datosCalificacionesGlobal[0].materias;
             const colores = [
-                '#0061f2','#e74c3c','#27ae60','#f39c12','#8e44ad',
-                '#16a085','#d35400','#2980b9','#c0392b','#1abc9c',
-                '#e67e22','#2c3e50','#7f8c8d','#6c5ce7'
+                '#E63946','#2196F3','#FF9800','#00BFA5','#7B1FA2',
+                '#F50057','#43A047','#FF6D00','#1565C0','#C62828',
+                '#00838F','#6200EA','#FF6D00','#00796B'
             ];
             const datasets = materias.map((m, i) => ({
                 label: m.sigla,
@@ -340,7 +340,7 @@
                 filtro === 'GENERAL' ? c.promedio_trimestral : (c.materias.find(m => m.sigla === filtro)?.calif || 0)
             );
             const esBajo = (v) => v < 6;
-            const coloresPuntos = valores.map(v => esBajo(v) ? '#e74c3c' : '#0061f2');
+            const coloresPuntos = valores.map(v => esBajo(v) ? '#E63946' : '#2196F3');
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -348,8 +348,8 @@
                     datasets: [{
                         label: filtro === 'GENERAL' ? 'Promedio General' : filtro,
                         data: valores,
-                        borderColor: '#0061f2',
-                        backgroundColor: 'rgba(0,97,242,0.08)',
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33,150,243,0.10)',
                         fill: true,
                         tension: 0.3,
                         pointBackgroundColor: coloresPuntos,
