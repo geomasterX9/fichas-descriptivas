@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviso de Privacidad - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-claro: #eff6ff; --fondo: #f0f4f8;
+            --blanco: #fff; --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); padding: 24px 16px 60px; }
+        .contenedor { max-width: 760px; margin: 0 auto; }
+
+        .btn-back { display: inline-flex; align-items: center; gap: 8px; background: var(--blanco); border: 1px solid var(--borde); border-radius: 10px; padding: 9px 16px; text-decoration: none; color: var(--muted); font-size: 14px; font-weight: 600; margin-bottom: 24px; transition: background 0.15s; }
+        .btn-back:hover { background: var(--borde); }
+
+        .encabezado { background: var(--azul); color: white; border-radius: 16px; padding: 32px; text-align: center; margin-bottom: 24px; }
+        .encabezado .inst { font-size: 12px; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .encabezado h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+        .encabezado p { font-size: 13px; opacity: 0.8; }
+        .fecha { display: inline-block; background: rgba(255,255,255,0.15); border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-top: 12px; }
+
+        .card { background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); padding: 28px 32px; margin-bottom: 16px; }
+        .card h2 { font-size: 15px; font-weight: 800; color: var(--azul); border-bottom: 2px solid var(--azul-claro); padding-bottom: 10px; margin-bottom: 16px; }
+        .card p { font-size: 14px; line-height: 1.7; color: #334155; margin-bottom: 12px; text-align: justify; }
+        .card p:last-child { margin-bottom: 0; }
+        .card ul { padding-left: 20px; margin-bottom: 12px; }
+        .card ul li { font-size: 14px; line-height: 1.7; color: #334155; margin-bottom: 6px; }
+        .card strong { color: var(--texto); }
+
+        .subtitulo { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
+
+        .chip-ley { display: inline-block; background: var(--azul-claro); color: var(--azul); border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 700; margin: 3px 3px 3px 0; }
+
+        .arco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        .arco-item { background: var(--fondo); border-radius: 10px; padding: 14px; }
+        .arco-letra { font-size: 22px; font-weight: 800; color: var(--azul); margin-bottom: 4px; }
+        .arco-nombre { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+        .arco-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+        .contacto { background: var(--azul-claro); border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px; margin-top: 12px; }
+        .contacto p { font-size: 13px; color: #1e40af; margin-bottom: 4px; }
+
+        .footer-aviso { text-align: center; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--borde); }
+        .footer-aviso p { font-size: 12px; color: var(--muted); }
+
+        @media (max-width: 500px) {
+            .arco-grid { grid-template-columns: 1fr; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="contenedor">
+
+    <a href="javascript:history.back()" class="btn-back">← Regresar</a>
+
+    <div class="encabezado">
+        <div class="inst">Secretaría de Educación Pública · DGET</div>
+        <h1>Aviso de Privacidad</h1>
+        <p>Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
+        <span class="fecha" id="fechaAviso">—</span>
+    </div>
+
+    <!-- I. RESPONSABLE -->
+    <div class="card">
+        <h2>I. Identidad y Domicilio del Responsable</h2>
+        <p>La <strong>Escuela Secundaria Técnica No. 84</strong>, con domicilio en San Luis Potosí, S.L.P., dependiente de la Dirección General de Educación Tecnológica (DGET) de la Secretaría de Educación Pública (SEP), en su carácter de sujeto obligado, es responsable del tratamiento de los datos personales de los alumnos matriculados en esta institución.</p>
+    </div>
+
+    <!-- II. FUNDAMENTO -->
+    <div class="card">
+        <h2>II. Fundamento Legal</h2>
+        <p>Este aviso se emite en cumplimiento de:</p>
+        <div style="margin-top:8px;">
+            <span class="chip-ley">LGPDPPSO 2017</span>
+            <span class="chip-ley">LGDNNA 2014</span>
+            <span class="chip-ley">Ley General de Educación</span>
+            <span class="chip-ley">Lineamientos INAI</span>
+            <span class="chip-ley">Art. 3° y 16° CPEUM</span>
+        </div>
+        <p style="margin-top:12px;">Particularmente, el tratamiento de datos de menores de edad se realiza conforme al principio de <strong>interés superior de la niñez</strong> establecido en el artículo 2° de la LGDNNA, y al principio de <strong>mínimo necesario</strong> del artículo 10 de la LGPDPPSO.</p>
+    </div>
+
+    <!-- III. DATOS -->
+    <div class="card">
+        <h2>III. Datos Personales que se Recaban</h2>
+        <div class="subtitulo">Identificación</div>
+        <ul><li>Nombre completo, fotografía, grado y grupo, número de matrícula.</li></ul>
+        <div class="subtitulo">Académicos</div>
+        <ul><li>Calificaciones por materia y trimestre, promedio general, historial de aprovechamiento.</li></ul>
+        <div class="subtitulo">Disciplinarios</div>
+        <ul><li>Registro de incidencias conductuales, observaciones de desempeño, reconocimientos positivos.</li></ul>
+        <div class="subtitulo">Socioeconómicos</div>
+        <ul><li>Información sobre el núcleo familiar, condición socioeconómica, datos de tutores o padres de familia.</li></ul>
+    </div>
+
+    <!-- IV. FINALIDADES -->
+    <div class="card">
+        <h2>IV. Finalidades del Tratamiento</h2>
+        <p><strong>Finalidades primarias</strong> (necesarias para la relación educativa):</p>
+        <ul>
+            <li>Gestión académica: registro, seguimiento y evaluación del rendimiento escolar.</li>
+            <li>Control disciplinario y reconocimiento del desempeño del alumno.</li>
+            <li>Identificación de alumnos en situación de riesgo para apoyo de trabajo social.</li>
+            <li>Comunicación con padres o tutores sobre el desempeño del alumno.</li>
+            <li>Elaboración de expedientes escolares conforme a la normativa de la SEP.</li>
+            <li>Cumplimiento de obligaciones legales ante autoridades educativas.</li>
+        </ul>
+        <p style="margin-top:12px;"><strong>Finalidades secundarias</strong>:</p>
+        <ul>
+            <li>Estadísticas institucionales agregadas y anónimas para mejora del servicio educativo.</li>
+            <li>Informes de eficiencia terminal ante autoridades educativas.</li>
+        </ul>
+    </div>
+
+    <!-- V. TRANSFERENCIAS -->
+    <div class="card">
+        <h2>V. Transferencias de Datos</h2>
+        <p>Los datos podrán ser transferidos únicamente a:</p>
+        <ul>
+            <li><strong>Autoridades educativas</strong> (SEP, DGET, SEIT) cuando lo requieran para el ejercicio de sus atribuciones legales.</li>
+            <li><strong>Instancias de protección de la infancia</strong> (DIF, SIPINNA) cuando exista riesgo para la integridad del menor.</li>
+            <li><strong>Autoridades judiciales o administrativas</strong>, cuando medie orden o mandato legal.</li>
+        </ul>
+        <p>No se realizarán transferencias de datos con fines comerciales o publicitarios.</p>
+    </div>
+
+    <!-- VI. SEGURIDAD -->
+    <div class="card">
+        <h2>VI. Medidas de Seguridad</h2>
+        <p>Esta institución ha implementado medidas técnicas, administrativas y físicas para proteger los datos personales, entre las que destacan:</p>
+        <ul>
+            <li>Acceso al sistema restringido mediante credenciales personales e intransferibles.</li>
+            <li>Almacenamiento con cifrado y protección de contraseñas mediante hashing seguro (bcrypt).</li>
+            <li>Control de acceso por roles: cada usuario solo accede a la información necesaria para sus funciones.</li>
+            <li>Restricción de acceso desde dispositivos o ubicaciones no autorizadas.</li>
+        </ul>
+    </div>
+
+    <!-- VII. ARCO -->
+    <div class="card">
+        <h2>VII. Derechos ARCO</h2>
+        <p>Los padres, madres o tutores legales, como representantes del alumno, tienen derecho a:</p>
+        <div class="arco-grid">
+            <div class="arco-item">
+                <div class="arco-letra">A</div>
+                <div class="arco-nombre">Acceso</div>
+                <div class="arco-desc">Conocer qué datos obran en nuestros registros y para qué se utilizan.</div>
+            </div>
+            <div class="arco-item">
+                <div class="arco-letra">R</div>
+                <div class="arco-nombre">Rectificación</div>
+                <div class="arco-desc">Solicitar la corrección de datos inexactos o incompletos.</div>
+            </div>
+            <div class="arco-item">
+                <div class="arco-letra">C</div>
+                <div class="arco-nombre">Cancelación</div>
+                <div class="arco-desc">Solicitar la supresión de datos cuando ya no sean necesarios.</div>
+            </div>
+            <div class="arco-item">
+                <div class="arco-letra">O</div>
+                <div class="arco-nombre">Oposición</div>
+                <div class="arco-desc">Oponerse al tratamiento de datos para finalidades secundarias.</div>
+            </div>
+        </div>
+        <div class="contacto" style="margin-top:16px;">
+            <p>📍 Para ejercer sus derechos ARCO, presente solicitud por escrito ante la <strong>Dirección de la institución</strong>.</p>
+            <p>⏱ La institución dará respuesta en un máximo de <strong>20 días hábiles</strong> conforme al artículo 48 de la LGPDPPSO.</p>
+        </div>
+    </div>
+
+    <!-- VIII. MENORES -->
+    <div class="card">
+        <h2>VIII. Protección Especial de Menores de Edad</h2>
+        <p>En apego al artículo 76 de la LGDNNA y al principio de interés superior de la niñez, esta institución garantiza que:</p>
+        <ul>
+            <li>El tratamiento de datos se realiza exclusivamente con fines educativos y de protección integral.</li>
+            <li>Ninguna persona no autorizada puede acceder a la información personal de los alumnos.</li>
+            <li>No se comparten fotografías ni datos identificativos en redes sociales públicas sin consentimiento expreso.</li>
+            <li>La información disciplinaria y socioeconómica es estrictamente confidencial.</li>
+        </ul>
+    </div>
+
+    <!-- IX. CONSENTIMIENTO -->
+    <div class="card">
+        <h2>IX. Consentimiento</h2>
+        <p>Al inscribir al alumno en esta institución, el padre, madre o tutor legal manifiesta su consentimiento expreso para el tratamiento de los datos personales del alumno en los términos del presente aviso, en cumplimiento del artículo 20 de la LGPDPPSO.</p>
+        <p>Para finalidades distintas a las aquí señaladas se recabará consentimiento expreso por escrito de manera previa.</p>
+    </div>
+
+    <div class="footer-aviso">
+        <p>Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
+        <p style="margin-top:4px;">Para más información consulte directamente en la Dirección de la institución.</p>
+    </div>
+
+</div>
+<script>
+    document.getElementById('fechaAviso').textContent =
+        new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+</script>
+</body>
+</html>
