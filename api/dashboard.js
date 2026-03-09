@@ -43,10 +43,33 @@ module.exports = async (req, res) => {
                 }
             });
             const prom = arr => arr.length ? parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)) : 0;
+
+            // Comparativo por materia desglosado por trimestre (para gráfica de líneas)
+            const matSiglas = Object.keys(mats);
+            const matsPorTrim = { 1: {}, 2: {}, 3: {} };
+            matSiglas.forEach(s => { matsPorTrim[1][s] = []; matsPorTrim[2][s] = []; matsPorTrim[3][s] = []; });
+            calif.forEach(c => {
+                const t = c.trimestre;
+                if ([1,2,3].includes(t) && c.materias) {
+                    c.materias.forEach(m => {
+                        const cal = parseFloat(m.calif);
+                        if (matsPorTrim[t][m.sigla] && cal >= 5) matsPorTrim[t][m.sigla].push(cal);
+                    });
+                }
+            });
+            // Para cada materia, array de promedios [T1, T2, T3] — solo trimestres con datos
+            const comparativoPorTrimestre = {};
+            matSiglas.forEach(s => {
+                comparativoPorTrimestre[s] = [1,2,3]
+                    .filter(t => trimes[t].length > 0)
+                    .map(t => prom(matsPorTrim[t][s]));
+            });
+
             return res.json({
                 porTrimestre: { labels: ['T1', 'T2', 'T3'], valores: [prom(trimes[1]), prom(trimes[2]), prom(trimes[3])] },
                 porGrado: { labels: ['1°', '2°', '3°'], valores: [prom(grads[1]), prom(grads[2]), prom(grads[3])] },
-                porMateria: { labels: Object.keys(mats), valores: Object.keys(mats).map(s => prom(mats[s])) }
+                porMateria: { labels: matSiglas, valores: matSiglas.map(s => prom(mats[s])) },
+                comparativoPorTrimestre
             });
         }
 
