@@ -155,7 +155,7 @@
         const estatus = document.getElementById('filtroEstatus').value;
         
         const filtrados = todosLosAlumnos.filter(a => {
-            const matchNombre = `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda);
+            const matchNombre = `${esc(a.apellidos)} ${esc(a.nombre)}`.toUpperCase().includes(busqueda);
             const matchGrado = grado === "" || a.grado.toString() === grado;
             const matchGrupo = grupo === "" || a.grupo === grupo;
             const matchEstatus = estatus === "" || (a.status || 'ACTIVO') === estatus;
@@ -180,7 +180,7 @@
             contenedor.innerHTML += `
                 <div class="tarjeta-alumno ${esBaja ? 'tarjeta-baja' : ''}">
                     <div class="info-alumno">
-                        <h3>${a.apellidos} ${a.nombre}</h3>
+                        <h3>${esc(a.apellidos)} ${esc(a.nombre)}</h3>
                         <div>
                             ${badgeEstatus}
                             <span class="badge badge-grado">${a.grado}° "${a.grupo}"</span>

@@ -143,7 +143,7 @@
                     ${btnFotoHTML}
                 </div>
                 <div style="margin-left: 20px;">
-                    <h1>${a.apellidos} ${a.nombre}</h1>
+                    <h1>${esc(a.apellidos)} ${esc(a.nombre)}</h1>
                     <p>Grado: <b>${a.grado}°</b> | Grupo: <b>"${a.grupo}"</b></p>
                 </div>`;
 
@@ -153,8 +153,8 @@
             if (f && f.id_alumno) {
                 document.getElementById('contSocio').innerHTML = `
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="tarjeta-dato"><h4>📍 Contacto</h4><p><b>Domicilio:</b> Calle ${f.domicilio_calle || '--'}</p><p><b>Tel:</b> ${f.telefono_casa || '--'}</p></div>
-                        <div class="tarjeta-dato"><h4>👨‍👩‍👧‍👦 Familia</h4><p><b>Vive con:</b> ${f.con_quien_vive || '--'}</p><p><b>Ocupación Papá:</b> ${f.ocupacion_papa || '--'}</p></div>
+                        <div class="tarjeta-dato"><h4>📍 Contacto</h4><p><b>Domicilio:</b> Calle ${esc(f.domicilio_calle || '--')}</p><p><b>Tel:</b> ${esc(f.telefono_casa || '--')}</p></div>
+                        <div class="tarjeta-dato"><h4>👨‍👩‍👧‍👦 Familia</h4><p><b>Vive con:</b> ${esc(f.con_quien_vive || '--')}</p><p><b>Ocupación Papá:</b> ${esc(f.ocupacion_papa || '--')}</p></div>
                     </div>`;
             } else {
                 document.getElementById('contSocio').innerHTML = '<p style="text-align:center; color:#666;">Sin ficha socioeconómica capturada.</p>';
@@ -165,10 +165,10 @@
             const reportes = await resRep.json();
             document.getElementById('listaReportes').innerHTML = reportes.map(r => `
                 <tr>
-                    <td style="padding:10px; border-bottom:1px solid #eee; white-space:nowrap;">${r.fecha}</td>
-                    <td style="font-weight:bold; border-bottom:1px solid #eee;">${r.gravedad}</td>
-                    <td style="border-bottom:1px solid #eee;">${r.motivo}</td>
-                    <td style="border-bottom:1px solid #eee; color:#555; font-size:13px;">${r.nombre_reporta || '—'}</td>
+                    <td style="padding:10px; border-bottom:1px solid #eee; white-space:nowrap;">${esc(r.fecha)}</td>
+                    <td style="font-weight:bold; border-bottom:1px solid #eee;">${esc(r.gravedad)}</td>
+                    <td style="border-bottom:1px solid #eee;">${esc(r.motivo)}</td>
+                    <td style="border-bottom:1px solid #eee; color:#555; font-size:13px;">${esc(r.nombre_reporta || '—')}</td>
                 </tr>
             `).join('') || '<tr><td colspan="4" style="text-align:center; padding:15px; color:#aaa;">Historial limpio.</td></tr>';
 

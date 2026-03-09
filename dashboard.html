@@ -182,10 +182,10 @@
                     const datos = await res.json();
                     tabla.innerHTML = `<tr><th>Alumno</th><th>G/G</th><th>Promedio</th><th>Materias reprobadas</th><th>Acción</th></tr>` + 
                     datos.map(a => `<tr>
-                        <td><b>${a.apellidos} ${a.nombre}</b></td>
+                        <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
                         <td><span class="badge-grupo">${a.grado}°"${a.grupo}"</span></td>
                         <td style="color:var(--rojo); font-weight:bold;">${a.promedio}</td>
-                        <td style="font-size:11px;">${a.materiasRiesgo}</td>
+                        <td style="font-size:11px;">${esc(a.materiasRiesgo)}</td>
                         <td><a href="expediente.html?id_alumno=${a.id_alumno}" style="color:var(--azul); text-decoration:none; font-weight:bold;">Ver Expediente</a></td>
                     </tr>`).join('');
                 } else {
@@ -195,11 +195,11 @@
                     const datos = await res.json();
                     tabla.innerHTML = `<tr><th>Fecha</th><th>Alumno</th><th>G/G</th><th>Gravedad</th><th>Motivo</th></tr>` + 
                     datos.map(r => `<tr>
-                        <td>${r.fecha}</td>
-                        <td><b>${r.nombre_alumno}</b></td>
-                        <td><span class="badge-grupo">${r.grado_grupo}</span></td>
-                        <td style="font-weight:bold;">${r.gravedad}</td>
-                        <td>${r.motivo}</td>
+                        <td>${esc(r.fecha)}</td>
+                        <td><b>${esc(r.nombre_alumno)}</b></td>
+                        <td><span class="badge-grupo">${esc(r.grado_grupo)}</span></td>
+                        <td style="font-weight:bold;">${esc(r.gravedad)}</td>
+                        <td>${esc(r.motivo)}</td>
                     </tr>`).join('');
                 }
             } catch(e) { 
