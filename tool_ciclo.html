@@ -479,53 +479,58 @@ async function descargarRespaldo() {
     alert('No hay alumnos de 3° para respaldar.');
     return;
   }
+  const btn = document.getElementById('btnDescargar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando respaldo...';
+
   try {
-    // Obtener fichas y reportes de egresados
-    const rows = [];
-    for (const alu of egresados) {
-      let ficha = {};
-      let reportesCount = 0;
-      try {
-        const rF = await apiFetch(`/api/expediente?tipo=ficha&id=${alu.id_alumno}`);
-        ficha = await rF.json();
-      } catch {}
-      try {
-        const rR = await apiFetch(`/api/reportes?id=${alu.id_alumno}`);
-        const rep = await rR.json();
-        reportesCount = Array.isArray(rep) ? rep.length : 0;
-      } catch {}
+    const ids = egresados.map(a => a.id_alumno);
 
-      rows.push({
-        'ID Alumno':        alu.id_alumno,
-        'Apellidos':        alu.apellidos,
-        'Nombre':           alu.nombre,
-        'Grado':            alu.grado,
-        'Grupo':            alu.grupo,
-        'Ciclo Escolar':    cicloActual,
-        'CURP':             alu.curp || '',
-        'Foto URL':         alu.foto_url || '',
-        'Tutor':            ficha.tutor_nombre || '',
-        'Tel. Tutor':       ficha.tutor_telefono || '',
-        'Madre':            ficha.madre_nombre || '',
-        'Padre':            ficha.padre_nombre || '',
-        'Domicilio':        ficha.domicilio_calle || '',
-        'Colonia':          ficha.colonia || '',
-        'Ingreso Mensual':  ficha.ingreso_mensual || '',
-        'Vive Con':         ficha.con_quien_vive || '',
-        'No. Hermanos':     ficha.num_hermanos ?? '',
-        'Condición Salud':  ficha.condicion_salud || '',
-        'No. Reportes':     reportesCount,
-      });
-    }
+    // Una sola llamada para todas las fichas del ciclo
+    const rF = await apiFetch(`/api/dashboard?tipo=ciclo_fichas&ciclo=${encodeURIComponent(cicloActual)}`);
+    const fichasArr = await rF.json();
+    const fichasMap = {};
+    (Array.isArray(fichasArr) ? fichasArr : []).forEach(f => { fichasMap[f.id_alumno] = f; });
 
-    const ws  = XLSX.utils.json_to_sheet(rows);
-    const wb  = XLSX.utils.book_new();
+    // Una sola llamada para todos los reportes del ciclo
+    const rR = await apiFetch(`/api/dashboard?tipo=ciclo_reportes_count&ciclo=${encodeURIComponent(cicloActual)}`);
+    const reportesArr = await rR.json();
+    const reportesMap = {};
+    (Array.isArray(reportesArr) ? reportesArr : []).forEach(r => { reportesMap[r.id_alumno] = r.count; });
+
+    const rows = egresados.map(alu => {
+      const ficha = fichasMap[alu.id_alumno] || {};
+      return {
+        'ID Alumno':       alu.id_alumno,
+        'Apellidos':       alu.apellidos,
+        'Nombre':          alu.nombre,
+        'Grado':           alu.grado,
+        'Grupo':           alu.grupo,
+        'Ciclo Escolar':   cicloActual,
+        'CURP':            alu.curp || '',
+        'Foto URL':        alu.foto_url || '',
+        'Tutor':           ficha.tutor_nombre || '',
+        'Tel. Tutor':      ficha.tutor_telefono || '',
+        'Madre':           ficha.madre_nombre || '',
+        'Padre':           ficha.padre_nombre || '',
+        'Domicilio':       ficha.domicilio_calle || '',
+        'Colonia':         ficha.colonia || '',
+        'Ingreso Mensual': ficha.ingreso_mensual || '',
+        'Vive Con':        ficha.con_quien_vive || '',
+        'No. Hermanos':    ficha.num_hermanos ?? '',
+        'Condición Salud': ficha.condicion_salud || '',
+        'No. Reportes':    reportesMap[alu.id_alumno] || 0,
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Egresados');
     XLSX.writeFile(wb, `EST84_Egresados_${cicloActual}.xlsx`);
 
     respaldoDescargado = true;
+    btn.textContent = '✅ Respaldo descargado';
     document.getElementById('btnPaso1Siguiente').disabled = false;
-    document.getElementById('btnPaso1Siguiente').textContent = 'Continuar →';
 
   } catch(e) {
     alert('Error al generar el respaldo: ' + e.message);
