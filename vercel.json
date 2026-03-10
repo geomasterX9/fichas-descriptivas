@@ -1,5 +1,19 @@
 {
   "version": 2,
+  "functions": {
+    "api/alumnos.js":                  { "maxDuration": 10 },
+    "api/carga-masiva-fotos.js":       { "maxDuration": 30 },
+    "api/dashboard.js":                { "maxDuration": 10 },
+    "api/expediente.js":               { "maxDuration": 10 },
+    "api/ficha-publica.js":            { "maxDuration": 10 },
+    "api/foto-alumno.js":              { "maxDuration": 30 },
+    "api/importar-calificaciones.js":  { "maxDuration": 60 },
+    "api/login.js":                    { "maxDuration": 10 },
+    "api/logs.js":                     { "maxDuration": 10 },
+    "api/personal.js":                 { "maxDuration": 10 },
+    "api/reportes.js":                 { "maxDuration": 10 },
+    "api/usuarios.js":                 { "maxDuration": 10 }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
