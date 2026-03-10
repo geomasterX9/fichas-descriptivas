@@ -111,9 +111,10 @@
                     <th>Alumno</th>
                     <th>Grado / Grupo</th>
                     <th>Estado ficha</th>
+                    <th>Expediente</th>
                 </tr>
             </thead>
-            <tbody id="cuerpoTabla"><tr><td colspan="3" class="empty">Cargando...</td></tr></tbody>
+            <tbody id="cuerpoTabla"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -134,7 +135,7 @@
             renderGrupos();
             filtrar();
         } catch(e) {
-            document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="3" class="empty">Error al cargar.</td></tr>';
+            document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="4" class="empty">Error al cargar.</td></tr>';
         }
     };
 
@@ -200,7 +201,7 @@
         document.getElementById('conteo').textContent = `${filtrados.length} alumnos`;
         const tbody = document.getElementById('cuerpoTabla');
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="empty">No hay alumnos con esos filtros.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">No hay alumnos con esos filtros.</td></tr>';
             return;
         }
         tbody.innerHTML = filtrados.map(a => `<tr>
@@ -209,6 +210,9 @@
             <td>${a.ficha_completada
                 ? '<span class="chip-ok">✅ Completada</span>'
                 : '<span class="chip-pend">⏳ Pendiente</span>'}</td>
+            <td>${a.ficha_completada
+                ? `<a href="expediente.html?id=${a.id_alumno}" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#eff6ff;color:#1B4F8A;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">📋 Ver expediente</a>`
+                : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}</td>
         </tr>`).join('');
     }
 </script>
