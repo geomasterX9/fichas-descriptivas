@@ -62,6 +62,15 @@ module.exports = async (req, res) => {
                 }
             }
         }
+        // Registrar log de importación
+        await supabase.from('logs_actividad').insert([{
+            id_usuario:     usuario.id,
+            nombre_usuario: usuario.nombre,
+            rol:            usuario.rol,
+            accion:         'IMPORTAR_CALIFICACIONES',
+            detalle:        `${contador} alumnos sincronizados`,
+            ip:             req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown'
+        }]);
         res.json({ exito: true, mensaje: `Sincronizados ${contador} alumnos correctamente.` });
     } catch (e) { res.status(500).json({ error: 'Error al procesar archivo PDF' }); }
 };
