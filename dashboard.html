@@ -2,302 +2,152 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - EST 84</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
-            --verde: #2d9b6f; --verde-claro: #f0fdf6;
-            --rojo: #e63946; --rojo-claro: #fff0f1;
-            --naranja: #f59e0b; --naranja-claro: #fffbeb;
-            --fondo: #f0f4f8; --blanco: #fff;
-            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+        :root { --azul: #0061f2; --verde: #10b981; --rojo: #e74c3c; --naranja: #f59e0b; --fondo: #f2f5f9; --blanco: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--fondo); margin: 0; padding: 0; color: #2c3e50; }
+        
+        /* NAVBAR */
+        .navbar { background: var(--blanco); padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .navbar-brand { font-weight: 700; font-size: 18px; color: var(--azul); }
+        .navbar-menu a { text-decoration: none; color: #64748b; font-weight: 600; font-size: 14px; margin-left: 20px; }
 
-        /* ── NAVBAR ── */
-        .navbar {
-            background: var(--azul);
-            padding: 0 28px;
-            height: 62px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
-            position: sticky; top: 0; z-index: 100;
-        }
-        .navbar-brand { display: flex; align-items: center; gap: 10px; color: white; font-weight: 800; font-size: 17px; }
-        .navbar-brand span { font-size: 22px; }
-        .navbar-menu { display: flex; align-items: center; gap: 8px; }
-        .navbar-menu a {
-            text-decoration: none; color: rgba(255,255,255,0.8); font-weight: 600;
-            font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s;
-        }
-        .navbar-menu a:hover { background: rgba(255,255,255,0.12); color: white; }
-        .navbar-menu a.salir { color: #fca5a5; }
-        .navbar-menu a.salir:hover { background: rgba(230,57,70,0.2); color: #fca5a5; }
-        .navbar-nombre {
-            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 20px; padding: 5px 14px; color: white; font-size: 13px; font-weight: 600;
-        }
+        /* KPI CARDS */
+        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 25px; }
+        .tarjeta-kpi { background: var(--blanco); padding: 25px; border-radius: 12px; border-left: 5px solid var(--azul); box-shadow: 0 4px 6px rgba(0,0,0,0.02); cursor: pointer; transition: transform 0.2s; }
+        .tarjeta-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .kpi-titulo { font-size: 13px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .kpi-valor { font-size: 28px; font-weight: 700; margin: 0; }
 
-        /* ── CONTENIDO ── */
-        .contenido { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+        /* GRÁFICA CONTROLADA */
+        .panel { background: var(--blanco); padding: 30px; border-radius: 12px; margin: 0 25px; border: 1px solid #e2e8f0; }
+        .chart-container { position: relative; height: 350px; width: 100%; margin-top: 20px; }
 
-        /* ── KPI CARDS ── */
-        .grid-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-        .tarjeta-kpi {
-            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
-            padding: 22px 20px; cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-            position: relative; overflow: hidden;
-        }
-        .tarjeta-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-        .tarjeta-kpi::before {
-            content: ''; position: absolute; top: 0; left: 0;
-            width: 4px; height: 100%; background: var(--azul);
-            border-radius: 16px 0 0 16px;
-        }
-        .tarjeta-kpi.naranja::before { background: var(--naranja); }
-        .tarjeta-kpi.rojo::before    { background: var(--rojo); }
-        .tarjeta-kpi.verde::before   { background: var(--verde); }
-        .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 8px; }
-        .kpi-valor { font-size: 32px; font-weight: 900; color: var(--texto); line-height: 1; }
-        .tarjeta-kpi.naranja .kpi-valor { color: var(--naranja); }
-        .tarjeta-kpi.rojo .kpi-valor    { color: var(--rojo); }
-        .tarjeta-kpi.verde .kpi-valor   { color: var(--verde); }
-        .kpi-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
-
-        /* ── HERRAMIENTAS ── */
-        .panel-tools {
-            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
-            padding: 20px 24px; margin-bottom: 24px;
-        }
-        .panel-tools-titulo {
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.8px; color: var(--muted); margin-bottom: 14px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .tools-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .tool-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            border-radius: 10px; padding: 10px 16px;
-            text-decoration: none; font-weight: 700; font-size: 13px;
-            transition: all 0.15s; border: 1.5px solid transparent;
-        }
-        .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .tool-azul   { background: var(--azul-claro); color: var(--azul); border-color: #bfdbfe; }
-        .tool-verde  { background: var(--verde-claro); color: var(--verde); border-color: #bbf7d0; }
-        .tool-naranja{ background: var(--naranja-claro); color: #92400e; border-color: #fde68a; }
-        .tool-morado { background: #f5f3ff; color: #6b21a8; border-color: #e9d5ff; }
-        .tool-esmeralda { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
-        .tool-gris   { background: #f8fafc; color: #334155; border-color: var(--borde); }
-
-        /* ── GRÁFICA ── */
-        .panel-grafica {
-            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); padding: 24px;
-        }
-        .panel-grafica-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
-        }
-        .panel-grafica-titulo { font-size: 16px; font-weight: 800; }
-        .grafica-select {
-            padding: 9px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
-            font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 600;
-            color: var(--azul); background: var(--azul-claro); cursor: pointer; outline: none;
-        }
-        .chart-container { position: relative; height: 320px; width: 100%; }
-
-        /* ── MODAL ── */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15,23,42,0.55); display: none; align-items: center;
-            justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
-            padding: 16px;
-        }
-        .modal-contenido {
-            background: var(--blanco); border-radius: 20px; width: 100%;
-            max-width: 920px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.2);
-        }
-        .modal-header {
-            padding: 22px 28px 18px; border-bottom: 1px solid var(--borde);
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; background: var(--blanco); z-index: 1;
-            border-radius: 20px 20px 0 0;
-        }
-        .modal-titulo { font-size: 18px; font-weight: 800; color: var(--azul); }
-        .modal-cerrar {
-            width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--borde);
-            background: var(--blanco); font-size: 18px; cursor: pointer; display: flex;
-            align-items: center; justify-content: center; transition: background 0.15s;
-        }
-        .modal-cerrar:hover { background: var(--fondo); }
-        .modal-body { padding: 20px 28px 28px; overflow-x: auto; }
-        .modal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .modal-table th {
-            background: #f8fafc; padding: 11px 14px; text-align: left;
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.5px; color: var(--muted); border-bottom: 2px solid var(--borde);
-        }
-        .modal-table td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .modal-table tr:last-child td { border-bottom: none; }
-        .modal-table tr:hover td { background: #fafbfc; }
-        .badge-grupo {
-            background: var(--azul-claro); color: var(--azul);
-            padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-        }
-        .badge-riesgo {
-            color: var(--rojo); font-weight: 800; font-size: 15px;
-        }
-        .link-exp {
-            color: var(--azul); text-decoration: none; font-weight: 700; font-size: 12px;
-            background: var(--azul-claro); padding: 5px 12px; border-radius: 8px;
-        }
-        .link-exp:hover { background: #dbeafe; }
-        .modal-footer { padding: 16px 28px; border-top: 1px solid var(--borde); }
-        .btn-cerrar-modal {
-            width: 100%; padding: 12px; border: none; border-radius: 10px;
-            background: var(--azul); color: white; font-size: 14px; font-weight: 700;
-            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
-        }
-        .btn-cerrar-modal:hover { background: var(--azul-hover); }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 900px) {
-            .grid-kpi { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 600px) {
-            .navbar { padding: 0 16px; }
-            .navbar-nombre { display: none; }
-            .navbar-brand { font-size: 15px; }
-            .contenido { padding: 16px 12px 40px; }
-            .grid-kpi { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .kpi-valor { font-size: 26px; }
-            .tools-grid { gap: 8px; }
-            .tool-btn { font-size: 12px; padding: 9px 12px; }
-            .panel-grafica { padding: 16px; }
-            .modal-contenido { max-height: 90vh; }
-            .modal-header, .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
-        }
+        /* MODALES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-contenido { background: white; padding: 30px; border-radius: 12px; width: 95%; max-width: 900px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; }
+        th { background: #f8fafc; color: #64748b; font-weight: 700; }
+        .badge-grupo { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; }
     </style>
 </head>
 <body>
-
     <nav class="navbar">
-        <div class="navbar-brand">
-            <span>🎓</span> EST 84 · Sistema Directivo
-        </div>
+        <div class="navbar-brand">🎓 EST 84 - Sistema Directivo</div>
         <div class="navbar-menu">
-            <span class="navbar-nombre" id="headerNombre">—</span>
-            <a href="buscador.html">🔍 Alumnos</a>
-            <a href="#" onclick="cerrarSesion()" class="salir">Salir 👋</a>
+            <a href="buscador.html">🔍 Buscar Alumnos</a>
+            <a href="#" onclick="cerrarSesion()" style="color:var(--rojo)">Salir 👋</a>
         </div>
     </nav>
 
-    <div class="contenido">
-
-        <!-- KPIs -->
-        <div class="grid-kpi">
-            <div class="tarjeta-kpi">
-                <div class="kpi-label">Total Alumnos</div>
-                <div class="kpi-valor" id="k-alu">—</div>
-            </div>
-            <div class="tarjeta-kpi naranja" onclick="abrirModal('reportes')" style="cursor:pointer">
-                <div class="kpi-label">Reportes</div>
-                <div class="kpi-valor" id="k-rep">—</div>
-                <div class="kpi-hint">Clic para ver detalle</div>
-            </div>
-            <div class="tarjeta-kpi rojo" onclick="abrirModal('riesgo')" style="cursor:pointer">
-                <div class="kpi-label">En Riesgo Académico</div>
-                <div class="kpi-valor" id="k-rie">—</div>
-                <div class="kpi-hint">Clic para ver detalle</div>
-            </div>
-            <div class="tarjeta-kpi verde">
-                <div class="kpi-label">Eficiencia Terminal</div>
-                <div class="kpi-valor">98%</div>
-            </div>
+    <div class="grid-kpi">
+        <div class="tarjeta-kpi">
+            <div class="kpi-titulo">Total Alumnos</div>
+            <div class="kpi-valor" id="k-alu">--</div>
         </div>
-
-        <!-- HERRAMIENTAS — solo ADMINISTRADOR -->
-        <div class="panel-tools" id="panelHerramientas" style="display:none">
-            <div class="panel-tools-titulo">🛠️ Herramientas de Administración</div>
-            <div class="tools-grid">
-                <a href="tool_lista_fotos.html"   class="tool-btn tool-azul">📋 Lista para Fotografías</a>
-                <a href="tool_fotos.html"          class="tool-btn tool-esmeralda">📷 Carga Masiva de Fotos</a>
-                <a href="tool_calificaciones.html" class="tool-btn tool-naranja">📊 Importar Calificaciones</a>
-                <a href="tool_fichas.html"         class="tool-btn tool-morado">📋 Fichas Socioeconómicas</a>
-                <a href="tool_usuarios.html"       class="tool-btn tool-verde">👥 Gestión de Usuarios</a>
-                <a href="tool_logs.html"           class="tool-btn tool-gris">📋 Logs de Actividad</a>
-            </div>
+        <div class="tarjeta-kpi" style="border-left-color:var(--naranja)" onclick="abrirModal('reportes')">
+            <div class="kpi-titulo">Reportes (Click para ver)</div>
+            <div class="kpi-valor" id="k-rep">--</div>
         </div>
-
-        <!-- GRÁFICA -->
-        <div class="panel-grafica">
-            <div class="panel-grafica-header">
-                <div class="panel-grafica-titulo">📈 Desempeño Académico Escolar</div>
-                <select class="grafica-select" id="filtro" onchange="actualizarGrafica()">
-                    <option value="materia">📚 Por Disciplina</option>
-                    <option value="grado">🏫 Por Grado</option>
-                    <option value="trimestre" id="optTrimestre" style="display:none">📅 Por Trimestre</option>
-                    <option value="comparativo" id="optComparativo" style="display:none">🔀 Comparativo trimestres</option>
-                    <option value="gradomateria">🏫 Por Disciplina y Grado</option>
-                </select>
-            </div>
-            <div class="chart-container">
-                <canvas id="graficaAprovechamiento"></canvas>
-            </div>
+        <div class="tarjeta-kpi" style="border-left-color:var(--rojo)" onclick="abrirModal('riesgo')">
+            <div class="kpi-titulo">En Riesgo (Click para ver)</div>
+            <div class="kpi-valor" id="k-rie">--</div>
         </div>
-
+        <div class="tarjeta-kpi" style="border-left-color:var(--verde)">
+            <div class="kpi-titulo">Eficiencia Terminal</div>
+            <div class="kpi-valor">98%</div>
+        </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- HERRAMIENTAS — solo visible para ADMINISTRADOR -->
+    <div id="panelHerramientas" style="display:none; padding: 0 25px; margin-bottom: 25px;">
+        <div style="background:var(--blanco); border-radius:12px; border:1px solid #e2e8f0; padding:22px;">
+            <h3 style="margin:0 0 16px 0; font-size:14px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">🛠️ Herramientas de Administración</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:12px;">
+                <a href="tool_lista_fotos.html" style="display:flex; align-items:center; gap:10px; background:#f0f7ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 18px; text-decoration:none; color:#1e40af; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    📋 Lista para Fotografías
+                </a>
+                <a href="tool_fotos.html" style="display:flex; align-items:center; gap:10px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 18px; text-decoration:none; color:#166534; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    📷 Carga Masiva de Fotos
+                </a>
+                <a href="tool_calificaciones.html" style="display:flex; align-items:center; gap:10px; background:#fefce8; border:1px solid #fde68a; border-radius:10px; padding:12px 18px; text-decoration:none; color:#854d0e; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    📊 Importar Calificaciones
+                </a>
+                <a href="tool_fichas.html" style="display:flex; align-items:center; gap:10px; background:#fdf4ff; border:1px solid #e9d5ff; border-radius:10px; padding:12px 18px; text-decoration:none; color:#6b21a8; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    📋 Fichas Socioeconómicas
+                </a>
+                <a href="tool_usuarios.html" style="display:flex; align-items:center; gap:10px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 18px; text-decoration:none; color:#166534; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    👥 Gestión de Usuarios
+                </a>
+                <a href="tool_logs.html" style="display:flex; align-items:center; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 18px; text-decoration:none; color:#334155; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    📋 Logs de Actividad
+                </a>
+                <a href="tool_ciclo.html" style="display:flex; align-items:center; gap:10px; background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:12px 18px; text-decoration:none; color:#9a3412; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    🔄 Cierre de Ciclo Escolar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <select id="filtro" onchange="actualizarGrafica()" style="float:right; padding:10px; border-radius:8px; cursor:pointer;">
+            <option value="materia">📚 Por Disciplina</option>
+            <option value="grado">🏫 Por Grado</option>
+            <option value="trimestre" id="optTrimestre" style="display:none;">📅 Por Trimestre</option>
+            <option value="comparativo" id="optComparativo" style="display:none;">🔀 Comparativo entre trimestres</option>
+            <option value="gradomateria">🏫 Por Disciplina y Grado</option>
+        </select>
+        <h3>📈 Desempeño Académico Escolar</h3>
+        <div class="chart-container">
+            <canvas id="graficaAprovechamiento"></canvas>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="miModal">
         <div class="modal-contenido">
-            <div class="modal-header">
-                <div class="modal-titulo" id="m-tit">Detalles</div>
-                <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="m-tit" style="color:var(--azul); margin:0;">Detalles</h2>
+                <button onclick="cerrarModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
             </div>
-            <div class="modal-body">
-                <table class="modal-table" id="m-tab"></table>
+            <div style="overflow-x:auto;">
+                <table id="m-tab"></table>
             </div>
-            <div class="modal-footer">
-                <button class="btn-cerrar-modal" onclick="cerrarModal()">Cerrar</button>
-            </div>
+            <button onclick="cerrarModal()" style="margin-top:20px; padding:12px 25px; cursor:pointer; background:var(--azul); color:white; border:none; border-radius:8px; font-weight:bold; width:100%;">Cerrar Ventana</button>
         </div>
     </div>
 
     <script src="auth-helper.js"></script>
-    <script>
+<script>
         verificarSesion();
+        
+
         let myChart = null;
         let statsData = null;
 
         window.onload = async () => {
             const nombre = localStorage.getItem('nombreActivo');
-            const rol    = localStorage.getItem('rolActivo');
-            if (!nombre) return window.location.href = 'index.html';
+            const rol = localStorage.getItem('rolActivo');
+            if(!nombre) window.location.href = 'index.html';
 
-            document.getElementById('headerNombre').textContent = nombre.split(' ')[0];
-
+            // Mostrar herramientas solo al administrador
             if (rol === 'ADMINISTRADOR') {
                 document.getElementById('panelHerramientas').style.display = 'block';
             }
-
+            
             registrarLog('VER_DASHBOARD');
             await cargarKpis();
-
             try {
                 const res = await apiFetch('/api/dashboard?tipo=estadisticas');
                 statsData = await res.json();
+                // Mostrar opciones de trimestre según datos disponibles
                 const trimsCon = statsData.porTrimestre.valores.filter(v => v > 0).length;
                 if (trimsCon >= 1) document.getElementById('optTrimestre').style.display = '';
                 if (trimsCon >= 2) document.getElementById('optComparativo').style.display = '';
                 actualizarGrafica();
-            } catch(e) { console.error('Error gráficas'); }
+            } catch(e) { console.error("Error al cargar gráficas"); }
         };
 
         async function cargarKpis() {
@@ -307,89 +157,119 @@
                 document.getElementById('k-alu').innerText = d.totalAlumnos;
                 document.getElementById('k-rep').innerText = d.totalReportes;
                 document.getElementById('k-rie').innerText = d.alumnosEnRiesgo;
-            } catch(e) { console.error('Error KPIs'); }
+            } catch(e) { console.error("Error al cargar KPIs"); }
         }
 
         function actualizarGrafica() {
-            if (!statsData) return;
+            if(!statsData) return;
             const f = document.getElementById('filtro').value;
-            if (myChart) myChart.destroy();
+            if(myChart) myChart.destroy();
             const ctx = document.getElementById('graficaAprovechamiento').getContext('2d');
 
-            const COLORES = ['#E63946','#1B4F8A','#FF9800','#2d9b6f','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
-
             if (f === 'comparativo') {
+                // Línea por materia comparando T1, T2, T3
                 const trimsDisp = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
                 const materias  = statsData.porMateria.labels;
-                const datasets  = materias.map((mat, i) => ({
+                const colores   = ['#E63946','#2196F3','#FF9800','#00BFA5','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
+
+                // Dataset por materia
+                const datasets = materias.map((mat, i) => ({
                     label: mat,
-                    data: statsData.comparativoPorTrimestre ? statsData.comparativoPorTrimestre[mat] || [] : trimsDisp.map(() => null),
-                    borderColor: COLORES[i % COLORES.length],
-                    backgroundColor: COLORES[i % COLORES.length] + '22',
+                    data: statsData.comparativoPorTrimestre
+                          ? statsData.comparativoPorTrimestre[mat] || []
+                          : trimsDisp.map(() => null),
+                    borderColor: colores[i % colores.length],
+                    backgroundColor: colores[i % colores.length] + '22',
                     fill: false, tension: 0.3, pointRadius: 5
                 }));
+
+                // Línea punteada de promedio general
                 datasets.unshift({
                     label: 'PROMEDIO GENERAL',
                     data: statsData.porTrimestre.valores.filter(v => v > 0),
-                    borderColor: '#000', backgroundColor: 'transparent',
-                    borderWidth: 3, borderDash: [8, 4],
+                    borderColor: '#000000',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    borderDash: [8, 4],
                     fill: false, tension: 0.3, pointRadius: 6
                 });
+
                 myChart = new Chart(ctx, {
                     type: 'line',
                     data: { labels: trimsDisp, datasets },
                     options: {
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11, family: 'Outfit' } } } },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                            title: { display: true, text: 'Comparativo escolar por trimestre', font: { size: 13 } }
+                        },
                         scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f5f5f5' } } }
                     }
                 });
+
             } else if (f === 'trimestre') {
+                // Barras de promedio general por trimestre (solo los que tienen datos)
                 const labels  = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
                 const valores = statsData.porTrimestre.valores.filter(v => v > 0);
+                const colores = ['#2196F3', '#00BFA5', '#FF9800'];
                 myChart = new Chart(ctx, {
                     type: 'bar',
-                    data: { labels, datasets: [{ label: 'Promedio', data: valores, backgroundColor: ['#1B4F8A','#2d9b6f','#f59e0b'], borderRadius: 8 }] },
+                    data: { labels, datasets: [{ label: 'Promedio', data: valores, backgroundColor: colores, borderRadius: 8 }] },
                     options: {
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` Promedio: ${c.parsed.y.toFixed(1)}` } } },
+                        plugins: { legend: { display: false },
+                            tooltip: { callbacks: { label: c => ` Promedio: ${c.parsed.y.toFixed(1)}` } }
+                        },
                         scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 } } }
                     }
                 });
+
             } else if (f === 'gradomateria') {
+                // Barras agrupadas: cada materia con 3 barras (1°, 2°, 3°)
                 const pgm = statsData.porGradoMateria;
+                const coloresGrado = ['#1565C0', '#FDD835', '#E63946'];
                 myChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: pgm.labels,
                         datasets: [
-                            { label: '1° Grado', data: pgm.grado1, backgroundColor: '#1565C0', borderRadius: 4 },
-                            { label: '2° Grado', data: pgm.grado2, backgroundColor: '#FDD835', borderRadius: 4 },
-                            { label: '3° Grado', data: pgm.grado3, backgroundColor: '#E63946', borderRadius: 4 }
+                            { label: '1° Grado', data: pgm.grado1, backgroundColor: coloresGrado[0], borderRadius: 4 },
+                            { label: '2° Grado', data: pgm.grado2, backgroundColor: coloresGrado[1], borderRadius: 4 },
+                            { label: '3° Grado', data: pgm.grado3, backgroundColor: coloresGrado[2], borderRadius: 4 }
                         ]
                     },
                     options: {
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12, family: 'Outfit' } } },
+                            legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12 } } },
+                            title: { display: true, text: 'Promedio por disciplina desglosado por grado', font: { size: 13 } },
                             tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}` } }
                         },
-                        scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f5f5f5' } } }
+                        scales: {
+                            y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f5f5f5' } },
+                            x: { ticks: { font: { size: 11 } } }
+                        }
                     }
                 });
+
             } else {
+                // Barras por materia o por grado (comportamiento original)
                 let labels, valores, colores;
-                if (f === 'materia') {
-                    labels = statsData.porMateria.labels; valores = statsData.porMateria.valores; colores = COLORES;
+                if(f === 'materia') {
+                    labels  = statsData.porMateria.labels;
+                    valores = statsData.porMateria.valores;
+                    colores = ['#E63946','#2196F3','#FF9800','#00BFA5','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
                 } else {
-                    labels = statsData.porGrado.labels; valores = statsData.porGrado.valores; colores = ['#1B4F8A','#f59e0b','#E63946'];
+                    labels  = statsData.porGrado.labels;
+                    valores = statsData.porGrado.valores;
+                    colores = ['#2196F3','#FF9800','#E63946'];
                 }
                 myChart = new Chart(ctx, {
                     type: 'bar',
-                    data: { labels, datasets: [{ data: valores, backgroundColor: colores, borderRadius: 8 }] },
+                    data: { labels, datasets: [{ data: valores, backgroundColor: colores, borderRadius: 6 }] },
                     options: {
                         maintainAspectRatio: false,
-                        scales: { y: { min: 5, max: 10, ticks: { stepSize: 1 }, grid: { color: '#f5f5f5' } } },
+                        scales: { y: { min: 5, max: 10, ticks: { stepSize: 1 } } },
                         plugins: { legend: { display: false } }
                     }
                 });
@@ -400,36 +280,38 @@
             const modal = document.getElementById('miModal');
             const tabla = document.getElementById('m-tab');
             modal.style.display = 'flex';
-            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:32px; color:var(--muted);'>Cargando datos...</td></tr>";
+            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center'>Cargando datos...</td></tr>";
 
             try {
-                if (tipo === 'riesgo') {
-                    document.getElementById('m-tit').innerText = '🚨 Alumnos en Riesgo Académico';
+                if(tipo === 'riesgo') {
+                    // Columnas: Alumno, Grado/Grupo, Promedio, Acción
+                    document.getElementById('m-tit').innerText = "🚨 Alumnos en Riesgo Académico (Promedio ≤ 6)";
                     const res = await apiFetch('/api/dashboard?tipo=riesgo');
                     const datos = await res.json();
-                    tabla.innerHTML = `<tr><th>Alumno</th><th>Grado/Grupo</th><th>Promedio</th><th>Materias</th><th>Acción</th></tr>` +
-                        datos.map(a => `<tr>
-                            <td><strong>${esc(a.apellidos)} ${esc(a.nombre)}</strong></td>
-                            <td><span class="badge-grupo">${a.grado}°"${a.grupo}"</span></td>
-                            <td class="badge-riesgo">${a.promedio}</td>
-                            <td style="font-size:11px; color:var(--muted);">${esc(a.materiasRiesgo)}</td>
-                            <td><a href="expediente.html?id_alumno=${a.id_alumno}" class="link-exp">Ver expediente</a></td>
-                        </tr>`).join('');
+                    tabla.innerHTML = `<tr><th>Alumno</th><th>G/G</th><th>Promedio</th><th>Materias reprobadas</th><th>Acción</th></tr>` + 
+                    datos.map(a => `<tr>
+                        <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                        <td><span class="badge-grupo">${a.grado}°"${a.grupo}"</span></td>
+                        <td style="color:var(--rojo); font-weight:bold;">${a.promedio}</td>
+                        <td style="font-size:11px;">${esc(a.materiasRiesgo)}</td>
+                        <td><a href="expediente.html?id_alumno=${a.id_alumno}" style="color:var(--azul); text-decoration:none; font-weight:bold;">Ver Expediente</a></td>
+                    </tr>`).join('');
                 } else {
-                    document.getElementById('m-tit').innerText = '📋 Historial General de Reportes';
+                    // Columnas: Fecha, Alumno, G/G, Gravedad, Motivo
+                    document.getElementById('m-tit').innerText = "📋 Historial General de Reportes";
                     const res = await apiFetch('/api/dashboard?tipo=reportes');
                     const datos = await res.json();
-                    tabla.innerHTML = `<tr><th>Fecha</th><th>Alumno</th><th>G/G</th><th>Gravedad</th><th>Motivo</th></tr>` +
-                        datos.map(r => `<tr>
-                            <td style="white-space:nowrap; font-size:12px;">${esc(r.fecha)}</td>
-                            <td><strong>${esc(r.nombre_alumno)}</strong></td>
-                            <td><span class="badge-grupo">${esc(r.grado_grupo)}</span></td>
-                            <td style="font-weight:700;">${esc(r.gravedad)}</td>
-                            <td style="font-size:12px; color:var(--muted); max-width:200px;">${esc(r.motivo)}</td>
-                        </tr>`).join('');
+                    tabla.innerHTML = `<tr><th>Fecha</th><th>Alumno</th><th>G/G</th><th>Gravedad</th><th>Motivo</th></tr>` + 
+                    datos.map(r => `<tr>
+                        <td>${esc(r.fecha)}</td>
+                        <td><b>${esc(r.nombre_alumno)}</b></td>
+                        <td><span class="badge-grupo">${esc(r.grado_grupo)}</span></td>
+                        <td style="font-weight:bold;">${esc(r.gravedad)}</td>
+                        <td>${esc(r.motivo)}</td>
+                    </tr>`).join('');
                 }
-            } catch(e) {
-                tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:24px; color:var(--rojo);'>Error al cargar.</td></tr>";
+            } catch(e) { 
+                tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; color:var(--rojo)'>Error al cargar la información.</td></tr>"; 
             }
         }
 

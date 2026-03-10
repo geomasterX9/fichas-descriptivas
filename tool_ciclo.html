@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cierre de Ciclo Escolar — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="auth-helper.js"></script>
+<style>
+  :root {
+    --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+    --verde: #2d9b6f; --verde-claro: #f0fdf6; --verde-borde: #bbf7d0;
+    --rojo: #e63946; --rojo-claro: #fff0f1; --rojo-borde: #fecaca;
+    --naranja: #f59e0b; --naranja-claro: #fffbeb; --naranja-borde: #fde68a;
+    --fondo: #f0f4f8; --blanco: #fff; --texto: #1a2332;
+    --muted: #64748b; --borde: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0f172a, var(--azul));
+    color: white; padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 44px; height: 44px; background: rgba(255,255,255,0.15);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .header h1 { font-size: 20px; font-weight: 800; }
+  .header p  { font-size: 13px; color: #93c5fd; margin-top: 2px; }
+  .btn-volver {
+    background: rgba(255,255,255,0.12); color: white;
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none; font-family: inherit; transition: background 0.2s;
+  }
+  .btn-volver:hover { background: rgba(255,255,255,0.22); }
+
+  .contenido { max-width: 820px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  /* ── AVISO CICLO ACTIVO ── */
+  .ciclo-banner {
+    background: var(--azul); color: white;
+    border-radius: 14px; padding: 18px 22px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 24px;
+  }
+  .ciclo-badge {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px; padding: 6px 14px; font-size: 18px; font-weight: 800;
+    white-space: nowrap;
+  }
+  .ciclo-banner-txt h2 { font-size: 15px; font-weight: 800; }
+  .ciclo-banner-txt p  { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+
+  /* ── ADVERTENCIA ── */
+  .advertencia {
+    background: var(--naranja-claro); border: 1px solid var(--naranja-borde);
+    border-left: 4px solid var(--naranja);
+    border-radius: 12px; padding: 16px 18px;
+    display: flex; gap: 12px; align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  .advertencia-icono { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .advertencia h3 { font-size: 14px; font-weight: 800; color: #92400e; margin-bottom: 4px; }
+  .advertencia p  { font-size: 13px; color: #78350f; line-height: 1.6; }
+
+  /* ── PASOS ── */
+  .pasos { display: flex; flex-direction: column; gap: 14px; }
+
+  .paso {
+    background: var(--blanco); border-radius: 16px;
+    border: 1px solid var(--borde); overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .paso.activo   { border-color: var(--azul); }
+  .paso.completo { border-color: var(--verde); }
+  .paso.bloqueado { opacity: 0.5; pointer-events: none; }
+
+  .paso-header {
+    padding: 16px 20px; display: flex; align-items: center; gap: 14px;
+    background: #f8fafc; border-bottom: 1px solid var(--borde);
+  }
+  .paso.activo   .paso-header { background: var(--azul-claro); border-color: #bfdbfe; }
+  .paso.completo .paso-header { background: var(--verde-claro); border-color: var(--verde-borde); }
+
+  .paso-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--borde); color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; flex-shrink: 0;
+  }
+  .paso.activo   .paso-num { background: var(--azul); color: white; }
+  .paso.completo .paso-num { background: var(--verde); color: white; }
+
+  .paso-titulo { font-size: 15px; font-weight: 800; }
+  .paso-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .paso.activo   .paso-sub { color: #1d4ed8; }
+  .paso.completo .paso-sub { color: var(--verde); }
+
+  .paso-check { margin-left: auto; font-size: 20px; }
+
+  .paso-cuerpo { padding: 20px; }
+
+  /* ── STATS PREVIAS ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px;
+  }
+  .stat-card {
+    background: #f8fafc; border: 1px solid var(--borde);
+    border-radius: 12px; padding: 14px 16px; text-align: center;
+  }
+  .stat-num   { font-size: 28px; font-weight: 800; color: var(--azul); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+  /* ── TABLA PREVIEW ── */
+  .tabla-preview {
+    background: var(--blanco); border: 1px solid var(--borde);
+    border-radius: 10px; overflow: hidden; margin-bottom: 16px;
+    max-height: 260px; overflow-y: auto;
+  }
+  .tabla-preview table { width: 100%; border-collapse: collapse; }
+  .tabla-preview th {
+    background: #f8fafc; padding: 9px 12px; text-align: left;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--muted);
+    border-bottom: 1px solid var(--borde); position: sticky; top: 0;
+  }
+  .tabla-preview td {
+    padding: 9px 12px; font-size: 13px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .tabla-preview tr:last-child td { border-bottom: none; }
+
+  /* ── CAMPO NUEVO CICLO ── */
+  .campo-ciclo {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: #f8fafc; border: 1px solid var(--borde);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .campo-ciclo label { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .campo-ciclo input {
+    padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 8px;
+    font-size: 16px; font-weight: 800; font-family: 'Outfit', sans-serif;
+    color: var(--azul); width: 140px; text-align: center;
+    transition: border-color 0.15s;
+  }
+  .campo-ciclo input:focus { outline: none; border-color: var(--azul); }
+  .campo-ciclo .hint { font-size: 12px; color: var(--muted); }
+
+  /* ── BOTONES DE ACCIÓN ── */
+  .btn-accion {
+    padding: 12px 24px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; font-family: 'Outfit', sans-serif;
+    cursor: pointer; transition: all 0.2s; display: inline-flex;
+    align-items: center; gap: 8px;
+  }
+  .btn-primario  { background: var(--azul); color: white; }
+  .btn-primario:hover  { background: var(--azul-hover); transform: translateY(-1px); }
+  .btn-primario:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-verde     { background: var(--verde); color: white; }
+  .btn-verde:hover     { background: #1e7a57; transform: translateY(-1px); }
+  .btn-peligro   { background: var(--rojo); color: white; }
+  .btn-peligro:hover   { background: #c0303a; transform: translateY(-1px); }
+  .btn-peligro:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secundario { background: #f1f5f9; color: var(--muted); border: 1px solid var(--borde); }
+  .btn-secundario:hover { background: var(--borde); }
+
+  /* ── PROGRESO ── */
+  .progreso-wrap { margin: 12px 0; }
+  .progreso-bar {
+    height: 6px; background: var(--borde); border-radius: 99px; overflow: hidden;
+  }
+  .progreso-fill {
+    height: 100%; background: var(--azul); border-radius: 99px;
+    transition: width 0.4s ease; width: 0%;
+  }
+  .progreso-txt { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ── LOG DE OPERACIONES ── */
+  .log-box {
+    background: #0f172a; color: #94a3b8; border-radius: 10px;
+    padding: 14px 16px; font-size: 12px; font-family: monospace;
+    max-height: 180px; overflow-y: auto; line-height: 1.8;
+    margin-top: 14px; display: none;
+  }
+  .log-box.visible { display: block; }
+  .log-ok  { color: #4ade80; }
+  .log-err { color: #f87171; }
+  .log-inf { color: #60a5fa; }
+
+  /* ── ESTADO ÉXITO FINAL ── */
+  .exito-final {
+    background: linear-gradient(135deg, var(--verde-claro), #dcfce7);
+    border: 1px solid var(--verde-borde); border-radius: 16px;
+    padding: 32px; text-align: center; display: none;
+  }
+  .exito-final.visible { display: block; }
+  .exito-final .icono  { font-size: 56px; margin-bottom: 14px; }
+  .exito-final h2      { font-size: 22px; font-weight: 800; color: var(--verde); margin-bottom: 8px; }
+  .exito-final p       { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  /* ── MODAL CONFIRMACIÓN ── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .overlay.visible { display: flex; }
+  .modal {
+    background: white; border-radius: 18px; padding: 28px;
+    max-width: 440px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-icono { font-size: 40px; margin-bottom: 14px; }
+  .modal h3    { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .modal p     { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+  .modal-input {
+    width: 100%; padding: 12px 14px; border: 2px solid var(--borde);
+    border-radius: 10px; font-size: 15px; font-family: 'Outfit', sans-serif;
+    margin-bottom: 16px; transition: border-color 0.15s;
+  }
+  .modal-input:focus { outline: none; border-color: var(--rojo); }
+  .modal-acciones { display: flex; gap: 10px; }
+  .modal-acciones .btn-accion { flex: 1; justify-content: center; }
+
+  @media (max-width: 580px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .campo-ciclo { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🔄</div>
+    <div>
+      <h1>Cierre de Ciclo Escolar</h1>
+      <p>Herramienta administrativa — Solo Administrador</p>
+    </div>
+  </div>
+  <a href="dashboard.html" class="btn-volver">← Volver al Dashboard</a>
+</div>
+
+<div class="contenido">
+
+  <!-- CICLO ACTIVO -->
+  <div class="ciclo-banner">
+    <div class="ciclo-badge" id="lblCicloActivo">Cargando...</div>
+    <div class="ciclo-banner-txt">
+      <h2>Ciclo escolar activo</h2>
+      <p>Todas las operaciones afectan únicamente a este ciclo</p>
+    </div>
+  </div>
+
+  <!-- ADVERTENCIA -->
+  <div class="advertencia">
+    <div class="advertencia-icono">⚠️</div>
+    <div>
+      <h3>Esta operación no se puede deshacer</h3>
+      <p>El proceso eliminará a los alumnos egresados (3°), promoverá a los demás de grado y abrirá el nuevo ciclo escolar. Asegúrate de haber descargado el respaldo de egresados antes de continuar.</p>
+    </div>
+  </div>
+
+  <!-- PASOS -->
+  <div class="pasos" id="contenedorPasos">
+
+    <!-- PASO 1: RESUMEN Y RESPALDO -->
+    <div class="paso activo" id="paso1">
+      <div class="paso-header">
+        <div class="paso-num">1</div>
+        <div>
+          <div class="paso-titulo">Resumen del ciclo actual</div>
+          <div class="paso-sub">Revisa los datos y descarga el respaldo de egresados</div>
+        </div>
+        <div class="paso-check" id="check1"></div>
+      </div>
+      <div class="paso-cuerpo">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total alumnos</div></div>
+          <div class="stat-card"><div class="stat-num" id="statEgresados">—</div><div class="stat-label">Egresados (3°)</div></div>
+          <div class="stat-card"><div class="stat-num" id="statPromocion">—</div><div class="stat-label">Se promueven</div></div>
+        </div>
+
+        <div class="tabla-preview" id="tablaEgresados">
+          <table>
+            <thead><tr><th>Alumno</th><th>Grupo</th></tr></thead>
+            <tbody id="cuerpoEgresados"><tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:20px;">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-accion btn-verde" id="btnDescargar" onclick="descargarRespaldo()">
+            📥 Descargar respaldo de egresados (.xlsx)
+          </button>
+          <button class="btn-accion btn-primario" id="btnPaso1Siguiente" onclick="confirmarPaso1()" disabled>
+            Continuar →
+          </button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;">
+          ⚠️ Debes descargar el respaldo antes de poder continuar.
+        </p>
+      </div>
+    </div>
+
+    <!-- PASO 2: CONFIGURAR NUEVO CICLO -->
+    <div class="paso bloqueado" id="paso2">
+      <div class="paso-header">
+        <div class="paso-num">2</div>
+        <div>
+          <div class="paso-titulo">Configurar nuevo ciclo</div>
+          <div class="paso-sub">Define el nombre del ciclo que se abrirá</div>
+        </div>
+        <div class="paso-check" id="check2"></div>
+      </div>
+      <div class="paso-cuerpo">
+        <div class="campo-ciclo">
+          <label>Nuevo ciclo escolar:</label>
+          <input type="text" id="inputNuevoCiclo" placeholder="2026-2027" maxlength="9" oninput="validarCiclo(this)">
+          <span class="hint" id="hintCiclo">Formato: AAAA-AAAA</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-accion btn-primario" id="btnPaso2Siguiente" onclick="confirmarPaso2()" disabled>
+            Continuar →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 3: EJECUTAR CIERRE -->
+    <div class="paso bloqueado" id="paso3">
+      <div class="paso-header">
+        <div class="paso-num">3</div>
+        <div>
+          <div class="paso-titulo">Ejecutar cierre de ciclo</div>
+          <div class="paso-sub">Eliminar egresados, promover alumnos y abrir nuevo ciclo</div>
+        </div>
+        <div class="paso-check" id="check3"></div>
+      </div>
+      <div class="paso-cuerpo">
+
+        <div style="background:#f8fafc;border:1px solid var(--borde);border-radius:10px;padding:16px;margin-bottom:16px;">
+          <p style="font-size:13px;font-weight:700;margin-bottom:10px;">El sistema realizará estas operaciones en orden:</p>
+          <div style="display:flex;flex-direction:column;gap:8px;" id="resumenOperaciones">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <span style="color:var(--rojo);">🗑️</span>
+              <span>Eliminar <strong id="resEgresados">—</strong> alumnos egresados de 3° y todos sus registros</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <span style="color:var(--naranja);">⬆️</span>
+              <span>Promover alumnos de 2° → 3° (mismo grupo)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <span style="color:var(--naranja);">⬆️</span>
+              <span>Promover alumnos de 1° → 2° (mismo grupo)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <span>🔄</span>
+              <span>Resetear fichas socioeconómicas (ficha_completada = false)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <span style="color:var(--verde);">✅</span>
+              <span>Activar nuevo ciclo: <strong id="resNuevoCiclo">—</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="progreso-wrap" id="progresoWrap" style="display:none;">
+          <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+          <div class="progreso-txt" id="progresoTxt">Iniciando...</div>
+        </div>
+
+        <div class="log-box" id="logBox"></div>
+
+        <div style="margin-top:16px;">
+          <button class="btn-accion btn-peligro" id="btnEjecutar" onclick="abrirModalConfirmacion()">
+            🚀 Ejecutar cierre de ciclo
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ÉXITO FINAL -->
+  <div class="exito-final" id="exitoFinal">
+    <div class="icono">🎉</div>
+    <h2 id="msgExitoFinal">¡Ciclo cerrado exitosamente!</h2>
+    <p id="descExitoFinal">El nuevo ciclo escolar ha sido activado. Ya puedes importar los alumnos de 1° desde el SEGE.</p>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="dashboard.html" class="btn-accion btn-primario">Ir al Dashboard</a>
+      <a href="tool_calificaciones.html" class="btn-accion btn-secundario">Importar calificaciones</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── MODAL DE CONFIRMACIÓN ── -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icono">⚠️</div>
+    <h3>Confirma el cierre de ciclo</h3>
+    <p>Esta acción <strong>eliminará permanentemente</strong> a los alumnos de 3° y no se puede deshacer. Escribe el ciclo actual para confirmar:</p>
+    <input type="text" class="modal-input" id="inputConfirmacion"
+      placeholder="Escribe el ciclo actual..." oninput="validarConfirmacion(this)">
+    <div class="modal-acciones">
+      <button class="btn-accion btn-secundario" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-accion btn-peligro" id="btnConfirmarEjecucion" onclick="ejecutarCierre()" disabled>
+        Sí, ejecutar cierre
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ESTADO GLOBAL ──
+let cicloActual   = '';
+let nuevoCiclo    = '';
+let egresados     = [];
+let respaldoDescargado = false;
+
+// ── INICIALIZAR ──
+window.onload = async () => {
+  verificarSesion(['ADMINISTRADOR']);
+  await cargarDatos();
+};
+
+async function cargarDatos() {
+  try {
+    // Cargar ciclo activo
+    const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo');
+    const datCiclo = await resCiclo.json();
+    cicloActual = datCiclo.valor || '2025-2026';
+    document.getElementById('lblCicloActivo').textContent = cicloActual;
+
+    // Sugerir nuevo ciclo automáticamente
+    const [ini, fin] = cicloActual.split('-').map(Number);
+    document.getElementById('inputNuevoCiclo').value = `${ini + 1}-${fin + 1}`;
+
+    // Cargar alumnos del ciclo activo
+    const resAlumnos = await apiFetch('/api/alumnos');
+    const alumnos    = await resAlumnos.json();
+
+    egresados         = alumnos.filter(a => a.grado === 3 || a.grado === '3');
+    const promueven   = alumnos.filter(a => a.grado === 1 || a.grado === 2 || a.grado === '1' || a.grado === '2');
+
+    document.getElementById('statTotal').textContent      = alumnos.length;
+    document.getElementById('statEgresados').textContent  = egresados.length;
+    document.getElementById('statPromocion').textContent  = promueven.length;
+    document.getElementById('resEgresados').textContent   = egresados.length;
+
+    // Tabla de egresados
+    document.getElementById('cuerpoEgresados').innerHTML = egresados.length === 0
+      ? '<tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:20px;">No hay alumnos de 3°</td></tr>'
+      : egresados.map(a =>
+          `<tr><td><strong>${a.apellidos} ${a.nombre}</strong></td><td>3° "${a.grupo}"</td></tr>`
+        ).join('');
+
+  } catch(e) {
+    console.error(e);
+    log('err', 'Error al cargar datos: ' + e.message);
+  }
+}
+
+// ── PASO 1: DESCARGAR RESPALDO ──
+async function descargarRespaldo() {
+  if (egresados.length === 0) {
+    alert('No hay alumnos de 3° para respaldar.');
+    return;
+  }
+  try {
+    // Obtener fichas y reportes de egresados
+    const rows = [];
+    for (const alu of egresados) {
+      let ficha = {};
+      let reportesCount = 0;
+      try {
+        const rF = await apiFetch(`/api/expediente?tipo=ficha&id=${alu.id_alumno}`);
+        ficha = await rF.json();
+      } catch {}
+      try {
+        const rR = await apiFetch(`/api/reportes?id=${alu.id_alumno}`);
+        const rep = await rR.json();
+        reportesCount = Array.isArray(rep) ? rep.length : 0;
+      } catch {}
+
+      rows.push({
+        'ID Alumno':        alu.id_alumno,
+        'Apellidos':        alu.apellidos,
+        'Nombre':           alu.nombre,
+        'Grado':            alu.grado,
+        'Grupo':            alu.grupo,
+        'Ciclo Escolar':    cicloActual,
+        'CURP':             alu.curp || '',
+        'Foto URL':         alu.foto_url || '',
+        'Tutor':            ficha.tutor_nombre || '',
+        'Tel. Tutor':       ficha.tutor_telefono || '',
+        'Madre':            ficha.madre_nombre || '',
+        'Padre':            ficha.padre_nombre || '',
+        'Domicilio':        ficha.domicilio_calle || '',
+        'Colonia':          ficha.colonia || '',
+        'Ingreso Mensual':  ficha.ingreso_mensual || '',
+        'Vive Con':         ficha.con_quien_vive || '',
+        'No. Hermanos':     ficha.num_hermanos ?? '',
+        'Condición Salud':  ficha.condicion_salud || '',
+        'No. Reportes':     reportesCount,
+      });
+    }
+
+    const ws  = XLSX.utils.json_to_sheet(rows);
+    const wb  = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Egresados');
+    XLSX.writeFile(wb, `EST84_Egresados_${cicloActual}.xlsx`);
+
+    respaldoDescargado = true;
+    document.getElementById('btnPaso1Siguiente').disabled = false;
+    document.getElementById('btnPaso1Siguiente').textContent = 'Continuar →';
+
+  } catch(e) {
+    alert('Error al generar el respaldo: ' + e.message);
+  }
+}
+
+function confirmarPaso1() {
+  if (!respaldoDescargado) return;
+  completarPaso(1);
+  activarPaso(2);
+  validarCiclo(document.getElementById('inputNuevoCiclo'));
+}
+
+// ── PASO 2: NUEVO CICLO ──
+function validarCiclo(input) {
+  const val  = input.value.trim();
+  const ok   = /^\d{4}-\d{4}$/.test(val);
+  const hint = document.getElementById('hintCiclo');
+  const btn  = document.getElementById('btnPaso2Siguiente');
+
+  if (ok) {
+    const [ini, fin] = val.split('-').map(Number);
+    if (fin !== ini + 1) {
+      hint.textContent = '⚠️ El año final debe ser el siguiente al inicial';
+      hint.style.color = 'var(--rojo)';
+      btn.disabled = true;
+      return;
+    }
+    hint.textContent = '✅ Formato correcto';
+    hint.style.color = 'var(--verde)';
+    btn.disabled = false;
+  } else {
+    hint.textContent = 'Formato: AAAA-AAAA (ej. 2026-2027)';
+    hint.style.color = 'var(--muted)';
+    btn.disabled = true;
+  }
+}
+
+function confirmarPaso2() {
+  nuevoCiclo = document.getElementById('inputNuevoCiclo').value.trim();
+  document.getElementById('resNuevoCiclo').textContent = nuevoCiclo;
+  completarPaso(2);
+  activarPaso(3);
+}
+
+// ── PASO 3: EJECUTAR ──
+function abrirModalConfirmacion() {
+  document.getElementById('inputConfirmacion').value = '';
+  document.getElementById('btnConfirmarEjecucion').disabled = true;
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+}
+
+function validarConfirmacion(input) {
+  const ok = input.value.trim() === cicloActual;
+  document.getElementById('btnConfirmarEjecucion').disabled = !ok;
+}
+
+async function ejecutarCierre() {
+  cerrarModal();
+  const btnEjecutar = document.getElementById('btnEjecutar');
+  btnEjecutar.disabled = true;
+  btnEjecutar.textContent = '⏳ Ejecutando...';
+
+  const progresoWrap = document.getElementById('progresoWrap');
+  const logBox       = document.getElementById('logBox');
+  progresoWrap.style.display = 'block';
+  logBox.classList.add('visible');
+
+  try {
+    // OPERACIÓN 1: Eliminar egresados (5 pasos por alumno → aproximado)
+    setProgreso(5, 'Eliminando registros de egresados...');
+    log('inf', `Iniciando eliminación de ${egresados.length} egresados...`);
+
+    const res1 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suboperacion: 'eliminar_egresados', ciclo: cicloActual })
+    });
+    const d1 = await res1.json();
+    if (!res1.ok) throw new Error(d1.error || 'Error al eliminar egresados');
+    log('ok', `✓ ${d1.eliminados} egresados eliminados`);
+
+    // OPERACIÓN 2: Promover 2° → 3°
+    setProgreso(35, 'Promoviendo alumnos de 2° a 3°...');
+    const res2 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suboperacion: 'promover', de: 2, a: 3, ciclo: cicloActual })
+    });
+    const d2 = await res2.json();
+    if (!res2.ok) throw new Error(d2.error || 'Error al promover 2°→3°');
+    log('ok', `✓ ${d2.promovidos} alumnos promovidos de 2° a 3°`);
+
+    // OPERACIÓN 3: Promover 1° → 2°
+    setProgreso(55, 'Promoviendo alumnos de 1° a 2°...');
+    const res3 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suboperacion: 'promover', de: 1, a: 2, ciclo: cicloActual })
+    });
+    const d3 = await res3.json();
+    if (!res3.ok) throw new Error(d3.error || 'Error al promover 1°→2°');
+    log('ok', `✓ ${d3.promovidos} alumnos promovidos de 1° a 2°`);
+
+    // OPERACIÓN 4: Resetear fichas
+    setProgreso(75, 'Reseteando fichas socioeconómicas...');
+    const res4 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suboperacion: 'resetear_fichas', ciclo: cicloActual })
+    });
+    const d4 = await res4.json();
+    if (!res4.ok) throw new Error(d4.error || 'Error al resetear fichas');
+    log('ok', `✓ ${d4.reseteadas} fichas reseteadas`);
+
+    // OPERACIÓN 5: Activar nuevo ciclo
+    setProgreso(90, `Activando ciclo ${nuevoCiclo}...`);
+    const res5 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suboperacion: 'activar_ciclo', nuevoCiclo })
+    });
+    const d5 = await res5.json();
+    if (!res5.ok) throw new Error(d5.error || 'Error al activar nuevo ciclo');
+    log('ok', `✓ Ciclo ${nuevoCiclo} activado correctamente`);
+
+    setProgreso(100, '¡Completado!');
+    log('ok', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    log('ok', `Cierre de ciclo ${cicloActual} completado exitosamente`);
+
+    completarPaso(3);
+
+    // Mostrar éxito final
+    setTimeout(() => {
+      document.getElementById('contenedorPasos').style.display = 'none';
+      document.getElementById('exitoFinal').classList.add('visible');
+      document.getElementById('msgExitoFinal').textContent = `¡Ciclo ${cicloActual} cerrado!`;
+      document.getElementById('descExitoFinal').textContent =
+        `El ciclo ${nuevoCiclo} ha sido activado. Ya puedes importar los nuevos alumnos de 1° desde el SEGE.`;
+    }, 1500);
+
+  } catch(e) {
+    log('err', '✗ Error: ' + e.message);
+    setProgreso(0, 'Error — revisa el log');
+    btnEjecutar.disabled = false;
+    btnEjecutar.textContent = '🚀 Reintentar';
+    alert('Error durante el cierre: ' + e.message);
+  }
+}
+
+// ── HELPERS UI ──
+function activarPaso(n) {
+  const paso = document.getElementById(`paso${n}`);
+  paso.classList.remove('bloqueado');
+  paso.classList.add('activo');
+  paso.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function completarPaso(n) {
+  const paso = document.getElementById(`paso${n}`);
+  paso.classList.remove('activo');
+  paso.classList.add('completo');
+  document.getElementById(`check${n}`).textContent = '✅';
+}
+
+function setProgreso(pct, txt) {
+  document.getElementById('progresoFill').style.width = pct + '%';
+  document.getElementById('progresoTxt').textContent = txt;
+}
+
+function log(tipo, msg) {
+  const box = document.getElementById('logBox');
+  const cls = tipo === 'ok' ? 'log-ok' : tipo === 'err' ? 'log-err' : 'log-inf';
+  box.innerHTML += `<div class="${cls}">${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+</script>
+</body>
+</html>
