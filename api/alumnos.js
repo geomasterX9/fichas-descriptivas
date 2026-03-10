@@ -9,6 +9,25 @@ module.exports = async (req, res) => {
     const usuario = await requireAuth(req, res, 'alumnos');
     if (!usuario) return;
 
+    const id = req.query.id;
+
+    // ── Con ?id= → operaciones sobre un alumno individual (antes alumno.js) ──
+    if (id) {
+        if (isNaN(parseInt(id))) return res.status(400).json({ error: 'ID de alumno inválido' });
+        if (req.method === 'GET') {
+            const { data } = await supabase.from('alumnos').select('*').eq('id_alumno', parseInt(id)).single();
+            return res.json(data || {});
+        }
+        if (req.method === 'PATCH') {
+            if (usuario.rol !== 'ADMINISTRADOR') return res.status(403).json({ error: 'Sin permiso para modificar datos del alumno.' });
+            const { error } = await supabase.from('alumnos').update(req.body).eq('id_alumno', parseInt(id));
+            if (error) return res.status(400).json({ error: error.message });
+            return res.json({ exito: true });
+        }
+        return res.status(405).json({ error: 'Método no permitido' });
+    }
+
+    // ── Sin ?id= → lista completa ──
     if (req.method === 'GET') {
         const { data } = await supabase.from('alumnos').select('*').order('apellidos', { ascending: true });
         return res.json(data || []);
