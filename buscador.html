@@ -3,75 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador de Expedientes - EST 84</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Buscador de Expedientes — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --azul: #0061f2; --fondo: #f2f5f9; --blanco: #ffffff; --texto: #2c3e50; --borde: #d1d9e6; --verde: #10b981; --rojo: #ef4444; }
-        body { font-family: 'Inter', sans-serif; background: var(--fondo); padding: 40px 20px; color: var(--texto); margin: 0; }
-        .contenedor { max-width: 950px; margin: 0 auto; }
-        .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .titulo-app h1 { color: var(--azul); font-size: 28px; margin: 0 0 5px 0; }
-        .titulo-app p { margin: 0; color: #69707a; }
-        .perfil-usuario { background: white; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--borde); }
-        .info-usuario { text-align: right; }
-        .info-usuario b { display: block; font-size: 14px; color: var(--azul); text-transform: capitalize; }
-        .info-usuario span { font-size: 11px; font-weight: 700; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569; }
-        .btn-salir { background: #fee2e2; color: #991b1b; border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-salir:hover { background: var(--rojo); color: white; }
-        .panel-superior { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-alta { background: var(--verde); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
-        .panel-filtros { background: var(--blanco); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; }
-        .campo-filtro { flex: 1; min-width: 140px; }
-        .campo-filtro label { display: block; font-size: 11px; font-weight: 700; color: #69707a; margin-bottom: 5px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px 15px; border: 1px solid var(--borde); border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; background-color: #fcfdfd; font-family: inherit; }
-        #resultados { display: flex; flex-direction: column; gap: 15px; }
-        .tarjeta-alumno { background: var(--blanco); padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--azul); }
-        .tarjeta-baja { border-left-color: #94a3b8; opacity: 0.8; background: #f8fafc; }
-        .info-alumno h3 { margin: 0 0 8px 0; font-size: 18px; color: #1e293b; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-right: 5px; }
-        .badge-grado { background: #e0e7ff; color: #3730a3; }
-        .badge-activo { background: #dcfce7; color: #166534; }
-        .badge-baja { background: #f1f5f9; color: #475569; }
-        .acciones-tarjeta { display: flex; align-items: center; gap: 10px; }
-        .btn-abrir { background: var(--azul); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; }
-        .btn-baja-directa { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-        .btn-reactivar-directa { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; }
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+        /* HEADER */
+        .header {
+            background: var(--azul); height: 62px; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 10px; color: white; font-weight: 800; font-size: 16px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .header-usuario {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 5px 12px;
+            color: white; font-size: 12px; font-weight: 600;
+        }
+        .header-rol {
+            background: rgba(255,255,255,0.08); border-radius: 6px;
+            padding: 3px 8px; font-size: 10px; font-weight: 700;
+            color: rgba(255,255,255,0.8); text-transform: uppercase;
+        }
+        .btn-salir {
+            background: rgba(230,57,70,0.15); color: #fca5a5;
+            border: 1px solid rgba(230,57,70,0.3);
+            padding: 6px 12px; border-radius: 8px;
+            font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: 0.2s;
+        }
+        .btn-salir:hover { background: rgba(230,57,70,0.3); }
+
+        /* CONTENIDO */
+        .contenedor { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
+
+        /* REGRESO + CONTADOR */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 10px; padding: 9px 16px;
+            text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 600;
+            transition: background 0.15s;
+        }
+        .btn-back:hover { background: var(--borde); }
+        .info-contador { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+        /* BANNER MODO REPORTE */
+        .banner-reporte {
+            background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+            border-radius: 12px; padding: 12px 16px;
+            font-size: 13px; font-weight: 600; text-align: center;
+            margin-bottom: 16px; display: none;
+        }
+
+        /* BARRA SUPERIOR */
+        .barra-acciones { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .btn-alta {
+            display: none; align-items: center; gap: 8px;
+            background: var(--verde); color: white; border: none;
+            padding: 10px 18px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s;
+            box-shadow: 0 2px 8px rgba(45,155,111,0.25);
+        }
+        .btn-alta:hover { background: #1e7a57; transform: translateY(-1px); }
+
+        /* FILTROS */
+        .panel-filtros {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 16px; padding: 18px 20px;
+            display: flex; gap: 12px; flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .campo-filtro { flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 5px; }
+        .campo-filtro.busqueda { flex: 2; min-width: 200px; }
+        .campo-filtro label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted);
+        }
+        .campo-filtro input,
+        .campo-filtro select {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 14px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: var(--blanco);
+            outline: none; transition: border-color 0.15s; appearance: none;
+        }
+        .campo-filtro input:focus,
+        .campo-filtro select:focus { border-color: var(--azul); }
+
+        /* LISTA DE RESULTADOS */
+        #resultados { display: flex; flex-direction: column; gap: 10px; }
+
+        .tarjeta-alumno {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 14px; padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: box-shadow 0.15s; gap: 12px;
+        }
+        .tarjeta-alumno:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .tarjeta-baja { background: #f8fafc; opacity: 0.85; }
+
+        .alumno-nombre { font-size: 16px; font-weight: 700; color: var(--texto); margin-bottom: 6px; }
+        .alumno-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .badge-activo  { background: var(--verde-claro); color: var(--verde); }
+        .badge-baja    { background: #f1f5f9; color: #475569; }
+        .badge-grado   { background: var(--azul-claro); color: var(--azul); }
+
+        .acciones-tarjeta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .btn-abrir {
+            background: var(--azul); color: white; text-decoration: none;
+            padding: 9px 18px; border-radius: 10px;
+            font-size: 13px; font-weight: 700;
+            transition: background 0.15s;
+        }
+        .btn-abrir:hover { background: var(--azul-hover); }
+        .btn-baja-directa {
+            background: var(--rojo-claro); color: var(--rojo);
+            border: 1px solid #fecdd3; padding: 8px 14px;
+            border-radius: 9px; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-reactivar-directa {
+            background: var(--verde-claro); color: var(--verde);
+            border: 1px solid #bbf7d0; padding: 8px 14px;
+            border-radius: 9px; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.5); display: none;
+            align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(4px); padding: 16px;
+        }
+        .modal-content {
+            background: var(--blanco); border-radius: 20px;
+            width: 100%; max-width: 420px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.2); padding: 28px;
+        }
+        .modal-header-row {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;
+        }
+        .modal-titulo { font-size: 18px; font-weight: 800; }
+        .modal-cerrar {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1.5px solid var(--borde); background: var(--blanco);
+            font-size: 16px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .modal-grid { display: flex; flex-direction: column; gap: 14px; }
+        .modal-campo label {
+            display: block; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 5px;
+        }
+        .modal-campo input,
+        .modal-campo select {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 14px; font-family: 'Outfit', sans-serif;
+            text-transform: uppercase; outline: none; transition: border-color 0.15s;
+        }
+        .modal-campo input:focus,
+        .modal-campo select:focus { border-color: var(--azul); }
+        .modal-campo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-cancelar {
+            flex: 1; padding: 11px; border: 1.5px solid var(--borde);
+            border-radius: 10px; background: var(--blanco);
+            font-size: 14px; font-weight: 600; font-family: 'Outfit', sans-serif;
+            color: var(--muted); cursor: pointer; transition: background 0.15s;
+        }
+        .btn-cancelar:hover { background: var(--fondo); }
+        .btn-guardar-alumno {
+            flex: 2; padding: 11px; border: none;
+            border-radius: 10px; background: var(--azul);
+            color: white; font-size: 14px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-guardar-alumno:hover { background: var(--azul-hover); }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .header-rol, .header-usuario { display: none; }
+            .contenedor { padding: 16px 12px 40px; }
+            .alumno-nombre { font-size: 14px; }
+            .acciones-tarjeta { flex-direction: column; align-items: flex-end; }
+        }
     </style>
 </head>
 <body>
 
+<div class="header">
+    <div class="header-left">🎓 Buscador de Expedientes</div>
+    <div class="header-right">
+        <span class="header-usuario" id="lblUsuario">—</span>
+        <span class="header-rol" id="lblRol">—</span>
+        <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+    </div>
+</div>
+
 <div class="contenedor">
-    <div id="btnRegreso" style="display:none; margin-bottom:16px;">
-        <a href="inicio.html" style="display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:9px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600;">← Volver al Inicio</a>
-    </div>
-    <div id="btnRegresoAdmin" style="display:none; margin-bottom:16px;">
-        <a href="dashboard.html" style="display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:9px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600;">← Volver al Dashboard</a>
-    </div>
-    <div class="header-app">
-        <div class="titulo-app">
-            <h1>Buscador de Expedientes</h1>
-            <p>Escuela Secundaria Técnica 84 | San Luis Potosí, México</p>
+
+    <!-- Botón regresar (según rol) -->
+    <div class="top-bar">
+        <div>
+            <a href="inicio.html" class="btn-back" id="btnRegreso" style="display:none">← Volver al Inicio</a>
+            <a href="dashboard.html" class="btn-back" id="btnRegresoAdmin" style="display:none">← Volver al Dashboard</a>
         </div>
-        <div class="perfil-usuario">
-            <div class="info-usuario">
-                <b id="lblUsuario">Usuario</b>
-                <span id="lblRol">ROL</span>
-            </div>
-            <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
-        </div>
+        <div class="info-contador" id="info-contador">Cargando...</div>
     </div>
 
-    <div class="panel-superior">
-        <div id="info-contador" style="font-size: 13px; font-weight: 600; color: #64748b;">Cargando...</div>
-        <button class="btn-alta" id="btnNuevoAlumno" onclick="abrirModal()">+ NUEVO ALUMNO</button>
+    <!-- Banner modo reporte -->
+    <div class="banner-reporte" id="bannerReporte">
+        📋 Selecciona el alumno al que deseas registrarle un reporte
     </div>
 
+    <!-- Botón nuevo alumno -->
+    <div class="barra-acciones">
+        <div></div>
+        <button class="btn-alta" id="btnNuevoAlumno" onclick="abrirModal()">+ Nuevo Alumno</button>
+    </div>
+
+    <!-- Filtros -->
     <div class="panel-filtros">
-        <div class="campo-filtro" style="flex: 2;">
+        <div class="campo-filtro busqueda">
             <label>Buscar por nombre</label>
-            <input type="text" id="inputBusqueda" oninput="buscarAlumno()" placeholder="Escribe un apellido o nombre...">
+            <input type="text" id="inputBusqueda" oninput="buscarAlumno()" placeholder="Escribe apellido o nombre...">
         </div>
         <div class="campo-filtro">
             <label>Grado</label>
@@ -84,7 +258,7 @@
             <label>Grupo</label>
             <select id="filtroGrupo" onchange="buscarAlumno()">
                 <option value="">Todos</option>
-                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                <option>A</option><option>B</option><option>C</option><option>D</option>
             </select>
         </div>
         <div class="campo-filtro">
@@ -100,36 +274,33 @@
     <div id="resultados"></div>
 </div>
 
-
 <!-- MODAL NUEVO ALUMNO -->
 <div class="modal-overlay" id="modalNuevoAlumno">
     <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="font-size:18px; font-weight:800; color:#1a2332;">➕ Nuevo Alumno</h2>
-            <button onclick="cerrarModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+        <div class="modal-header-row">
+            <div class="modal-titulo">➕ Nuevo Alumno</div>
+            <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
         </div>
-        <div style="display:grid; gap:14px;">
-            <div>
-                <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Apellidos <span style="color:#e63946;">*</span></label>
-                <input type="text" id="na_apellidos" placeholder="Apellido paterno y materno" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit; text-transform:uppercase;">
+        <div class="modal-grid">
+            <div class="modal-campo">
+                <label>Apellidos <span style="color:var(--rojo)">*</span></label>
+                <input type="text" id="na_apellidos" placeholder="Apellido paterno y materno">
             </div>
-            <div>
-                <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Nombre(s) <span style="color:#e63946;">*</span></label>
-                <input type="text" id="na_nombre" placeholder="Nombre o nombres" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit; text-transform:uppercase;">
+            <div class="modal-campo">
+                <label>Nombre(s) <span style="color:var(--rojo)">*</span></label>
+                <input type="text" id="na_nombre" placeholder="Nombre o nombres">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div>
-                    <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Grado <span style="color:#e63946;">*</span></label>
-                    <select id="na_grado" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit;">
+            <div class="modal-campo-row">
+                <div class="modal-campo">
+                    <label>Grado <span style="color:var(--rojo)">*</span></label>
+                    <select id="na_grado" style="text-transform:none">
                         <option value="">Selecciona...</option>
-                        <option value="1">1°</option>
-                        <option value="2">2°</option>
-                        <option value="3">3°</option>
+                        <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
                     </select>
                 </div>
-                <div>
-                    <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#64748b; margin-bottom:5px;">Grupo <span style="color:#e63946;">*</span></label>
-                    <select id="na_grupo" style="width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit;">
+                <div class="modal-campo">
+                    <label>Grupo <span style="color:var(--rojo)">*</span></label>
+                    <select id="na_grupo" style="text-transform:none">
                         <option value="">Selecciona...</option>
                         <option>A</option><option>B</option><option>C</option>
                         <option>D</option><option>E</option><option>F</option>
@@ -137,54 +308,35 @@
                 </div>
             </div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:22px;">
-            <button onclick="cerrarModal()" style="flex:1; padding:11px; border:1.5px solid #e2e8f0; border-radius:10px; background:white; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; color:#64748b;">Cancelar</button>
-            <button onclick="guardarNuevoAlumno()" id="btnGuardarAlumno" style="flex:2; padding:11px; border:none; border-radius:10px; background:#1B4F8A; color:white; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Guardar Alumno</button>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-guardar-alumno" onclick="guardarNuevoAlumno()" id="btnGuardarAlumno">Guardar Alumno</button>
         </div>
     </div>
 </div>
 
 <script src="auth-helper.js"></script>
 <script>
-        verificarSesion();
-        
-
+    verificarSesion();
     let todosLosAlumnos = [];
     let rolUsuario = '';
-
     const modoReporte = new URLSearchParams(window.location.search).get('modo') === 'reporte';
 
     window.onload = async () => {
         const nombre = localStorage.getItem('nombreActivo');
-        rolUsuario = localStorage.getItem('rolActivo');
-
-        if (!nombre || !rolUsuario) {
-            window.location.href = 'index.html';
-            return;
-        }
+        rolUsuario   = localStorage.getItem('rolActivo');
+        if (!nombre || !rolUsuario) return window.location.href = 'index.html';
 
         document.getElementById('lblUsuario').innerText = nombre;
-        document.getElementById('lblRol').innerText = rolUsuario;
+        document.getElementById('lblRol').innerText     = rolUsuario;
 
         if (rolUsuario === 'ADMINISTRADOR') {
-            document.getElementById('btnNuevoAlumno').style.display = 'flex';
+            document.getElementById('btnNuevoAlumno').style.display  = 'inline-flex';
             document.getElementById('btnRegresoAdmin').style.display = 'block';
         }
-        if (rolUsuario === 'DIRECTIVO') {
-            document.getElementById('btnRegresoAdmin').style.display = 'block';
-        }
-        if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO') {
-            document.getElementById('btnRegreso').style.display = 'block';
-        }
-
-        // Banner indicador cuando se viene a registrar reporte
-        if (modoReporte) {
-            const banner = document.createElement('div');
-            banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:10px 16px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:600;text-align:center;';
-            banner.innerHTML = '📋 Selecciona el alumno al que deseas registrarle un reporte';
-            const cont = document.querySelector('.buscador-wrapper') || document.querySelector('main') || document.body;
-            cont.prepend(banner);
-        }
+        if (rolUsuario === 'DIRECTIVO') document.getElementById('btnRegresoAdmin').style.display = 'block';
+        if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO') document.getElementById('btnRegreso').style.display = 'block';
+        if (modoReporte) document.getElementById('bannerReporte').style.display = 'block';
 
         await cargarDatos();
     };
@@ -195,130 +347,107 @@
             todosLosAlumnos = await res.json();
             todosLosAlumnos.sort((a, b) => a.apellidos.localeCompare(b.apellidos));
             buscarAlumno();
-        } catch (e) { console.error("Error al cargar alumnos"); }
+        } catch(e) { console.error('Error al cargar alumnos'); }
     }
 
+    function buscarAlumno() {
+        const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+        const estatus  = document.getElementById('filtroEstatus').value;
 
+        const filtrados = todosLosAlumnos.filter(a => {
+            const nm = `${a.apellidos} ${a.nombre}`.toUpperCase();
+            return nm.includes(busqueda)
+                && (grado   === '' || a.grado.toString() === grado)
+                && (grupo   === '' || a.grupo === grupo)
+                && (estatus === '' || (a.status || 'ACTIVO') === estatus);
+        });
+
+        document.getElementById('info-contador').innerText = `${filtrados.length} alumno${filtrados.length !== 1 ? 's' : ''} encontrado${filtrados.length !== 1 ? 's' : ''}`;
+        const cont = document.getElementById('resultados');
+        cont.innerHTML = '';
+
+        if (filtrados.length === 0) {
+            cont.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); background:var(--blanco); border-radius:14px; border:1px solid var(--borde);">
+                <div style="font-size:36px; margin-bottom:10px;">🔍</div>
+                <p style="font-weight:700;">Sin resultados</p>
+                <p style="font-size:13px; margin-top:4px;">Intenta con otros filtros</p>
+            </div>`;
+            return;
+        }
+
+        filtrados.forEach(a => {
+            const esBaja = a.status === 'BAJA';
+            let accionAdmin = '';
+            if (rolUsuario === 'ADMINISTRADOR') {
+                accionAdmin = esBaja
+                    ? `<button class="btn-reactivar-directa" onclick="actualizarEstatus('${a.id_alumno}','ACTIVO')">Reactivar</button>`
+                    : `<button class="btn-baja-directa" onclick="actualizarEstatus('${a.id_alumno}','BAJA')">Dar Baja</button>`;
+            }
+            cont.innerHTML += `
+                <div class="tarjeta-alumno ${esBaja ? 'tarjeta-baja' : ''}">
+                    <div>
+                        <div class="alumno-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                        <div class="alumno-badges">
+                            <span class="badge ${esBaja ? 'badge-baja' : 'badge-activo'}">${esBaja ? 'BAJA' : 'ACTIVO'}</span>
+                            <span class="badge badge-grado">${a.grado}° "${a.grupo}"</span>
+                        </div>
+                    </div>
+                    <div class="acciones-tarjeta">
+                        ${accionAdmin}
+                        <a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}" class="btn-abrir">
+                            ${modoReporte ? 'Reporte' : 'Expediente'}
+                        </a>
+                    </div>
+                </div>`;
+        });
+    }
 
     function abrirModal() {
-        document.getElementById('na_apellidos').value = '';
-        document.getElementById('na_nombre').value = '';
-        document.getElementById('na_grado').value = '';
-        document.getElementById('na_grupo').value = '';
-        const modal = document.getElementById('modalNuevoAlumno');
-        modal.style.display = 'flex';
+        ['na_apellidos','na_nombre'].forEach(id => document.getElementById(id).value = '');
+        ['na_grado','na_grupo'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('modalNuevoAlumno').style.display = 'flex';
     }
-
-    function cerrarModal() {
-        document.getElementById('modalNuevoAlumno').style.display = 'none';
-    }
+    function cerrarModal() { document.getElementById('modalNuevoAlumno').style.display = 'none'; }
 
     async function guardarNuevoAlumno() {
         const apellidos = document.getElementById('na_apellidos').value.trim().toUpperCase();
         const nombre    = document.getElementById('na_nombre').value.trim().toUpperCase();
         const grado     = document.getElementById('na_grado').value;
         const grupo     = document.getElementById('na_grupo').value;
-
-        if (!apellidos || !nombre || !grado || !grupo) {
-            alert('Por favor completa todos los campos.');
-            return;
-        }
+        if (!apellidos || !nombre || !grado || !grupo) return alert('Por favor completa todos los campos.');
 
         const btn = document.getElementById('btnGuardarAlumno');
         btn.textContent = 'Guardando...'; btn.disabled = true;
-
         try {
             const res = await apiFetch('/api/alumnos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ apellidos, nombre, grado: parseInt(grado), grupo, status: 'ACTIVO' })
             });
             const data = await res.json();
-            if (res.ok) {
-                cerrarModal();
-                await cargarDatos();
-                alert(`✅ Alumno ${apellidos} ${nombre} dado de alta correctamente.`);
-            } else {
-                alert('Error: ' + (data.error || 'No se pudo guardar.'));
-            }
-        } catch(e) {
-            alert('Error de conexión. Intenta de nuevo.');
-        }
+            if (res.ok) { cerrarModal(); await cargarDatos(); alert(`✅ Alumno dado de alta correctamente.`); }
+            else alert('Error: ' + (data.error || 'No se pudo guardar.'));
+        } catch { alert('Error de conexión.'); }
         btn.textContent = 'Guardar Alumno'; btn.disabled = false;
     }
 
-    function buscarAlumno() {
-        const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
-        const grado = document.getElementById('filtroGrado').value;
-        const grupo = document.getElementById('filtroGrupo').value;
-        const estatus = document.getElementById('filtroEstatus').value;
-        
-        const filtrados = todosLosAlumnos.filter(a => {
-            const matchNombre = `${esc(a.apellidos)} ${esc(a.nombre)}`.toUpperCase().includes(busqueda);
-            const matchGrado = grado === "" || a.grado.toString() === grado;
-            const matchGrupo = grupo === "" || a.grupo === grupo;
-            const matchEstatus = estatus === "" || (a.status || 'ACTIVO') === estatus;
-            return matchNombre && matchGrado && matchGrupo && matchEstatus;
-        });
-
-        const contenedor = document.getElementById('resultados');
-        document.getElementById('info-contador').innerText = `${filtrados.length} alumnos encontrados`;
-        contenedor.innerHTML = "";
-
-        filtrados.forEach(a => {
-            const esBaja = a.status === 'BAJA';
-            const badgeEstatus = esBaja ? '<span class="badge badge-baja">BAJA</span>' : '<span class="badge badge-activo">ACTIVO</span>';
-            
-            let htmlAccionesAdmin = "";
-            if (rolUsuario === 'ADMINISTRADOR') {
-                htmlAccionesAdmin = esBaja 
-                    ? `<button class="btn-reactivar-directa" onclick="actualizarEstatus('${a.id_alumno}', 'ACTIVO')">REACTIVAR</button>`
-                    : `<button class="btn-baja-directa" onclick="actualizarEstatus('${a.id_alumno}', 'BAJA')">BAJA</button>`;
-            }
-
-            contenedor.innerHTML += `
-                <div class="tarjeta-alumno ${esBaja ? 'tarjeta-baja' : ''}">
-                    <div class="info-alumno">
-                        <h3>${esc(a.apellidos)} ${esc(a.nombre)}</h3>
-                        <div>
-                            ${badgeEstatus}
-                            <span class="badge badge-grado">${a.grado}° "${a.grupo}"</span>
-                        </div>
-                    </div>
-                    <div class="acciones-tarjeta">
-                        ${htmlAccionesAdmin}
-                        <a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}" class="btn-abrir">${modoReporte ? 'REPORTE' : 'EXPEDIENTE'}</a>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
     async function actualizarEstatus(idAlumno, nuevoEstatus) {
-        const accion = nuevoEstatus === 'BAJA' ? 'dar de baja' : 'reactivar';
         const alumno = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumno));
-        const nombre = alumno ? `${alumno.apellidos} ${alumno.nombre}` : `alumno #${idAlumno}`;
-
+        const nombre = alumno ? `${alumno.apellidos} ${alumno.nombre}` : `#${idAlumno}`;
+        const accion = nuevoEstatus === 'BAJA' ? 'dar de baja' : 'reactivar';
         if (!confirm(`¿Confirmas ${accion} a ${nombre}?`)) return;
-
         try {
             const res = await apiFetch('/api/alumnos', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_alumno: parseInt(idAlumno), status: nuevoEstatus })
             });
-
             if (res && res.ok) {
                 const idx = todosLosAlumnos.findIndex(a => String(a.id_alumno) === String(idAlumno));
                 if (idx !== -1) todosLosAlumnos[idx].status = nuevoEstatus;
                 buscarAlumno();
-            } else {
-                const err = await res.json();
-                alert('Error: ' + err.error);
-            }
-        } catch(e) {
-            alert('Error de conexión con el servidor.');
-        }
+            } else { const err = await res.json(); alert('Error: ' + err.error); }
+        } catch { alert('Error de conexión.'); }
     }
 
     function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
