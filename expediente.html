@@ -132,6 +132,13 @@
             btn.href = 'dashboard.html';
             btn.innerText = '← Volver al Dashboard';
         }
+        if (rolActivo === 'ADMINISTRADOR') {
+            const btnBuscador = document.createElement('a');
+            btnBuscador.href = 'buscador.html';
+            btnBuscador.innerText = '🔍 Ir al Buscador';
+            btnBuscador.style.cssText = 'color:var(--azul); text-decoration:none; font-weight:600; font-size:14px; margin-left:20px;';
+            document.getElementById('btnRegresar').insertAdjacentElement('afterend', btnBuscador);
+        }
         await cargarTodo();
     };
 
