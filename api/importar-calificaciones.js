@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     // Solo ADMINISTRADOR puede importar calificaciones
-    const usuario = requireAuth(req, res, 'importar-calificaciones');
+    const usuario = await requireAuth(req, res, 'importar-calificaciones');
     if (!usuario) return;
 
     try {

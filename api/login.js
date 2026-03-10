@@ -68,9 +68,15 @@ module.exports = async (req, res) => {
 
         await redis.del(`login_intentos:${ip}`); // Limpiar contador al login exitoso
 
+        // Actualizar token_valido_desde para invalidar sesiones anteriores
+        await supabase
+            .from('usuarios')
+            .update({ token_valido_desde: new Date().toISOString() })
+            .eq('id_usuario', data.id_usuario);
+
         const token = jwt.sign(
             { id: data.id_usuario, nombre: data.nombre_completo, rol: data.rol },
-            process.env.JWT_SECRET,  // sin fallback — falla si no está configurado
+            process.env.JWT_SECRET,
             { expiresIn: '8h' }
         );
 

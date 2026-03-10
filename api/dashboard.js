@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const usuario = requireAuth(req, res, 'dashboard');
+    const usuario = await requireAuth(req, res, 'dashboard');
     if (!usuario) return;
 
     const tipo = req.query.tipo || 'kpis';

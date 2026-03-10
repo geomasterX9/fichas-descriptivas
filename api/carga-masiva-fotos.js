@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
     setSecurityHeaders(res, 'POST, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const usuario = requireAuth(req, res, 'carga-masiva-fotos');
+    const usuario = await requireAuth(req, res, 'carga-masiva-fotos');
     if (!usuario) return;
 
     // Solo ADMINISTRADOR puede hacer carga masiva

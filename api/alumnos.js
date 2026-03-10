@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, PATCH, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const usuario = requireAuth(req, res, 'alumnos');
+    const usuario = await requireAuth(req, res, 'alumnos');
     if (!usuario) return;
 
     if (req.method === 'GET') {
