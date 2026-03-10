@@ -123,6 +123,91 @@ module.exports = async (req, res) => {
             return res.json(identificados);
         }
 
+        // Operaciones de cierre de ciclo
+        if (tipo === 'ciclo_config' || tipo === 'ciclo_op') {
+            return await handleCiclo(req, res, usuario, tipo);
+        }
+
         res.status(400).json({ error: 'Tipo no válido' });
     } catch (e) { res.status(500).json({ error: 'Error en dashboard' }); }
 };
+
+
+// ── OPERACIONES DE CIERRE DE CICLO ──────────────────────────
+async function handleCiclo(req, res, usuario, operacion) {
+    if (usuario.rol !== 'ADMINISTRADOR') {
+        return res.status(403).json({ error: 'Solo el administrador puede ejecutar el cierre de ciclo.' });
+    }
+
+    // GET: leer configuración (ej. ?tipo=ciclo_config&clave=ciclo_activo)
+    if (req.method === 'GET' && operacion === 'ciclo_config') {
+        const clave = req.query.clave;
+        if (!clave) return res.status(400).json({ error: 'Falta parámetro clave' });
+        const { data, error } = await supabase.from('configuracion').select('valor').eq('clave', clave).single();
+        if (error || !data) return res.status(404).json({ error: 'Clave no encontrada' });
+        return res.json({ clave, valor: data.valor });
+    }
+
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+
+    const { suboperacion } = req.body || {};
+
+    if (suboperacion === 'eliminar_egresados') {
+        const { ciclo } = req.body;
+        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
+        const { data: egresados, error: errE } = await supabase
+            .from('alumnos').select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
+        if (errE) return res.status(500).json({ error: errE.message });
+        if (!egresados || egresados.length === 0) return res.json({ eliminados: 0 });
+        const ids = egresados.map(a => a.id_alumno);
+        await supabase.from('calificaciones').delete().in('id_alumno', ids);
+        await supabase.from('reportes_disciplinarios').delete().in('id_alumno', ids);
+        await supabase.from('datos_socioeconomicos').delete().in('id_alumno', ids);
+        const { error: errDel } = await supabase.from('alumnos').delete().in('id_alumno', ids);
+        if (errDel) return res.status(500).json({ error: errDel.message });
+        await supabase.from('logs_actividad').insert([{
+            id_usuario: usuario.id_usuario, nombre_usuario: usuario.nombre_completo, rol: usuario.rol,
+            accion: 'CIERRE_CICLO_EGRESADOS', detalle: `Eliminados ${ids.length} egresados del ciclo ${ciclo}`,
+            ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown', fecha: new Date().toISOString()
+        }]);
+        return res.json({ eliminados: ids.length });
+    }
+
+    if (suboperacion === 'promover') {
+        const { de, a, ciclo } = req.body;
+        if (!de || !a || !ciclo) return res.status(400).json({ error: 'Faltan parámetros' });
+        if (![1, 2].includes(Number(de)) || ![2, 3].includes(Number(a)))
+            return res.status(400).json({ error: 'Grados inválidos' });
+        const { data: actualizados, error: errP } = await supabase
+            .from('alumnos').update({ grado: Number(a) })
+            .eq('grado', Number(de)).eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
+        if (errP) return res.status(500).json({ error: errP.message });
+        return res.json({ promovidos: actualizados?.length || 0 });
+    }
+
+    if (suboperacion === 'resetear_fichas') {
+        const { ciclo } = req.body;
+        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
+        const { data: actualizados, error: errR } = await supabase
+            .from('alumnos').update({ ficha_completada: false })
+            .eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
+        if (errR) return res.status(500).json({ error: errR.message });
+        return res.json({ reseteadas: actualizados?.length || 0 });
+    }
+
+    if (suboperacion === 'activar_ciclo') {
+        const { nuevoCiclo } = req.body;
+        if (!nuevoCiclo || !/^\d{4}-\d{4}$/.test(nuevoCiclo))
+            return res.status(400).json({ error: 'Formato de ciclo inválido' });
+        const { setCicloActivo } = require('../lib/_ciclo');
+        try { await setCicloActivo(nuevoCiclo); } catch(e) { return res.status(500).json({ error: e.message }); }
+        await supabase.from('logs_actividad').insert([{
+            id_usuario: usuario.id_usuario, nombre_usuario: usuario.nombre_completo, rol: usuario.rol,
+            accion: 'CIERRE_CICLO_ACTIVAR', detalle: `Ciclo activado: ${nuevoCiclo}`,
+            ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown', fecha: new Date().toISOString()
+        }]);
+        return res.json({ exito: true, cicloActivo: nuevoCiclo });
+    }
+
+    return res.status(400).json({ error: `Suboperacion desconocida: ${suboperacion}` });
+}
