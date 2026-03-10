@@ -140,6 +140,7 @@
             document.getElementById('btnRegresar').insertAdjacentElement('afterend', btnBuscador);
         }
         await cargarTodo();
+        registrarLog('VER_EXPEDIENTE', `Alumno ID: ${idAlumno}`);
     };
 
     async function cargarTodo() {

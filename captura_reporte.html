@@ -193,6 +193,7 @@
             });
             if (res && res.ok) {
                 alert(gravedad === 'Positiva' ? '⭐ ¡Reconocimiento guardado correctamente!' : '✅ Reporte guardado correctamente.');
+                registrarLog('REGISTRAR_OBSERVACION', `Alumno ID: ${idAlumno}, Gravedad: ${gravedad}`);
                 window.location.href = `expediente.html?id_alumno=${idAlumno}`;
             } else {
                 const err = await res.json();

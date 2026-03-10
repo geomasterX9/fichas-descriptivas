@@ -82,6 +82,9 @@
                 <a href="tool_usuarios.html" style="display:flex; align-items:center; gap:10px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 18px; text-decoration:none; color:#166534; font-weight:600; font-size:14px; transition:all 0.2s;">
                     👥 Gestión de Usuarios
                 </a>
+                <a href="tool_logs.html" style="display:flex; align-items:center; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 18px; text-decoration:none; color:#334155; font-weight:600; font-size:14px; transition:all 0.2s;">
+                    📋 Logs de Actividad
+                </a>
             </div>
         </div>
     </div>
@@ -131,6 +134,7 @@
                 document.getElementById('panelHerramientas').style.display = 'block';
             }
             
+            registrarLog('VER_DASHBOARD');
             await cargarKpis();
             try {
                 const res = await apiFetch('/api/dashboard?tipo=estadisticas');

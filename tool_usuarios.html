@@ -452,6 +452,7 @@
     progress.classList.remove('open');
     cancelarImportacion();
     await cargarUsuarios();
+    registrarLog('IMPORTAR_USUARIOS', `${ok} usuarios creados`);
     alert(`Importación completada:\n✅ ${ok} usuarios creados\n❌ ${errores} errores (usuarios duplicados o datos inválidos)`);
   }
 
@@ -538,6 +539,8 @@
     }
 
     cerrarModal();
+    if (!modoEdicion) registrarLog('CREAR_USUARIO', `Usuario: ${usuario}`);
+    else registrarLog('EDITAR_USUARIO', `ID: ${id}`);
     await cargarUsuarios();
   }
 
@@ -585,6 +588,7 @@
     }
     cerrarModalClave();
     alerta.className = 'alerta';
+    registrarLog('CAMBIAR_CONTRASENA', `Usuario ID: ${id}`);
     await cargarUsuarios();
     alert('✅ Contraseña actualizada. La sesión activa del usuario se cerró automáticamente.');
   }
@@ -612,6 +616,7 @@
     const data = await res.json();
     if (data.error) { alert(data.error); return; }
     cerrarModalEliminar();
+    registrarLog('ELIMINAR_USUARIO', `ID: ${id}`);
     await cargarUsuarios();
   }
 

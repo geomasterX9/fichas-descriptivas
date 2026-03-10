@@ -98,6 +98,7 @@
                     localStorage.setItem('nombreActivo', data.nombre_completo);
                     localStorage.setItem('rolActivo', data.rol);
                     localStorage.setItem('authToken', data.token);
+                    registrarLog('LOGIN', `Acceso como ${data.rol}`);
                     
                     btn.innerHTML = "¡Acceso Correcto! ✅";
                     btn.style.background = "#27ae60"; 
