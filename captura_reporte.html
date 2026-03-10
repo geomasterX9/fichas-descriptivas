@@ -62,6 +62,14 @@
         .btn-guardar.positiva:hover { background: #1e7a57; }
         .btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 <body>
 <div class="contenedor">
@@ -215,5 +223,13 @@
         await guardarReporte('Positiva', document.getElementById('personal-positiva').value, document.getElementById('fecha-positiva').value, document.getElementById('motivo-positiva').value, 'btnPositiva');
     };
 </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
 </body>
 </html>

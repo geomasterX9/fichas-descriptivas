@@ -53,6 +53,14 @@
         .chip-pend { background:#fef9c3; color:#854d0e; display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
         .empty { text-align:center; padding:40px; color:var(--muted); }
     </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 <body>
 <div class="contenedor">
@@ -216,5 +224,13 @@
         </tr>`).join('');
     }
 </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
 </body>
 </html>
