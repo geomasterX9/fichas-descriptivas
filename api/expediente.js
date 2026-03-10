@@ -20,7 +20,20 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'GET' && tipo === 'ficha') {
         const { data } = await supabase.from('datos_socioeconomicos').select('*').eq('id_alumno', parseInt(id)).single();
-        return res.json(data || {});
+        if (!data) return res.json({});
+
+        // Roles con acceso completo a datos sensibles
+        const ROLES_COMPLETOS = ['ADMINISTRADOR', 'DIRECTIVO', 'TRABAJO SOCIAL'];
+        if (!ROLES_COMPLETOS.includes(usuario.rol)) {
+            // DOCENTE / PREFECTO: eliminar campos privados antes de enviar
+            const CAMPOS_PRIVADOS = [
+                'domicilio_calle', 'telefono_casa',
+                'tutor_telefono', 'madre_telefono', 'padre_telefono'
+            ];
+            CAMPOS_PRIVADOS.forEach(campo => delete data[campo]);
+        }
+
+        return res.json(data);
     }
     if (req.method === 'POST' && tipo === 'ficha') {
         // Solo Admin y Trabajo Social pueden escribir la ficha
