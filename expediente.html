@@ -145,7 +145,7 @@
 
     async function cargarTodo() {
         try {
-            const resAlu = await apiFetch(`/api/alumno?id=${idAlumno}`);
+            const resAlu = await apiFetch(`/api/alumnos?id=${idAlumno}`);
             const a = await resAlu.json();
 
             // Columna real en Supabase se llama 'fotos-alumnos'
