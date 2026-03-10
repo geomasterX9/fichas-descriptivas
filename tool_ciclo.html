@@ -447,7 +447,12 @@ async function cargarDatos() {
     const resAlumnos = await apiFetch('/api/alumnos');
     const alumnos    = await resAlumnos.json();
 
-    egresados         = alumnos.filter(a => a.grado === 3 || a.grado === '3');
+    egresados = alumnos
+        .filter(a => a.grado === 3 || a.grado === '3')
+        .sort((a, b) => {
+            if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+            return a.apellidos.localeCompare(b.apellidos);
+        });
     const promueven   = alumnos.filter(a => a.grado === 1 || a.grado === 2 || a.grado === '1' || a.grado === '2');
 
     document.getElementById('statTotal').textContent      = alumnos.length;
