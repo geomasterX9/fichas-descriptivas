@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestión de Usuarios — EST 84</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --azul:#1d4ed8; --azul-hover:#1e40af; --azul-claro:#eff6ff;
@@ -34,6 +35,31 @@
   .contador { font-size:14px; color:var(--gris); font-weight:600; }
   .btn-nuevo { background:var(--azul); color:white; border:none; padding:11px 20px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px; transition:background 0.2s; }
   .btn-nuevo:hover { background:var(--azul-hover); }
+  .btn-importar { background:#f8fafc; color:var(--gris); border:2px dashed var(--borde); padding:11px 20px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
+  .btn-importar:hover { background:var(--azul-claro); border-color:var(--azul); color:var(--azul); }
+  .btn-plantilla { background:#fefce8; color:#854d0e; border:1px solid #fde68a; padding:11px 16px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:background 0.2s; text-decoration:none; display:flex; align-items:center; gap:6px; }
+  .btn-plantilla:hover { background:#fef08a; }
+
+  /* PREVIEW IMPORTACIÓN */
+  .preview-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); margin-bottom:20px; overflow:hidden; display:none; }
+  .preview-wrap.open { display:block; }
+  .preview-header { background:#f8fafc; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--borde); }
+  .preview-header h3 { font-size:15px; font-weight:800; }
+  .preview-resumen { display:flex; gap:16px; flex-wrap:wrap; }
+  .preview-chip { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+  .chip-ok     { background:var(--verde-claro); color:var(--verde); }
+  .chip-error  { background:var(--rojo-claro);  color:var(--rojo); }
+  .chip-total  { background:var(--azul-claro);  color:var(--azul); }
+  .preview-tabla { overflow-x:auto; max-height:300px; overflow-y:auto; }
+  .preview-tabla table { font-size:13px; }
+  .fila-ok    td { background:#f0fdf4; }
+  .fila-error td { background:#fef2f2; }
+  .fila-error .error-msg { color:var(--rojo); font-size:11px; font-weight:600; }
+  .preview-footer { padding:14px 18px; border-top:1px solid var(--borde); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .progress-wrap { display:none; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--gris); }
+  .progress-wrap.open { display:flex; }
+  .progress-bar { width:200px; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--azul); border-radius:4px; transition:width 0.3s; }
 
   /* TABLA */
   .tabla-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); overflow:hidden; }
@@ -125,7 +151,44 @@
     <div class="barra-izq">
       <span class="contador" id="contadorUsuarios">Cargando...</span>
     </div>
-    <button class="btn-nuevo" onclick="abrirModalNuevo()">+ Nuevo Usuario</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <a class="btn-plantilla" onclick="descargarPlantilla()">📥 Descargar plantilla Excel</a>
+      <label class="btn-importar">
+        📂 Importar desde Excel/CSV
+        <input type="file" id="inputImportar" accept=".xlsx,.xls,.csv" style="display:none" onchange="procesarArchivo(event)">
+      </label>
+      <button class="btn-nuevo" onclick="abrirModalNuevo()">+ Nuevo Usuario</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW IMPORTACIÓN -->
+  <div class="preview-wrap" id="previewWrap">
+    <div class="preview-header">
+      <h3>📋 Vista previa — Importación de usuarios</h3>
+      <div class="preview-resumen">
+        <span class="preview-chip chip-total" id="chipTotal"></span>
+        <span class="preview-chip chip-ok"    id="chipOk"></span>
+        <span class="preview-chip chip-error" id="chipError"></span>
+      </div>
+    </div>
+    <div class="preview-tabla">
+      <table>
+        <thead><tr><th>#</th><th>Nombre completo</th><th>Usuario</th><th>Contraseña</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="preview-footer">
+      <button class="btn-guardar" style="background:var(--verde);border:none;padding:10px 20px;border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="importarUsuarios()">
+        ✅ Importar válidos
+      </button>
+      <button class="btn-cancelar" style="background:#f1f5f9;border:none;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--gris);" onclick="cancelarImportacion()">
+        Cancelar
+      </button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <span id="progressTxt">0 / 0</span>
+      </div>
+    </div>
   </div>
 
   <div class="tabla-wrap">
@@ -287,6 +350,109 @@
         </td>
       </tr>`;
     }).join('');
+  }
+
+  // ── IMPORTACIÓN MASIVA ──
+  const ROLES_VALIDOS_SET = new Set(['ADMINISTRADOR','DIRECTIVO','DOCENTE','PREFECTO','TRABAJO SOCIAL']);
+  let filasPendientes = [];
+
+  function descargarPlantilla() {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['nombre_completo','usuario','password','rol'],
+      ['GARCÍA PÉREZ JUAN','JGARCIA','Contraseña123','DOCENTE'],
+      ['LÓPEZ TORRES ANA','ALOPEZ','Contraseña456','PREFECTO'],
+    ]);
+    ws['!cols'] = [{wch:35},{wch:20},{wch:20},{wch:20}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+    XLSX.writeFile(wb, 'plantilla_usuarios_EST84.xlsx');
+  }
+
+  function procesarArchivo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = ''; // Permitir re-subir el mismo archivo
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const wb = XLSX.read(ev.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      filasPendientes = filas.map((f, i) => {
+        const nombre = String(f.nombre_completo || '').trim().toUpperCase();
+        const usuario = String(f.usuario || '').trim().toUpperCase();
+        const password = String(f.password || '').trim();
+        const rol = String(f.rol || '').trim().toUpperCase();
+        let errores = [];
+        if (!nombre)                              errores.push('Nombre vacío');
+        if (!usuario || usuario.length < 3)       errores.push('Usuario inválido');
+        if (!password || password.length < 6)     errores.push('Contraseña < 6 chars');
+        if (!ROLES_VALIDOS_SET.has(rol))          errores.push(`Rol inválido: "${rol}"`);
+        return { num: i+1, nombre, usuario, password, rol, errores, valido: errores.length === 0 };
+      });
+
+      renderPreview();
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  function renderPreview() {
+    const validos = filasPendientes.filter(f => f.valido).length;
+    const errores = filasPendientes.filter(f => !f.valido).length;
+    document.getElementById('chipTotal').textContent = `${filasPendientes.length} filas`;
+    document.getElementById('chipOk').textContent    = `✅ ${validos} válidos`;
+    document.getElementById('chipError').textContent = `❌ ${errores} con error`;
+    document.getElementById('chipError').style.display = errores > 0 ? '' : 'none';
+
+    document.getElementById('previewBody').innerHTML = filasPendientes.map(f => `
+      <tr class="${f.valido ? 'fila-ok' : 'fila-error'}">
+        <td>${f.num}</td>
+        <td>${esc(f.nombre)}</td>
+        <td><code>${esc(f.usuario)}</code></td>
+        <td>${'•'.repeat(Math.min(f.password.length, 10))}</td>
+        <td>${esc(f.rol)}</td>
+        <td>${f.valido ? '✅ OK' : `<span class="error-msg">❌ ${esc(f.errores.join(', '))}</span>`}</td>
+      </tr>`).join('');
+
+    document.getElementById('previewWrap').classList.add('open');
+    document.getElementById('progressWrap').classList.remove('open');
+  }
+
+  function cancelarImportacion() {
+    filasPendientes = [];
+    document.getElementById('previewWrap').classList.remove('open');
+  }
+
+  async function importarUsuarios() {
+    const validos = filasPendientes.filter(f => f.valido);
+    if (validos.length === 0) { alert('No hay filas válidas para importar.'); return; }
+
+    const progress = document.getElementById('progressWrap');
+    const fill     = document.getElementById('progressFill');
+    const txt      = document.getElementById('progressTxt');
+    progress.classList.add('open');
+
+    let ok = 0, errores = 0;
+    for (let i = 0; i < validos.length; i++) {
+      const f = validos[i];
+      txt.textContent  = `${i+1} / ${validos.length}`;
+      fill.style.width = `${Math.round((i+1)/validos.length*100)}%`;
+
+      const res = await apiFetch('/api/usuarios', {
+        method: 'POST',
+        body: JSON.stringify({ nombre_completo: f.nombre, usuario: f.usuario, password: f.password, rol: f.rol })
+      });
+      if (res) {
+        const data = await res.json();
+        data.exito ? ok++ : errores++;
+      } else { errores++; }
+    }
+
+    progress.classList.remove('open');
+    cancelarImportacion();
+    await cargarUsuarios();
+    alert(`Importación completada:\n✅ ${ok} usuarios creados\n❌ ${errores} errores (usuarios duplicados o datos inválidos)`);
   }
 
   // ── MODAL NUEVO ──
