@@ -1,6 +1,6 @@
-const supabase = require('./_supabase');
-const { requireAuth } = require('./_auth');
-const { setSecurityHeaders, sanitize } = require('./_security');
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, PATCH, OPTIONS', req.headers.origin);

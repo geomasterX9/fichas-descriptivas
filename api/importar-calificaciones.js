@@ -1,6 +1,6 @@
-const supabase = require('./_supabase');
-const { requireAuth } = require('./_auth');
-const { setSecurityHeaders } = require('./_security');
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders } = require('../lib/_security');
 const { IncomingForm } = require('formidable');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');

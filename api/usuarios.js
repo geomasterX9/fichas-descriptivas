@@ -1,6 +1,6 @@
-const supabase = require('./_supabase');
-const { requireAuth } = require('./_auth');
-const { setSecurityHeaders, sanitize } = require('./_security');
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
 const bcrypt = require('bcryptjs');
 
 const ROLES_VALIDOS = ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'];

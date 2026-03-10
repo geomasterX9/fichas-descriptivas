@@ -3,8 +3,8 @@
 // GET  ?grado=1&grupo=A   → lista alumnos del grupo
 // POST (body con id_alumno) → guardar ficha
 // ============================================================
-const supabase = require('./_supabase');
-const { setSecurityHeaders } = require('./_security');
+const supabase = require('../lib/_supabase');
+const { setSecurityHeaders } = require('../lib/_security');
 
 function setCorsPublico(res, reqOrigin) {
     const permitidos = [
