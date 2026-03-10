@@ -1,6 +1,7 @@
 const supabase = require('../lib/_supabase');
 const { requireAuth } = require('../lib/_auth');
 const { setSecurityHeaders, sanitize } = require('../lib/_security');
+const { getCicloActivo } = require('../lib/_ciclo');
 
 const GRAVEDADES_VALIDAS = ['Positiva', 'Leve', 'Moderada', 'Grave'];
 
@@ -15,9 +16,12 @@ module.exports = async (req, res) => {
         try {
             const id = req.query.id;
             if (!id || isNaN(parseInt(id))) return res.status(400).json({ error: 'ID inválido' });
+            const ciclo = await getCicloActivo();
             const { data: reportes } = await supabase
                 .from('reportes_disciplinarios').select('*')
-                .eq('id_alumno', parseInt(id)).order('fecha', { ascending: false });
+                .eq('id_alumno', parseInt(id))
+                .eq('ciclo_escolar', ciclo)
+                .order('fecha', { ascending: false });
             if (!reportes || reportes.length === 0) return res.json([]);
             const { data: personal } = await supabase.from('personal').select('id_personal, nombre_completo');
             const mapaPersonal = {};
@@ -35,12 +39,14 @@ module.exports = async (req, res) => {
             if (typeof motivo !== 'string' || motivo.trim().length < 5 || motivo.length > 500) return res.status(400).json({ error: 'El motivo debe tener entre 5 y 500 caracteres.' });
             if (isNaN(parseInt(id_alumno)) || isNaN(parseInt(id_personal))) return res.status(400).json({ error: 'IDs inválidos.' });
 
+            const ciclo = await getCicloActivo();
             const payload = {
                 id_alumno: parseInt(id_alumno),
                 id_personal: parseInt(id_personal),
                 gravedad,
                 motivo: sanitize(motivo.trim()),
-                fecha: fecha || new Date().toISOString().split('T')[0]
+                fecha: fecha || new Date().toISOString().split('T')[0],
+                ciclo_escolar: ciclo
             };
             const { error } = await supabase.from('reportes_disciplinarios').insert([payload]);
             if (error) return res.status(400).json({ error: error.message });

@@ -1,6 +1,7 @@
 const supabase = require('../lib/_supabase');
 const { requireAuth } = require('../lib/_auth');
 const { setSecurityHeaders } = require('../lib/_security');
+const { getCicloActivo } = require('../lib/_ciclo');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
@@ -13,9 +14,10 @@ module.exports = async (req, res) => {
 
     try {
         if (tipo === 'kpis') {
-            const { count: totalAlumnos } = await supabase.from('alumnos').select('*', { count: 'exact', head: true });
-            const { count: totalReportes } = await supabase.from('reportes_disciplinarios').select('*', { count: 'exact', head: true });
-            const { data: califRiesgo } = await supabase.from('calificaciones').select('id_alumno, promedio_trimestral, materias');
+            const ciclo = await getCicloActivo();
+            const { count: totalAlumnos } = await supabase.from('alumnos').select('*', { count: 'exact', head: true }).eq('ciclo_escolar', ciclo);
+            const { count: totalReportes } = await supabase.from('reportes_disciplinarios').select('*', { count: 'exact', head: true }).eq('ciclo_escolar', ciclo);
+            const { data: califRiesgo } = await supabase.from('calificaciones').select('id_alumno, promedio_trimestral, materias').eq('ciclo_escolar', ciclo);
             const idsEnRiesgo = new Set();
             if (califRiesgo) {
                 califRiesgo.forEach(c => {
@@ -27,8 +29,9 @@ module.exports = async (req, res) => {
         }
 
         if (tipo === 'estadisticas') {
-            const { data: calif } = await supabase.from('calificaciones').select('*');
-            const { data: alum } = await supabase.from('alumnos').select('id_alumno, grado');
+            const ciclo = await getCicloActivo();
+            const { data: calif } = await supabase.from('calificaciones').select('*').eq('ciclo_escolar', ciclo);
+            const { data: alum } = await supabase.from('alumnos').select('id_alumno, grado').eq('ciclo_escolar', ciclo);
             if (!calif || !alum) return res.json({});
             const aluGrado = {};
             alum.forEach(a => aluGrado[a.id_alumno] = a.grado);
@@ -89,7 +92,8 @@ module.exports = async (req, res) => {
         }
 
         if (tipo === 'riesgo') {
-            const { data: calif } = await supabase.from('calificaciones').select('*');
+            const ciclo = await getCicloActivo();
+            const { data: calif } = await supabase.from('calificaciones').select('*').eq('ciclo_escolar', ciclo);
             if (!calif || calif.length === 0) return res.json([]);
             const califEnRiesgo = calif.filter(c =>
                 parseFloat(c.promedio_trimestral) <= 6.5 ||
@@ -97,7 +101,7 @@ module.exports = async (req, res) => {
             );
             if (califEnRiesgo.length === 0) return res.json([]);
             const ids = [...new Set(califEnRiesgo.map(c => c.id_alumno))];
-            const { data: alumnos } = await supabase.from('alumnos').select('*').in('id_alumno', ids);
+            const { data: alumnos } = await supabase.from('alumnos').select('*').in('id_alumno', ids).eq('ciclo_escolar', ciclo);
             const lista = alumnos.map(alu => {
                 const c = califEnRiesgo.find(x => x.id_alumno === alu.id_alumno);
                 const reprobadas = c.materias ? c.materias.filter(m => parseFloat(m.calif) <= 6).map(m => `${m.sigla}: ${m.calif}`).join(', ') : '';
@@ -108,8 +112,10 @@ module.exports = async (req, res) => {
         }
 
         if (tipo === 'reportes') {
-            const { data: reportes } = await supabase.from('reportes_disciplinarios').select('*').order('fecha', { ascending: false });
-            const { data: alumnos } = await supabase.from('alumnos').select('id_alumno, nombre, apellidos, grado, grupo');
+            const ciclo = await getCicloActivo();
+            const { data: reportes } = await supabase.from('reportes_disciplinarios').select('*')
+                .eq('ciclo_escolar', ciclo).order('fecha', { ascending: false });
+            const { data: alumnos } = await supabase.from('alumnos').select('id_alumno, nombre, apellidos, grado, grupo').eq('ciclo_escolar', ciclo);
             const identificados = (reportes || []).map(rep => {
                 const alu = (alumnos || []).find(a => a.id_alumno == rep.id_alumno);
                 return { ...rep, nombre_alumno: alu ? `${alu.apellidos} ${alu.nombre}` : 'Desconocido', grado_grupo: alu ? `${alu.grado}°"${alu.grupo}"` : '--' };

@@ -5,6 +5,7 @@
 // ============================================================
 const supabase = require('../lib/_supabase');
 const { setSecurityHeaders } = require('../lib/_security');
+const { getCicloActivo } = require('../lib/_ciclo');
 
 function setCorsPublico(res, reqOrigin) {
     const permitidos = [
@@ -36,6 +37,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Se requiere grado y grupo.' });
         }
 
+        const ciclo    = await getCicloActivo();
         const gradoNum = parseInt(grado);
         if (isNaN(gradoNum) || gradoNum < 1 || gradoNum > 3) {
             return res.status(400).json({ error: 'Grado inválido.' });
@@ -50,6 +52,7 @@ module.exports = async (req, res) => {
             .eq('grado', gradoNum)
             .eq('grupo', grupo)
             .eq('status', 'ACTIVO')
+            .eq('ciclo_escolar', ciclo)
             .order('apellidos', { ascending: true });
 
         if (error) return res.status(500).json({ error: 'Error al consultar alumnos.' });
@@ -87,8 +90,10 @@ module.exports = async (req, res) => {
             }
         }
 
+        const ciclo = await getCicloActivo();
         const ficha = {
             id_alumno:          idAlumno,
+            ciclo_escolar:      ciclo,
             tutor_nombre:       String(d.tutor_nombre || '').trim().substring(0, 150),
             tutor_parentesco:   String(d.tutor_parentesco || '').trim().substring(0, 60),
             tutor_telefono:     String(d.tutor_telefono || '').trim().substring(0, 20),
