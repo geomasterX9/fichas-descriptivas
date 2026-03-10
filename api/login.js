@@ -2,25 +2,36 @@ const supabase = require('./_supabase');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { setSecurityHeaders, sanitize } = require('./_security');
+const { Redis } = require('@upstash/redis');
 
-const intentos = new Map();
 const MAX_INTENTOS = 5;
-const VENTANA_MS = 15 * 60 * 1000;
+const VENTANA_SEG = 15 * 60; // 15 minutos en segundos
 
-function verificarRateLimit(ip) {
-    const ahora = Date.now();
-    const registro = intentos.get(ip) || { count: 0, inicio: ahora };
-    if (ahora - registro.inicio > VENTANA_MS) {
-        intentos.set(ip, { count: 1, inicio: ahora });
+// Cliente Redis — usa variables de entorno de Vercel
+const redis = new Redis({
+    url:   process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+async function verificarRateLimit(ip) {
+    const key = `login_intentos:${ip}`;
+    try {
+        // Incrementar contador; si es la primera vez, crear con TTL de 15 min
+        const intentos = await redis.incr(key);
+        if (intentos === 1) {
+            await redis.expire(key, VENTANA_SEG);
+        }
+        if (intentos > MAX_INTENTOS) {
+            const ttl = await redis.ttl(key);
+            const mins = Math.ceil(ttl / 60);
+            return { bloqueado: true, minutosRestantes: mins };
+        }
+        return { bloqueado: false };
+    } catch (e) {
+        // Si Redis falla, permitir el acceso para no bloquear a usuarios legítimos
+        console.error('Redis error en rate limit:', e.message);
         return { bloqueado: false };
     }
-    if (registro.count >= MAX_INTENTOS) {
-        const mins = Math.ceil((VENTANA_MS - (ahora - registro.inicio)) / 60000);
-        return { bloqueado: true, minutosRestantes: mins };
-    }
-    registro.count++;
-    intentos.set(ip, registro);
-    return { bloqueado: false };
 }
 
 module.exports = async (req, res) => {
@@ -29,7 +40,7 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
 
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-    const limite = verificarRateLimit(ip);
+    const limite = await verificarRateLimit(ip);
     if (limite.bloqueado) {
         return res.status(429).json({ error: `Demasiados intentos. Espera ${limite.minutosRestantes} minuto(s).` });
     }
@@ -55,7 +66,7 @@ module.exports = async (req, res) => {
             return res.status(401).json({ error: 'Usuario, contraseña o rol incorrectos.' });
         }
 
-        intentos.delete(ip);
+        await redis.del(`login_intentos:${ip}`); // Limpiar contador al login exitoso
 
         const token = jwt.sign(
             { id: data.id_usuario, nombre: data.nombre_completo, rol: data.rol },
