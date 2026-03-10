@@ -6,10 +6,32 @@
     <title>Lista para Fotografías - EST 84</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --azul: #0061f2; --fondo: #f0f4f8; --blanco: #fff; --borde: #e2e8f0; --texto: #1a2332; --muted: #64748b; }
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --fondo: #f0f4f8; --blanco: #fff; --borde: #e2e8f0;
+            --texto: #1a2332; --muted: #64748b;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); padding: 24px 16px; }
-        .contenedor { max-width: 860px; margin: 0 auto; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--azul); padding: 0 24px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { display: flex; align-items: center; gap: 10px; color: white; font-weight: 800; font-size: 17px; }
+        .navbar-menu { display: flex; align-items: center; gap: 8px; }
+        .navbar-menu a {
+            text-decoration: none; color: rgba(255,255,255,0.8); font-weight: 600;
+            font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s;
+        }
+        .navbar-menu a:hover { background: rgba(255,255,255,0.12); color: white; }
+        .navbar-menu a.salir { color: #fca5a5; }
+        .navbar-menu a.salir:hover { background: rgba(230,57,70,0.2); }
+
+        .contenedor { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; }
 
         /* CONTROLES */
         .controles { background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); padding: 22px; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
@@ -72,11 +94,16 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 <body>
-<div class="contenedor">
 
-    <div style="margin-bottom:16px;" class="no-print">
-        <a href="dashboard.html" style="display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--borde); border-radius:10px; padding:9px 16px; text-decoration:none; color:var(--muted); font-size:14px; font-weight:600;">← Volver al Dashboard</a>
-    </div>
+    <nav class="navbar no-print">
+        <div class="navbar-brand">🎓 Lista para Fotografías</div>
+        <div class="navbar-menu">
+            <a href="dashboard.html">← Dashboard</a>
+            <a href="#" onclick="cerrarSesion()" class="salir">Salir 👋</a>
+        </div>
+    </nav>
+
+<div class="contenedor">
 
     <!-- CONTROLES -->
     <div class="controles">
@@ -220,6 +247,7 @@
     }
 
     window.onload = cargarAlumnos;
+    function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
 </script>
     <script>
       if ('serviceWorker' in navigator) {
