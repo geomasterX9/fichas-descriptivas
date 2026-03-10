@@ -124,7 +124,8 @@ module.exports = async (req, res) => {
         }
 
         // Operaciones de cierre de ciclo
-        if (tipo === 'ciclo_config' || tipo === 'ciclo_op') {
+        if (tipo === 'ciclo_config' || tipo === 'ciclo_op' ||
+            tipo === 'ciclo_fichas' || tipo === 'ciclo_reportes_count') {
             return await handleCiclo(req, res, usuario, tipo);
         }
 
@@ -146,6 +147,35 @@ async function handleCiclo(req, res, usuario, operacion) {
         const { data, error } = await supabase.from('configuracion').select('valor').eq('clave', clave).single();
         if (error || !data) return res.status(404).json({ error: 'Clave no encontrada' });
         return res.json({ clave, valor: data.valor });
+    }
+
+    // GET: todas las fichas de un ciclo (para respaldo masivo)
+    if (req.method === 'GET' && operacion === 'ciclo_fichas') {
+        const ciclo = req.query.ciclo;
+        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
+        const { data: alumnos3 } = await supabase.from('alumnos')
+            .select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
+        if (!alumnos3 || alumnos3.length === 0) return res.json([]);
+        const ids = alumnos3.map(a => a.id_alumno);
+        const { data: fichas } = await supabase.from('datos_socioeconomicos')
+            .select('*').in('id_alumno', ids);
+        return res.json(fichas || []);
+    }
+
+    // GET: conteo de reportes por alumno de un ciclo (para respaldo)
+    if (req.method === 'GET' && operacion === 'ciclo_reportes_count') {
+        const ciclo = req.query.ciclo;
+        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
+        const { data: alumnos3 } = await supabase.from('alumnos')
+            .select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
+        if (!alumnos3 || alumnos3.length === 0) return res.json([]);
+        const ids = alumnos3.map(a => a.id_alumno);
+        const { data: reportes } = await supabase.from('reportes_disciplinarios')
+            .select('id_alumno').in('id_alumno', ids).eq('ciclo_escolar', ciclo);
+        // Agrupar conteo por id_alumno
+        const conteo = {};
+        (reportes || []).forEach(r => { conteo[r.id_alumno] = (conteo[r.id_alumno] || 0) + 1; });
+        return res.json(ids.map(id => ({ id_alumno: id, count: conteo[id] || 0 })));
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
