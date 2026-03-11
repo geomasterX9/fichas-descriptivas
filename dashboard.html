@@ -291,13 +291,18 @@
             try {
                 const res = await apiFetch('/api/dashboard?tipo=estadisticas');
                 statsData = await res.json();
+                // Diagnóstico visual temporal
+                if (!statsData || !statsData.porTrimestre) {
+                    document.querySelector('.chart-container').innerHTML = '<p style="text-align:center; padding:20px; color:red; font-size:12px;">DATOS INESPERADOS: ' + JSON.stringify(statsData).substring(0, 200) + '</p>';
+                    return;
+                }
                 const trimsCon = statsData.porTrimestre.valores.filter(v => v > 0).length;
                 if (trimsCon >= 1) document.getElementById('optTrimestre').style.display = '';
                 if (trimsCon >= 2) document.getElementById('optComparativo').style.display = '';
                 requestAnimationFrame(() => setTimeout(() => actualizarGrafica(), 50));
             } catch(e) {
                 console.error('Error gráficas', e);
-                document.querySelector('.chart-container').innerHTML = '<p style="text-align:center; padding:40px; color:#64748b; font-size:13px;">⚠️ No se pudieron cargar las estadísticas.</p>';
+                document.querySelector('.chart-container').innerHTML = '<p style="text-align:center; padding:40px; color:red; font-size:13px;">ERROR: ' + e.message + '</p>';
             }
         };
 
