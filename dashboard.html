@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - EST 84</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1B4F8A">
@@ -320,12 +320,7 @@
             if (!statsData) return;
             const f = document.getElementById('filtro').value;
             if (myChart) myChart.destroy();
-            const canvas = document.getElementById('graficaAprovechamiento');
-            const container = canvas.parentElement;
-            // Forzar altura explícita en el canvas para Safari/iOS
-            const h = container.clientHeight > 50 ? container.clientHeight : (window.innerWidth < 600 ? 240 : 320);
-            canvas.style.height = h + 'px';
-            const ctx = canvas.getContext('2d');
+            const ctx = document.getElementById('graficaAprovechamiento').getContext('2d');
             const COLORES = ['#E63946','#1B4F8A','#FF9800','#2d9b6f','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
 
             if (f === 'comparativo') {
