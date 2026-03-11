@@ -125,7 +125,8 @@ module.exports = async (req, res) => {
 
         // Operaciones de cierre de ciclo
         if (tipo === 'ciclo_config' || tipo === 'ciclo_op' ||
-            tipo === 'ciclo_fichas' || tipo === 'ciclo_reportes_count') {
+            tipo === 'ciclo_fichas' || tipo === 'ciclo_reportes_count' ||
+            tipo === 'ciclo_reportes_todos' || tipo === 'ciclo_calificaciones') {
             return await handleCiclo(req, res, usuario, tipo);
         }
 
@@ -176,6 +177,39 @@ async function handleCiclo(req, res, usuario, operacion) {
         const conteo = {};
         (reportes || []).forEach(r => { conteo[r.id_alumno] = (conteo[r.id_alumno] || 0) + 1; });
         return res.json(ids.map(id => ({ id_alumno: id, count: conteo[id] || 0 })));
+    }
+
+    // GET: todos los reportes de un ciclo (para backup completo)
+    if (req.method === 'GET' && operacion === 'ciclo_reportes_todos') {
+        const ciclo = req.query.ciclo;
+        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
+        const { data: alumnos } = await supabase.from('alumnos')
+            .select('id_alumno, apellidos, nombre').eq('ciclo_escolar', ciclo);
+        const ids = (alumnos || []).map(a => a.id_alumno);
+        if (ids.length === 0) return res.json([]);
+        const mapaAlumnos = {};
+        (alumnos || []).forEach(a => { mapaAlumnos[a.id_alumno] = a.apellidos + ' ' + a.nombre; });
+        const { data: reportes } = await supabase.from('reportes_disciplinarios')
+            .select('*').in('id_alumno', ids).order('fecha', { ascending: false });
+        const { data: usuariosDB } = await supabase.from('usuarios').select('id_usuario, nombre_completo');
+        const { data: personal }   = await supabase.from('personal').select('id_personal, nombre_completo');
+        const mapaU = {}; const mapaP = {};
+        (usuariosDB || []).forEach(u => { mapaU[u.id_usuario]  = u.nombre_completo; });
+        (personal   || []).forEach(p => { mapaP[p.id_personal] = p.nombre_completo; });
+        return res.json((reportes || []).map(r => ({
+            ...r,
+            nombre_alumno: mapaAlumnos[r.id_alumno] || '',
+            nombre_reporta: r.id_usuario ? (mapaU[r.id_usuario] || '') : (mapaP[r.id_personal] || '')
+        })));
+    }
+
+    // GET: todas las calificaciones de un ciclo (para backup completo)
+    if (req.method === 'GET' && operacion === 'ciclo_calificaciones') {
+        const ciclo = req.query.ciclo;
+        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
+        const { data: cals } = await supabase.from('calificaciones')
+            .select('*').eq('ciclo_escolar', ciclo);
+        return res.json(cals || []);
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
