@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
             { expiresIn: '8h' }
         );
 
-        res.json({ mensaje: 'Acceso concedido', token, nombre_completo: data.nombre_completo, rol: data.rol });
+        res.json({ mensaje: 'Acceso concedido', token, id_usuario: data.id_usuario, nombre_completo: data.nombre_completo, rol: data.rol });
 
     } catch (e) {
         console.error('Error en login:', e.message);
