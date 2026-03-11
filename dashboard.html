@@ -293,8 +293,11 @@
                 const trimsCon = statsData.porTrimestre.valores.filter(v => v > 0).length;
                 if (trimsCon >= 1) document.getElementById('optTrimestre').style.display = '';
                 if (trimsCon >= 2) document.getElementById('optComparativo').style.display = '';
-                actualizarGrafica();
-            } catch(e) { console.error('Error gráficas'); }
+                requestAnimationFrame(() => setTimeout(() => actualizarGrafica(), 50));
+            } catch(e) {
+                console.error('Error gráficas', e);
+                document.querySelector('.chart-container').innerHTML = '<p style="text-align:center; padding:40px; color:#64748b; font-size:13px;">⚠️ No se pudieron cargar las estadísticas.</p>';
+            }
         };
 
         async function cargarKpis() {
