@@ -50,6 +50,13 @@
             cursor: pointer; transition: all 0.15s;
         }
         .btn-pdf:hover { background: rgba(255,255,255,0.25); }
+        .btn-reporte-disc {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 7px 14px; border-radius: 8px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .btn-reporte-disc:hover { background: rgba(255,255,255,0.22); }
 
         /* CONTENIDO */
         .contenido { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
@@ -191,12 +198,27 @@
         <a href="buscador.html" class="btn-nav" id="btnBuscador" style="display:none">🔍 Buscador</a>
     </div>
     <div class="navbar-right">
+        <button class="btn-reporte-disc" id="btnReporteDisc" onclick="descargarReporteDisc()" style="display:none">📋 Reporte</button>
         <button class="btn-pdf" onclick="descargarPDF()">🖨️ PDF</button>
         <a href="#" onclick="cerrarSesion()" class="btn-nav salir">Salir 👋</a>
     </div>
 </nav>
 
 <div class="contenido">
+
+    <!-- ENCABEZADO INSTITUCIONAL — oculto en pantalla, visible en PDF -->
+    <div id="encabezado-institucional" style="display:none; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:3px solid #1B4F8A; margin-bottom:6px;">
+            <img src="/logo_sege.png" style="height:52px; object-fit:contain;">
+            <div style="text-align:center; flex:1; padding:0 12px;">
+                <div style="font-size:11px; color:#555; font-weight:600;">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                <div style="font-size:14px; font-weight:800; color:#1B4F8A; margin:3px 0;">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
+                <div style="font-size:11px; color:#555;">CLAVE: 24DST0092Z</div>
+                <div style="font-size:10px; color:#777;">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+            </div>
+            <img src="/logo_est84.png" style="height:52px; object-fit:contain;">
+        </div>
+    </div>
 
     <div class="cabecera">
         <div class="perfil-header" id="perfilDinamico">
@@ -267,6 +289,9 @@
             btn.href = 'dashboard.html';
             btn.innerText = '← Dashboard';
             document.getElementById('btnBuscador').style.display = '';
+        }
+        if (['ADMINISTRADOR','DIRECTIVO','TRABAJO SOCIAL'].includes(rolActivo)) {
+            document.getElementById('btnReporteDisc').style.display = '';
         }
 
         await cargarTodo();
@@ -490,9 +515,10 @@
         } catch { return null; }
     }
 
-    async function descargarPDF() {
+    async function prepararPDF() {
         const nav = document.querySelector('.navbar');
         nav.style.display = 'none';
+        document.getElementById('encabezado-institucional').style.display = 'block';
         const imgEl = document.getElementById('imgFotoAlumno');
         const srcOriginal = imgEl ? imgEl.src : null;
         if (imgEl && fotoActualSrc) {
@@ -501,7 +527,18 @@
         }
         const btnFoto = document.querySelector('.btn-foto');
         if (btnFoto) btnFoto.style.display = 'none';
+        return { nav, imgEl, srcOriginal, btnFoto };
+    }
 
+    function restaurarDespuesPDF({ nav, imgEl, srcOriginal, btnFoto }) {
+        nav.style.display = 'flex';
+        document.getElementById('encabezado-institucional').style.display = 'none';
+        if (imgEl && srcOriginal) imgEl.src = srcOriginal;
+        if (btnFoto) btnFoto.style.display = 'flex';
+    }
+
+    async function descargarPDF() {
+        const ctx = await prepararPDF();
         await html2pdf().set({
             margin: 12,
             filename: `Expediente_${idAlumno}.pdf`,
@@ -509,10 +546,85 @@
             jsPDF: { format: 'letter' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         }).from(document.querySelector('.contenido')).save();
+        restaurarDespuesPDF(ctx);
+    }
 
-        nav.style.display = 'flex';
-        if (imgEl && srcOriginal) imgEl.src = srcOriginal;
-        if (btnFoto) btnFoto.style.display = 'flex';
+    async function descargarReporteDisc() {
+        // Construir HTML del reporte disciplinario
+        const alumnoNombre = document.querySelector('.perfil-nombre')?.innerText || '';
+        const alumnoSub    = document.querySelector('.perfil-sub')?.innerText || '';
+        const reportesHTML = document.getElementById('listaReportes')?.innerHTML || '';
+        const fecha = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+
+        const html = `
+        <div style="font-family:'Outfit',sans-serif; padding:0; color:#1a2332;">
+            <!-- Encabezado institucional -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:3px solid #1B4F8A; margin-bottom:16px;">
+                <img src="/logo_sege.png" style="height:52px; object-fit:contain;">
+                <div style="text-align:center; flex:1; padding:0 12px;">
+                    <div style="font-size:11px; color:#555; font-weight:600;">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                    <div style="font-size:15px; font-weight:800; color:#1B4F8A; margin:3px 0;">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
+                    <div style="font-size:11px; color:#555;">CLAVE: 24DST0092Z</div>
+                    <div style="font-size:10px; color:#777;">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+                </div>
+                <img src="/logo_est84.png" style="height:52px; object-fit:contain;">
+            </div>
+            <!-- Título -->
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#1B4F8A;">Reporte Disciplinario Individual</div>
+                <div style="font-size:11px; color:#64748b; margin-top:3px;">Emitido el ${fecha}</div>
+            </div>
+            <!-- Datos del alumno -->
+            <div style="background:#eff6ff; border-radius:10px; padding:12px 16px; margin-bottom:16px; border-left:4px solid #1B4F8A;">
+                <div style="font-size:16px; font-weight:800;">&#x1F393; ${alumnoNombre}</div>
+                <div style="font-size:13px; color:#64748b; margin-top:4px;">${alumnoSub}</div>
+            </div>
+            <!-- Historial -->
+            <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#64748b; margin-bottom:8px; border-left:4px solid #f59e0b; padding-left:8px;">Historial de Observaciones</div>
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Fecha</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Gravedad</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Motivo</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Reportado por</th>
+                    </tr>
+                </thead>
+                <tbody>${reportesHTML}</tbody>
+            </table>
+            <!-- Pie de página -->
+            <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
+                <div style="text-align:center; width:45%;">
+                    <div style="border-top:1px solid #94a3b8; padding-top:6px; margin-top:40px;">Firma del Director(a)</div>
+                </div>
+                <div style="text-align:center; width:45%;">
+                    <div style="border-top:1px solid #94a3b8; padding-top:6px; margin-top:40px;">Firma del Responsable</div>
+                </div>
+            </div>
+        </div>`;
+
+        const nombreArchivo = `Reporte_Disciplinario_${alumnoNombre.replace(/\s+/g,'_')}.pdf`;
+
+        const blob = await html2pdf().set({
+            margin: 14,
+            filename: nombreArchivo,
+            html2canvas: { scale: 2, useCORS: true, allowTaint: false },
+            jsPDF: { format: 'letter' },
+        }).from(html).outputPdf('blob');
+
+        // Web Share API en móvil, descarga directa en PC
+        if (navigator.share && navigator.canShare) {
+            const file = new File([blob], nombreArchivo, { type: 'application/pdf' });
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Reporte Disciplinario', text: alumnoNombre });
+                return;
+            }
+        }
+        // Fallback: descarga directa
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nombreArchivo; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
 
     document.addEventListener('contextmenu', e => {
