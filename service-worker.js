@@ -4,8 +4,8 @@
 //             Network-first para llamadas a /api
 // ============================================================
 
-const CACHE_NAME    = 'est84-v1';
-const CACHE_STATIC  = 'est84-static-v1';
+const CACHE_NAME    = 'est84-v2';
+const CACHE_STATIC  = 'est84-static-v2';
 
 // Assets que se cachean al instalar el SW
 const ASSETS_PRECACHE = [
