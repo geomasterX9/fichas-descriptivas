@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
         const { data, error } = await supabase
             .from('usuarios')
             .select('id_usuario, usuario, password, nombre_completo, rol')
-            .eq('usuario', sanitize(usuario.trim().toUpperCase()))
+            .eq('usuario', sanitize(usuario.trim().toLowerCase()))
             .eq('rol', rol.toUpperCase().trim())
             .single();
 
