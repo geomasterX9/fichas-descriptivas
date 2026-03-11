@@ -303,16 +303,21 @@
           </table>
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
           <button class="btn-accion btn-verde" id="btnDescargar" onclick="descargarRespaldo()">
-            📥 Descargar respaldo de egresados (.xlsx)
+            📥 Respaldo egresados (.xlsx)
           </button>
+          <button class="btn-accion btn-primario" id="btnBackupCompleto" onclick="descargarBackupCompleto()">
+            💾 Backup completo del ciclo (.xlsx)
+          </button>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn-accion btn-primario" id="btnPaso1Siguiente" onclick="confirmarPaso1()" disabled>
             Continuar →
           </button>
         </div>
         <p style="font-size:12px;color:var(--muted);margin-top:10px;">
-          ⚠️ Debes descargar el respaldo antes de poder continuar.
+          ⚠️ Debes descargar el respaldo de egresados antes de poder continuar.
         </p>
       </div>
     </div>
@@ -478,6 +483,84 @@ async function cargarDatos() {
   } catch(e) {
     console.error(e);
     log('err', 'Error al cargar datos: ' + e.message);
+  }
+}
+
+// ── BACKUP COMPLETO DEL CICLO ──
+async function descargarBackupCompleto() {
+  const btn = document.getElementById('btnBackupCompleto');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando backup...';
+
+  try {
+    const wb = XLSX.utils.book_new();
+
+    // Hoja 1: Alumnos
+    btn.textContent = '⏳ Cargando alumnos...';
+    const resAlu = await apiFetch('/api/alumnos');
+    const alumnos = await resAlu.json();
+    const wsAlumnos = XLSX.utils.json_to_sheet(alumnos.map(a => ({
+      'ID':           a.id_alumno,
+      'Apellidos':    a.apellidos,
+      'Nombre':       a.nombre,
+      'Grado':        a.grado,
+      'Grupo':        a.grupo,
+      'Status':       a.status,
+      'CURP':         a.curp || '',
+      'Foto URL':     a.foto_url || '',
+      'Ficha':        a.ficha_completada ? 'Sí' : 'No',
+      'Ciclo':        a.ciclo_escolar,
+    })));
+    XLSX.utils.book_append_sheet(wb, wsAlumnos, 'Alumnos');
+
+    // Hoja 2: Reportes disciplinarios
+    btn.textContent = '⏳ Cargando reportes...';
+    const resRep = await apiFetch(`/api/dashboard?tipo=ciclo_reportes_todos&ciclo=${encodeURIComponent(cicloActual)}`);
+    const reportes = await resRep.json();
+    if (Array.isArray(reportes) && reportes.length > 0) {
+      const wsRep = XLSX.utils.json_to_sheet(reportes.map(r => ({
+        'ID Alumno':    r.id_alumno,
+        'Alumno':       r.nombre_alumno || '',
+        'Fecha':        r.fecha,
+        'Gravedad':     r.gravedad,
+        'Motivo':       r.motivo,
+        'Reportado por': r.nombre_reporta || '',
+        'Ciclo':        r.ciclo_escolar,
+      })));
+      XLSX.utils.book_append_sheet(wb, wsRep, 'Reportes');
+    }
+
+    // Hoja 3: Calificaciones
+    btn.textContent = '⏳ Cargando calificaciones...';
+    const resCal = await apiFetch(`/api/dashboard?tipo=ciclo_calificaciones&ciclo=${encodeURIComponent(cicloActual)}`);
+    const cals = await resCal.json();
+    if (Array.isArray(cals) && cals.length > 0) {
+      const wsCal = XLSX.utils.json_to_sheet(cals.map(c => ({
+        'ID Alumno':    c.id_alumno,
+        'Trimestre':    c.trimestre,
+        'Promedio':     c.promedio_trimestral,
+        'Ciclo':        c.ciclo_escolar,
+      })));
+      XLSX.utils.book_append_sheet(wb, wsCal, 'Calificaciones');
+    }
+
+    // Hoja 4: Fichas socioeconómicas
+    btn.textContent = '⏳ Cargando fichas...';
+    const resFichas = await apiFetch(`/api/dashboard?tipo=ciclo_fichas&ciclo=${encodeURIComponent(cicloActual)}`);
+    const fichas = await resFichas.json();
+    if (Array.isArray(fichas) && fichas.length > 0) {
+      const wsFichas = XLSX.utils.json_to_sheet(fichas);
+      XLSX.utils.book_append_sheet(wb, wsFichas, 'Fichas');
+    }
+
+    XLSX.writeFile(wb, `EST84_Backup_Completo_${cicloActual}.xlsx`);
+    btn.textContent = '✅ Backup descargado';
+    btn.style.background = 'var(--verde)';
+
+  } catch(e) {
+    alert('Error al generar backup: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '💾 Backup completo del ciclo (.xlsx)';
   }
 }
 
