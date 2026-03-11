@@ -5,8 +5,8 @@
 //             Network-only para /api
 // ============================================================
 
-const CACHE_NAME    = 'est84-v6';
-const CACHE_STATIC  = 'est84-static-v6';
+const CACHE_NAME    = 'est84-v7';
+const CACHE_STATIC  = 'est84-static-v7';
 
 // Solo se pre-cachean el manifest y los íconos PWA
 // Los HTML y JS siempre se piden frescos a la red
@@ -46,15 +46,15 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Fuentes Google y CDN externos → Cache-first (no cambian)
+  // Fuentes Google y CDN externos → dejar pasar sin interceptar
   if (
     url.hostname === 'fonts.googleapis.com' ||
     url.hostname === 'fonts.gstatic.com' ||
     url.hostname === 'cdnjs.cloudflare.com' ||
-    url.hostname === 'cdn.jsdelivr.net'
+    url.hostname === 'cdn.jsdelivr.net' ||
+    url.hostname === 'cdn-icons-png.flaticon.com'
   ) {
-    event.respondWith(cacheFirst(event.request));
-    return;
+    return; // No interceptar — el navegador los maneja directamente
   }
 
   // HTML y JS propios → Network-first (siempre frescos)
