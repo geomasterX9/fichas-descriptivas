@@ -116,6 +116,7 @@
             color: var(--azul); background: var(--azul-claro); cursor: pointer; outline: none;
         }
         .chart-container { position: relative; height: 320px; width: 100%; }
+        @media (max-width: 600px) { .chart-container { height: 240px; } }
 
         /* ── MODAL ── */
         .modal-overlay {
@@ -244,7 +245,7 @@
                 </select>
             </div>
             <div class="chart-container">
-                <canvas id="graficaAprovechamiento"></canvas>
+                <canvas id="graficaAprovechamiento" style="display:block; width:100%; height:100%;"></canvas>
             </div>
         </div>
 
@@ -310,7 +311,12 @@
             if (!statsData) return;
             const f = document.getElementById('filtro').value;
             if (myChart) myChart.destroy();
-            const ctx = document.getElementById('graficaAprovechamiento').getContext('2d');
+            const canvas = document.getElementById('graficaAprovechamiento');
+            const container = canvas.parentElement;
+            // Forzar altura explícita en el canvas para Safari/iOS
+            const h = container.clientHeight > 50 ? container.clientHeight : (window.innerWidth < 600 ? 240 : 320);
+            canvas.style.height = h + 'px';
+            const ctx = canvas.getContext('2d');
             const COLORES = ['#E63946','#1B4F8A','#FF9800','#2d9b6f','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
 
             if (f === 'comparativo') {
@@ -389,6 +395,8 @@
                     }
                 });
             }
+            // Forzar repintado en Safari/iOS
+            setTimeout(() => { if (myChart) myChart.resize(); }, 100);
         }
 
         async function abrirModal(tipo) {
