@@ -5,8 +5,8 @@
 //             Network-only para /api
 // ============================================================
 
-const CACHE_NAME    = 'est84-v8';
-const CACHE_STATIC  = 'est84-static-v8';
+const CACHE_NAME    = 'est84-v9';
+const CACHE_STATIC  = 'est84-static-v9';
 
 // Solo se pre-cachean el manifest y los íconos PWA
 // Los HTML y JS siempre se piden frescos a la red
