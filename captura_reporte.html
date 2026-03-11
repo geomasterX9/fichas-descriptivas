@@ -10,7 +10,7 @@
             --fondo: #f0f4f8; --blanco: #ffffff; --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
             --rojo: #e63946; --rojo-claro: #fff0f1; --rojo-borde: #fecdd3;
             --verde: #2d9b6f; --verde-claro: #f0fdf6; --verde-borde: #bbf7d0;
-            --azul: #0061f2; --azul-claro: #eff6ff;
+            --azul: #1B4F8A; --azul-claro: #eff6ff;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; padding: 24px 16px 60px; color: var(--texto); }
@@ -105,8 +105,8 @@
         <div class="form-body">
             <form id="formFalta">
                 <input type="hidden" id="gravedad-falta" value="">
-                <label>¿Quién reporta?</label>
-                <select id="personal-falta" required><option value="">Cargando...</option></select>
+                <label>Quién reporta</label>
+                <div style="background:#f8fafc; border:1.5px solid var(--borde); border-radius:10px; padding:11px 14px; font-size:14px; font-weight:600; margin-bottom:18px; color:var(--texto);" id="lbl-reporta-falta">—</div>
                 <label>Nivel de gravedad</label>
                 <div class="gravedad-pills">
                     <div class="pill leve" onclick="setGravedad('Leve', this)">Leve</div>
@@ -125,8 +125,8 @@
         <div class="form-header positiva">⭐ &nbsp;Registrar Observación Positiva</div>
         <div class="form-body">
             <form id="formPositiva">
-                <label>¿Quién reconoce?</label>
-                <select id="personal-positiva" required><option value="">Cargando...</option></select>
+                <label>Quién reconoce</label>
+                <div style="background:#f8fafc; border:1.5px solid var(--borde); border-radius:10px; padding:11px 14px; font-size:14px; font-weight:600; margin-bottom:18px; color:var(--texto);" id="lbl-reporta-positiva">—</div>
                 <label>Fecha</label>
                 <input type="date" id="fecha-positiva" required>
                 <label>Descripción del logro o actitud</label>
@@ -142,7 +142,7 @@
     const idAlumno = new URLSearchParams(window.location.search).get('id_alumno');
     const rolActivo = localStorage.getItem('rolActivo');
     const nombreActivo = localStorage.getItem('nombreActivo');
-    let personalData = [];
+
 
     window.onload = async () => {
         if (!idAlumno) return window.location.href = 'buscador.html';
@@ -150,30 +150,17 @@
         document.getElementById('fecha-falta').valueAsDate = new Date();
         document.getElementById('fecha-positiva').valueAsDate = new Date();
         try {
-            const [resAlu, resPers] = await Promise.all([
-                apiFetch(`/api/alumnos?id=${idAlumno}`),
-                apiFetch(`/api/personal?rol=${encodeURIComponent(rolActivo)}`)
-            ]);
+            const resAlu = await apiFetch(`/api/alumnos?id=${idAlumno}`);
             const dataAlu = await resAlu.json();
-            personalData = await resPers.json();
             document.getElementById('lblAlumno').innerText = `${dataAlu.apellidos} ${dataAlu.nombre}`;
             document.getElementById('lblGradoGrupo').innerText = `${dataAlu.grado}° "${dataAlu.grupo}"`;
-            llenarSelectPersonal('personal-falta');
-            llenarSelectPersonal('personal-positiva');
+            // Mostrar quién reporta (usuario en sesión)
+            document.getElementById('lbl-reporta-falta').innerText = nombreActivo || '—';
+            document.getElementById('lbl-reporta-positiva').innerText = nombreActivo || '—';
         } catch (e) { console.error('Error de carga', e); }
     };
 
-    function llenarSelectPersonal(selectId) {
-        const sel = document.getElementById(selectId);
-        sel.innerHTML = '<option value="">Selecciona quién reporta...</option>';
-        personalData.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id_personal;
-            opt.textContent = p.nombre_completo;
-            if (p.nombre_completo.toUpperCase() === (nombreActivo || '').toUpperCase()) opt.selected = true;
-            sel.appendChild(opt);
-        });
-    }
+
 
     function seleccionarTipo(tipo) {
         document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('activo'));
@@ -189,15 +176,16 @@
         document.getElementById('gravedad-falta').value = valor;
     }
 
-    async function guardarReporte(gravedad, personalId, fecha, motivo, btnId) {
+    async function guardarReporte(gravedad, fecha, motivo, btnId) {
         const btn = document.getElementById(btnId);
         const textoOriginal = btn.innerText;
         btn.innerText = 'Guardando...'; btn.disabled = true;
+        const idUsuario = parseInt(localStorage.getItem('idUsuario'));
         try {
             const res = await apiFetch('/api/reportes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_alumno: parseInt(idAlumno), id_personal: parseInt(personalId), fecha, gravedad, motivo: motivo.trim() })
+                body: JSON.stringify({ id_alumno: parseInt(idAlumno), id_usuario: idUsuario, fecha, gravedad, motivo: motivo.trim() })
             });
             if (res && res.ok) {
                 alert(gravedad === 'Positiva' ? '⭐ ¡Reconocimiento guardado correctamente!' : '✅ Reporte guardado correctamente.');
@@ -215,12 +203,12 @@
         e.preventDefault();
         const gravedad = document.getElementById('gravedad-falta').value;
         if (!gravedad) return alert('Selecciona el nivel de gravedad.');
-        await guardarReporte(gravedad, document.getElementById('personal-falta').value, document.getElementById('fecha-falta').value, document.getElementById('motivo-falta').value, 'btnFalta');
+        await guardarReporte(gravedad, document.getElementById('fecha-falta').value, document.getElementById('motivo-falta').value, 'btnFalta');
     };
 
     document.getElementById('formPositiva').onsubmit = async (e) => {
         e.preventDefault();
-        await guardarReporte('Positiva', document.getElementById('personal-positiva').value, document.getElementById('fecha-positiva').value, document.getElementById('motivo-positiva').value, 'btnPositiva');
+        await guardarReporte('Positiva', document.getElementById('fecha-positiva').value, document.getElementById('motivo-positiva').value, 'btnPositiva');
     };
 </script>
     <script>
