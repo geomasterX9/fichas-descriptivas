@@ -1,9 +1,11 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 // ============================================================
 // FICHA PÚBLICA — Sin JWT
 // GET  ?grado=1&grupo=A   → lista alumnos del grupo
 // POST (body con id_alumno) → guardar ficha
 // ============================================================
+const supabase = require('../lib/_supabase');
+const { setSecurityHeaders } = require('../lib/_security');
+const { getCicloActivo } = require('../lib/_ciclo');
 
 function setCorsPublico(res, reqOrigin) {
     const permitidos = [

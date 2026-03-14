@@ -1,4 +1,6 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
 
 const GRAVEDADES_VALIDAS = ['Positiva', 'Leve', 'Moderada', 'Grave'];
 
@@ -38,7 +40,7 @@ module.exports = async (req, res) => {
 
     else if (req.method === 'POST') {
         try {
-            const { id_alumno, gravedad, motivo, id_usuario, fecha } = req.body || {};
+            const { id_alumno, gravedad, motivo, acuerdo, id_usuario, fecha } = req.body || {};
 
             if (!id_alumno || !gravedad || !motivo || !id_usuario)
                 return res.status(400).json({ error: 'Todos los campos son requeridos.' });
@@ -46,6 +48,8 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'Gravedad no válida.' });
             if (typeof motivo !== 'string' || motivo.trim().length < 5 || motivo.length > 500)
                 return res.status(400).json({ error: 'El motivo debe tener entre 5 y 500 caracteres.' });
+            if (acuerdo && typeof acuerdo === 'string' && acuerdo.length > 500)
+                return res.status(400).json({ error: 'El acuerdo no puede exceder 500 caracteres.' });
             if (isNaN(parseInt(id_alumno)) || isNaN(parseInt(id_usuario)))
                 return res.status(400).json({ error: 'IDs inválidos.' });
 
@@ -57,8 +61,9 @@ module.exports = async (req, res) => {
                 id_alumno:  parseInt(id_alumno),
                 id_usuario: parseInt(id_usuario),
                 gravedad,
-                motivo: sanitize(motivo.trim()),
-                fecha: fecha || new Date().toISOString().split('T')[0]
+                motivo:  sanitize(motivo.trim()),
+                acuerdo: acuerdo ? sanitize(acuerdo.trim()) : null,
+                fecha:   fecha || new Date().toISOString().split('T')[0]
             };
             const { error } = await supabase.from('reportes_disciplinarios').insert([payload]);
             if (error) return res.status(400).json({ error: error.message });

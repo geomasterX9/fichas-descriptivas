@@ -161,6 +161,31 @@
         .tabla-boleta td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; }
         .tabla-boleta tr:last-child td { border-bottom: none; }
         .promedio-cell { font-weight: 800; background: var(--azul-claro); color: var(--azul); }
+
+        .motivos-card {
+            background: #fffbeb; border: 1px solid #fde68a;
+            border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+        }
+        .motivos-trimestre { font-size: 13px; font-weight: 800; color: #92400e; margin-bottom: 6px; }
+        .motivos-reprobadas { font-size: 12px; color: #b45309; margin-bottom: 10px; }
+        .motivos-textarea {
+            width: 100%; padding: 10px 12px;
+            border: 1.5px solid #fde68a; border-radius: 9px;
+            font-size: 13px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: white; resize: none;
+            height: 80px; transition: border-color 0.15s; outline: none;
+        }
+        .motivos-textarea:focus { border-color: var(--naranja); }
+        .btn-guardar-motivos {
+            margin-top: 8px; padding: 8px 18px;
+            background: var(--naranja); color: white;
+            border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-guardar-motivos:hover { background: #d97706; }
+        .motivos-ok { font-size: 12px; color: var(--verde); font-weight: 700; margin-left: 10px; display: none; }
         .selector-grafica {
             padding: 9px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
             font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 600;
@@ -177,7 +202,9 @@
             .perfil-header { gap: 14px; }
             .grid-socio { grid-template-columns: 1fr; }
             .tabla-reportes th:nth-child(4),
-            .tabla-reportes td:nth-child(4) { display: none; }
+            .tabla-reportes td:nth-child(4),
+            .tabla-reportes th:nth-child(5),
+            .tabla-reportes td:nth-child(5) { display: none; }
             .seccion-body { padding: 12px 10px; }
             .btn-nav { padding: 6px 10px; font-size: 12px; }
         }
@@ -245,6 +272,7 @@
                         <th>Fecha</th>
                         <th>Gravedad</th>
                         <th>Motivo</th>
+                        <th>Acuerdo</th>
                         <th>Reportado por</th>
                     </tr>
                 </thead>
@@ -265,6 +293,12 @@
             <canvas id="graficaPromedios" height="120"></canvas>
             <div class="contenedor-boleta" id="contBoleta"></div>
         </div>
+    </div>
+
+    <!-- Motivos de reprobación — visible solo si hay materias reprobadas -->
+    <div class="seccion" id="seccionMotivos" style="display:none;">
+        <div class="seccion-header naranja">IV. Motivos de Reprobación</div>
+        <div class="seccion-body" id="contMotivos"></div>
     </div>
 
 </div>
@@ -365,13 +399,29 @@
                         ${fila('Servicios', dat(f.vivienda_servicios))}
                     </div>
                     <div class="tarjeta-dato">
-                        <h4>💰 Situación Económica y Salud</h4>
+                        <h4>💰 Situación Económica</h4>
                         ${fila('Ingreso mensual', dat(f.ingreso_mensual))}
-                        ${fila('Cond. médica', dat(f.condicion_salud))}
-                        ${fila('Discapacidad', dat(f.discapacidad))}
                         ${fila('Observaciones', dat(f.observaciones))}
                     </div>
-                </div>`;
+                </div>
+                <!-- Situación de salud — tarjeta destacada -->
+                ${(f.condicion_salud || f.discapacidad) ? `
+                <div class="tarjeta-dato" style="margin-top:12px; border-left:4px solid #f59e0b; background:#fffbeb;">
+                    <h4>🏥 Situación de Salud</h4>
+                    ${f.condicion_salud ? `
+                    <div class="fila-dato">
+                        <span class="fila-label">Condición médica</span>
+                        <span class="fila-valor" style="color:#92400e; font-weight:600;">${esc(f.condicion_salud)}</span>
+                    </div>` : ''}
+                    ${f.discapacidad ? `
+                    <div class="fila-dato">
+                        <span class="fila-label">Discapacidad</span>
+                        <span class="fila-valor" style="color:#92400e; font-weight:600;">${esc(f.discapacidad)}</span>
+                    </div>` : ''}
+                </div>` : `
+                <div style="margin-top:12px; background:#f0fdf6; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; font-size:13px; color:#166534;">
+                    ✅ Sin condiciones de salud reportadas
+                </div>`}
             } else {
                 document.getElementById('contSocio').innerHTML =
                     '<p style="text-align:center; color:var(--muted); padding:20px;">Sin ficha socioeconómica capturada.</p>';
@@ -385,9 +435,10 @@
                     <td style="white-space:nowrap; font-size:12px;">${esc(r.fecha)}</td>
                     <td style="font-weight:700;">${esc(r.gravedad)}</td>
                     <td>${esc(r.motivo)}</td>
+                    <td style="font-size:12px; color:var(--muted);">${r.acuerdo ? esc(r.acuerdo) : '<span style="color:#cbd5e1;">—</span>'}</td>
                     <td style="font-size:12px; color:var(--muted);">${esc(r.nombre_reporta || '—')}</td>
                   </tr>`).join('')
-                : '<tr><td colspan="4" style="text-align:center; padding:16px; color:var(--muted);">Historial limpio.</td></tr>';
+                : '<tr><td colspan="5" style="text-align:center; padding:16px; color:var(--muted);">Historial limpio.</td></tr>';
 
             // Calificaciones
             const resCal = await apiFetch(`/api/expediente?tipo=calificaciones&id=${idAlumno}`);
@@ -399,6 +450,7 @@
                 if (datosCalificacionesGlobal.length >= 2)
                     document.getElementById('optComparativo').style.display = '';
                 renderBoleta();
+                renderMotivos();
                 actualizarGrafica();
             } else {
                 document.getElementById('selectorGrafica').style.display = 'none';
@@ -434,6 +486,56 @@
         } catch { cargando.innerHTML = '❌'; }
         setTimeout(() => cargando.remove(), 1500);
         input.value = '';
+    }
+
+    function renderMotivos() {
+        // Detectar trimestres con materias reprobadas (calif <= 6)
+        const conReprobadas = datosCalificacionesGlobal.filter(c =>
+            c.materias && c.materias.some(m => parseFloat(m.calif) <= 6)
+        );
+        if (conReprobadas.length === 0) return; // Sin reprobadas — no mostrar sección
+
+        document.getElementById('seccionMotivos').style.display = '';
+        const cont = document.getElementById('contMotivos');
+        cont.innerHTML = conReprobadas.map(c => {
+            const reprobadas = c.materias.filter(m => parseFloat(m.calif) <= 6)
+                .map(m => `${m.sigla}: ${m.calif}`).join(', ');
+            return `
+            <div class="motivos-card">
+                <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
+                <div class="motivos-reprobadas">📚 Materias en riesgo: ${reprobadas}</div>
+                <textarea
+                    class="motivos-textarea"
+                    id="motivos-t${c.trimestre}"
+                    placeholder="Describe los motivos de reprobación en este trimestre..."
+                >${esc(c.motivos_reprobacion || '')}</textarea>
+                <div>
+                    <button class="btn-guardar-motivos" onclick="guardarMotivos(${c.trimestre})">
+                        💾 Guardar
+                    </button>
+                    <span class="motivos-ok" id="ok-t${c.trimestre}">✅ Guardado</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function guardarMotivos(trimestre) {
+        const motivos = document.getElementById(`motivos-t${trimestre}`).value;
+        const okSpan  = document.getElementById(`ok-t${trimestre}`);
+        try {
+            const res = await apiFetch('/api/expediente?tipo=motivos_reprobacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: idAlumno, trimestre, motivos_reprobacion: motivos })
+            });
+            if (res && res.ok) {
+                okSpan.style.display = 'inline';
+                setTimeout(() => { okSpan.style.display = 'none'; }, 2500);
+                // Actualizar datos locales
+                const idx = datosCalificacionesGlobal.findIndex(c => c.trimestre === trimestre);
+                if (idx >= 0) datosCalificacionesGlobal[idx].motivos_reprobacion = motivos;
+            }
+        } catch(e) { alert('Error al guardar. Intenta de nuevo.'); }
     }
 
     function renderBoleta() {
@@ -587,6 +689,7 @@
                         <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Fecha</th>
                         <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Gravedad</th>
                         <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Motivo</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Acuerdo</th>
                         <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Reportado por</th>
                     </tr>
                 </thead>

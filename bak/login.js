@@ -1,6 +1,7 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const supabase = require('../lib/_supabase');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
 const { Redis } = require('@upstash/redis');
 
 const MAX_INTENTOS = 5;

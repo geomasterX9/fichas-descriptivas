@@ -8,3 +8,5 @@ generar_usuarios.js
 extras/
 fotos/
 node_modules/
+.vercel
+.env*.local

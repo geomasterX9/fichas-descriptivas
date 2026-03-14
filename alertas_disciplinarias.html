@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas Disciplinarias — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-claro: #eff6ff;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --naranja: #f59e0b; --naranja-claro: #fffbeb;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; color: var(--texto); }
+
+        .navbar {
+            background: var(--azul); padding: 0 24px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { color: white; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .btn-nav { text-decoration: none; color: rgba(255,255,255,0.85); font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s; }
+        .btn-nav:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        .contenedor { max-width: 680px; margin: 0 auto; padding: 28px 16px 60px; }
+
+        .banner-alerta {
+            background: linear-gradient(135deg, #92400e, #b45309);
+            border-radius: 16px; padding: 20px 24px;
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 24px; color: white;
+        }
+        .banner-icono { font-size: 36px; flex-shrink: 0; }
+        .banner-titulo { font-size: 18px; font-weight: 800; }
+        .banner-sub { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+
+        .filtros { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .filtro-btn {
+            padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--borde);
+            font-size: 13px; font-weight: 600; cursor: pointer; background: var(--blanco);
+            font-family: 'Outfit', sans-serif; color: var(--muted); transition: all 0.15s;
+        }
+        .filtro-btn:hover { border-color: #94a3b8; color: var(--texto); }
+        .filtro-btn.activo { background: var(--azul); border-color: var(--azul); color: white; }
+
+        .lista { display: flex; flex-direction: column; gap: 12px; }
+
+        .alumno-card {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 14px; padding: 16px 18px;
+            display: flex; align-items: center; gap: 14px;
+            transition: all 0.15s; text-decoration: none; color: inherit;
+        }
+        .alumno-card:hover { border-color: var(--azul); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,79,138,0.1); }
+        .alumno-card.grave { border-left: 4px solid var(--rojo); }
+        .alumno-card.moderado { border-left: 4px solid var(--naranja); }
+
+        .card-icono {
+            width: 46px; height: 46px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .card-icono.grave    { background: var(--rojo-claro); }
+        .card-icono.moderado { background: var(--naranja-claro); }
+
+        .card-info { flex: 1; min-width: 0; }
+        .card-nombre { font-weight: 800; font-size: 15px; }
+        .card-grado  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .card-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+        .chip {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .chip-grave    { background: var(--rojo-claro); color: var(--rojo); }
+        .chip-reportes { background: #fff7ed; color: #9a3412; }
+        .chip-multi    { background: var(--naranja-claro); color: #92400e; }
+
+        .card-flecha { font-size: 20px; color: #c0cfe0; flex-shrink: 0; }
+
+        .empty {
+            text-align: center; padding: 48px 24px;
+            background: var(--blanco); border-radius: 14px;
+            border: 1px solid var(--borde);
+        }
+        .empty-icono { font-size: 48px; margin-bottom: 12px; }
+        .empty-titulo { font-size: 16px; font-weight: 800; color: var(--verde); margin-bottom: 6px; }
+        .empty-sub { font-size: 13px; color: var(--muted); }
+
+        .conteo { font-size: 13px; color: var(--muted); margin-bottom: 12px; font-weight: 600; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">⚠️ Alertas Disciplinarias</div>
+    <a href="inicio.html" class="btn-nav">← Volver</a>
+</nav>
+
+<div class="contenedor">
+    <div class="banner-alerta" id="banner">
+        <div class="banner-icono">🚨</div>
+        <div>
+            <div class="banner-titulo" id="bannerTitulo">Cargando...</div>
+            <div class="banner-sub" id="bannerSub">Alumnos que requieren atención inmediata</div>
+        </div>
+    </div>
+
+    <div class="filtros">
+        <button class="filtro-btn activo" onclick="filtrar('todos', this)">Todos</button>
+        <button class="filtro-btn" onclick="filtrar('grave', this)">🔴 Con falta grave</button>
+        <button class="filtro-btn" onclick="filtrar('multiples', this)">🟡 3+ reportes</button>
+    </div>
+
+    <div class="conteo" id="conteo"></div>
+    <div class="lista" id="lista">
+        <div class="empty"><div class="empty-icono">⏳</div><div class="empty-titulo">Cargando...</div></div>
+    </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+    let todosAlumnos = [];
+
+    async function cargar() {
+        // Intentar desde sessionStorage primero (ya cargado en inicio.html)
+        const cached = sessionStorage.getItem('alertas_disciplinarias');
+        if (cached) {
+            todosAlumnos = JSON.parse(cached);
+            renderizar(todosAlumnos);
+            return;
+        }
+        // Si no hay cache, consultar API
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
+            if (!res) return;
+            todosAlumnos = await res.json();
+            renderizar(todosAlumnos);
+        } catch(e) {
+            document.getElementById('lista').innerHTML = `<div class="empty"><div class="empty-icono">❌</div><div class="empty-titulo">Error al cargar</div></div>`;
+        }
+    }
+
+    function renderizar(lista) {
+        const graves = lista.filter(a => a.reportes_graves > 0).length;
+        document.getElementById('bannerTitulo').textContent =
+            lista.length === 0
+                ? '✅ Sin alertas activas'
+                : `${lista.length} alumno(s) requieren atención`;
+        document.getElementById('bannerSub').textContent =
+            lista.length === 0
+                ? 'No hay alumnos en situación de riesgo disciplinario'
+                : `${graves} con falta grave · ${lista.length - graves} con 3 o más reportes`;
+
+        document.getElementById('conteo').textContent = `Mostrando ${lista.length} alumno(s)`;
+
+        if (lista.length === 0) {
+            document.getElementById('lista').innerHTML = `
+                <div class="empty">
+                    <div class="empty-icono">✅</div>
+                    <div class="empty-titulo">Sin alertas activas</div>
+                    <div class="empty-sub">Ningún alumno tiene faltas graves ni 3 o más reportes en este ciclo.</div>
+                </div>`;
+            return;
+        }
+
+        document.getElementById('lista').innerHTML = lista.map(a => {
+            const esGrave   = a.reportes_graves > 0;
+            const tipoClass = esGrave ? 'grave' : 'moderado';
+            const iconoClass= esGrave ? 'grave' : 'moderado';
+            const icono     = esGrave ? '🔴' : '🟡';
+            return `
+            <a href="expediente.html?id_alumno=${a.id_alumno}" class="alumno-card ${tipoClass}">
+                <div class="card-icono ${iconoClass}">${icono}</div>
+                <div class="card-info">
+                    <div class="card-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                    <div class="card-grado">${a.grado}° Grupo "${a.grupo}"</div>
+                    <div class="card-badges">
+                        ${a.reportes_graves > 0  ? `<span class="chip chip-grave">⚠️ ${a.reportes_graves} falta(s) grave(s)</span>` : ''}
+                        ${a.total_reportes >= 3   ? `<span class="chip chip-reportes">📋 ${a.total_reportes} reportes totales</span>` : ''}
+                        ${a.total_reportes > 0 && a.total_reportes < 3 ? `<span class="chip chip-multi">📋 ${a.total_reportes} reportes</span>` : ''}
+                    </div>
+                </div>
+                <div class="card-flecha">›</div>
+            </a>`;
+        }).join('');
+    }
+
+    function filtrar(tipo, btn) {
+        document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+        let lista = [...todosAlumnos];
+        if (tipo === 'grave')    lista = lista.filter(a => a.reportes_graves > 0);
+        if (tipo === 'multiples') lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+        document.getElementById('conteo').textContent = `Mostrando ${lista.length} alumno(s)`;
+        document.getElementById('lista').innerHTML = lista.length === 0
+            ? `<div class="empty"><div class="empty-icono">✅</div><div class="empty-titulo">Sin alertas en esta categoría</div></div>`
+            : lista.map(a => {
+                const esGrave = a.reportes_graves > 0;
+                const tipoClass = esGrave ? 'grave' : 'moderado';
+                const icono = esGrave ? '🔴' : '🟡';
+                return `
+                <a href="expediente.html?id_alumno=${a.id_alumno}" class="alumno-card ${tipoClass}">
+                    <div class="card-icono ${tipoClass}">${icono}</div>
+                    <div class="card-info">
+                        <div class="card-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                        <div class="card-grado">${a.grado}° Grupo "${a.grupo}"</div>
+                        <div class="card-badges">
+                            ${a.reportes_graves > 0 ? `<span class="chip chip-grave">⚠️ ${a.reportes_graves} falta(s) grave(s)</span>` : ''}
+                            ${a.total_reportes >= 3  ? `<span class="chip chip-reportes">📋 ${a.total_reportes} reportes totales</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-flecha">›</div>
+                </a>`;
+            }).join('');
+    }
+
+    window.onload = cargar;
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .catch(err => console.warn('SW no registrado:', err));
+        });
+    }
+</script>
+</body>
+</html>

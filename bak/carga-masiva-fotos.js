@@ -1,4 +1,6 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders } = require('../lib/_security');
 const { IncomingForm } = require('formidable');
 const fs = require('fs');
 const path = require('path');

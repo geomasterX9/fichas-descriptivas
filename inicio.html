@@ -84,6 +84,27 @@
         }
         .icono-reporte     { background: #fff0f1; }
         .icono-expediente  { background: var(--azul-claro); }
+        .icono-alerta      { background: #fef9c3; }
+
+        .badge-alerta {
+            background: #e63946; color: white;
+            border-radius: 20px; padding: 3px 10px;
+            font-size: 12px; font-weight: 800;
+            margin-left: 8px; display: inline-block;
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.65; }
+        }
+        .btn-opcion.alerta-activa {
+            border-color: #fde68a;
+            background: #fffbeb;
+        }
+        .btn-opcion.alerta-activa:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 8px 24px rgba(245,158,11,0.15);
+        }
 
         .opcion-texto { flex: 1; }
         .opcion-titulo { font-size: 18px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
@@ -157,6 +178,25 @@
             </div>
             <div class="opcion-flecha">›</div>
         </a>
+        <a class="btn-opcion" href="evaluaciones_parciales.html">
+            <div class="opcion-icono" style="background:#f0fdf6;">📝</div>
+            <div class="opcion-texto">
+                <div class="opcion-titulo">Evaluaciones Parciales</div>
+                <div class="opcion-desc">Captura calificaciones a mitad de trimestre por grupo.</div>
+            </div>
+            <div class="opcion-flecha">›</div>
+        </a>
+        <a class="btn-opcion" href="alertas_disciplinarias.html" id="btnAlertas" style="display:none;">
+            <div class="opcion-icono icono-alerta">⚠️</div>
+            <div class="opcion-texto">
+                <div class="opcion-titulo">
+                    Alertas Disciplinarias
+                    <span class="badge-alerta" id="badgeAlertas">0</span>
+                </div>
+                <div class="opcion-desc" id="descAlertas">Alumnos que requieren atención inmediata.</div>
+            </div>
+            <div class="opcion-flecha">›</div>
+        </a>
     </div>
 
     <div class="pie">
@@ -182,6 +222,29 @@
         document.getElementById('saludo').textContent = `${saludo}, ${nombre.split(' ')[0]} 👋`;
 
         if (rol === 'TRABAJO SOCIAL') document.getElementById('btnReporte').style.display = 'none';
+
+        // Consultar alumnos en riesgo disciplinario
+        async function cargarAlertas() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
+                if (!res) return;
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    const btn = document.getElementById('btnAlertas');
+                    btn.style.display = 'flex';
+                    btn.classList.add('alerta-activa');
+                    document.getElementById('badgeAlertas').textContent = data.length;
+                    const graves = data.filter(a => a.reportes_graves > 0).length;
+                    document.getElementById('descAlertas').textContent =
+                        graves > 0
+                            ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
+                            : `${data.length} alumno(s) con 3 o más reportes`;
+                    // Guardar en sessionStorage para usarlo en la pantalla de alertas
+                    sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
+                }
+            } catch(e) { /* silencioso */ }
+        }
+        cargarAlertas();
 
         function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
     </script>

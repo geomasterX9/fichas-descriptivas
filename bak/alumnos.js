@@ -1,4 +1,7 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
+const { getCicloActivo } = require('../lib/_ciclo');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, PATCH, OPTIONS', req.headers.origin);
@@ -25,14 +28,12 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
-    // ── Sin ?id= → lista del ciclo activo, con filtros opcionales ──
+    // ── Sin ?id= → lista completa del ciclo activo ──
     if (req.method === 'GET') {
         const ciclo = await getCicloActivo();
-        let query = supabase.from('alumnos').select('*').eq('ciclo_escolar', ciclo);
-        if (req.query.grado) query = query.eq('grado', parseInt(req.query.grado));
-        if (req.query.grupo) query = query.eq('grupo', req.query.grupo.toUpperCase());
-        if (req.query.status) query = query.eq('status', req.query.status);
-        const { data } = await query.order('apellidos', { ascending: true });
+        const { data } = await supabase.from('alumnos').select('*')
+            .eq('ciclo_escolar', ciclo)
+            .order('apellidos', { ascending: true });
         return res.json(data || []);
     }
     // Solo ADMINISTRADOR puede crear/modificar alumnos

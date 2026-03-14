@@ -1,18 +1,16 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
-
-// Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial'];
+const supabase = require('../lib/_supabase');
+const { requireAuth } = require('../lib/_auth');
+const { setSecurityHeaders } = require('../lib/_security');
+const { getCicloActivo } = require('../lib/_ciclo');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const tipo = req.query.tipo || 'kpis';
-
-    // Para tipos de alerta: cualquier rol autenticado puede acceder
-    const recurso = TIPOS_TODOS_ROLES.includes(tipo) ? null : 'dashboard';
-    const usuario = await requireAuth(req, res, recurso);
+    const usuario = await requireAuth(req, res, 'dashboard');
     if (!usuario) return;
+
+    const tipo = req.query.tipo || 'kpis';
 
     try {
         if (tipo === 'kpis') {
@@ -134,18 +132,19 @@ module.exports = async (req, res) => {
                 .eq('ciclo_escolar', ciclo);
             if (!evaluaciones || evaluaciones.length === 0) return res.json([]);
 
+            // Filtrar alumnos con al menos una materia parcial <= 6
             const enRiesgo = evaluaciones.filter(e =>
-                e.materias && Array.isArray(e.materias) && e.materias.length > 0 &&
-                e.materias.some(m => parseFloat(m.calif) <= 6)
+                e.materias && e.materias.some(m => parseFloat(m.calif) <= 6)
             );
             if (enRiesgo.length === 0) return res.json([]);
 
             const ids = [...new Set(enRiesgo.map(e => e.id_alumno))];
             const { data: alumnos } = await supabase
                 .from('alumnos')
-                .select('id_alumno, nombre, apellidos, grado, grupo')
+                .select('id_alumno, nombre, apellidos, grado, grupo, foto_url')
                 .in('id_alumno', ids)
                 .eq('ciclo_escolar', ciclo)
+                .eq('status', 'Activo')
                 .order('apellidos', { ascending: true });
 
             const lista = (alumnos || []).map(a => {
@@ -193,7 +192,7 @@ module.exports = async (req, res) => {
                 .select('id_alumno, nombre, apellidos, grado, grupo')
                 .in('id_alumno', idsEnRiesgo)
                 .eq('ciclo_escolar', ciclo)
-                .eq('status', 'ACTIVO')
+                .eq('status', 'Activo')
                 .order('apellidos', { ascending: true });
 
             const lista = (alumnos || []).map(a => ({
@@ -344,7 +343,7 @@ async function handleCiclo(req, res, usuario, operacion) {
         const { nuevoCiclo } = req.body;
         if (!nuevoCiclo || !/^\d{4}-\d{4}$/.test(nuevoCiclo))
             return res.status(400).json({ error: 'Formato de ciclo inválido' });
-        const { setCicloActivo } = require('./_lib');
+        const { setCicloActivo } = require('../lib/_ciclo');
         try { await setCicloActivo(nuevoCiclo); } catch(e) { return res.status(500).json({ error: e.message }); }
         await supabase.from('logs_actividad').insert([{
             id_usuario: usuario.id_usuario, nombre_usuario: usuario.nombre_completo, rol: usuario.rol,

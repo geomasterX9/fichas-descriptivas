@@ -117,6 +117,8 @@
                 <input type="date" id="fecha-falta" required>
                 <label>Descripción del hecho</label>
                 <textarea id="motivo-falta" required placeholder="Describe brevemente lo ocurrido..."></textarea>
+                <label>Acuerdo o compromiso <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(opcional)</span></label>
+                <textarea id="acuerdo-falta" placeholder="Describe el acuerdo al que se llegó con el alumno..." style="height:80px;"></textarea>
                 <button type="submit" class="btn-guardar falta" id="btnFalta">GUARDAR REPORTE</button>
             </form>
         </div>
@@ -176,7 +178,7 @@
         document.getElementById('gravedad-falta').value = valor;
     }
 
-    async function guardarReporte(gravedad, fecha, motivo, btnId) {
+    async function guardarReporte(gravedad, fecha, motivo, btnId, acuerdo = '') {
         const btn = document.getElementById(btnId);
         const textoOriginal = btn.innerText;
         btn.innerText = 'Guardando...'; btn.disabled = true;
@@ -185,7 +187,7 @@
             const res = await apiFetch('/api/reportes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_alumno: parseInt(idAlumno), id_usuario: idUsuario, fecha, gravedad, motivo: motivo.trim() })
+                body: JSON.stringify({ id_alumno: parseInt(idAlumno), id_usuario: idUsuario, fecha, gravedad, motivo: motivo.trim(), acuerdo })
             });
             if (res && res.ok) {
                 alert(gravedad === 'Positiva' ? '⭐ ¡Reconocimiento guardado correctamente!' : '✅ Reporte guardado correctamente.');
@@ -203,7 +205,8 @@
         e.preventDefault();
         const gravedad = document.getElementById('gravedad-falta').value;
         if (!gravedad) return alert('Selecciona el nivel de gravedad.');
-        await guardarReporte(gravedad, document.getElementById('fecha-falta').value, document.getElementById('motivo-falta').value, 'btnFalta');
+        const acuerdo = document.getElementById('acuerdo-falta').value.trim();
+        await guardarReporte(gravedad, document.getElementById('fecha-falta').value, document.getElementById('motivo-falta').value, 'btnFalta', acuerdo);
     };
 
     document.getElementById('formPositiva').onsubmit = async (e) => {
