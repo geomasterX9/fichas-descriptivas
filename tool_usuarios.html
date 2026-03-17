@@ -238,13 +238,31 @@
     </div>
     <div class="campo">
       <label>Rol</label>
-      <select id="campoRol">
+      <select id="campoRol" onchange="toggleCampoMateria()">
         <option value="">— Selecciona un rol —</option>
         <option value="ADMINISTRADOR">ADMINISTRADOR</option>
         <option value="DIRECTIVO">DIRECTIVO</option>
         <option value="DOCENTE">DOCENTE</option>
         <option value="PREFECTO">PREFECTO</option>
         <option value="TRABAJO SOCIAL">TRABAJO SOCIAL</option>
+      </select>
+    </div>
+
+    <div class="campo" id="campoMateriaWrap" style="display:none">
+      <label>Materia asignada</label>
+      <select id="campoMateria">
+        <option value="">— Sin materia —</option>
+        <option value="ESP">ESP — Español</option>
+        <option value="MAT">MAT — Matemáticas</option>
+        <option value="SLI">SLI — Segunda Lengua: Inglés</option>
+        <option value="CIE">CIE — Ciencias</option>
+        <option value="HIS">HIS — Historia</option>
+        <option value="GMM">GMM — Geografía y Medio Ambiente (1°)</option>
+        <option value="FCE">FCE — Formación Cívica y Ética</option>
+        <option value="ETE">ETE — Educación Tecnológica</option>
+        <option value="EFI">EFI — Educación Física</option>
+        <option value="ART">ART — Artes</option>
+        <option value="ESO">ESO — Orientación</option>
       </select>
     </div>
 
@@ -465,7 +483,14 @@
   }
 
   // ── MODAL NUEVO ──
-  function abrirModalNuevo() {
+  function toggleCampoMateria() {
+    const rol = document.getElementById('campoRol').value;
+    const wrap = document.getElementById('campoMateriaWrap');
+    wrap.style.display = rol === 'DOCENTE' ? 'block' : 'none';
+    if (rol !== 'DOCENTE') document.getElementById('campoMateria').value = '';
+  }
+
+    function abrirModalNuevo() {
     modoEdicion = false;
     document.getElementById('modalTitulo').textContent = '👤 Nuevo Usuario';
     document.getElementById('campoId').value = '';
@@ -490,6 +515,8 @@
     document.getElementById('campoUsuario').value = u.usuario;
     document.getElementById('campoPassword').value = '';
     document.getElementById('campoRol').value = u.rol;
+    document.getElementById('campoMateriaWrap').style.display = u.rol === 'DOCENTE' ? 'block' : 'none';
+    document.getElementById('campoMateria').value = u.materia || '';
     document.getElementById('campoPasswordWrap').style.display = 'none';
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
@@ -524,7 +551,8 @@
     btn.textContent = 'Guardando...';
     btn.disabled = true;
 
-    const body = { nombre_completo: nombre, usuario, rol };
+    const materia = document.getElementById('campoMateria').value;
+    const body = { nombre_completo: nombre, usuario, rol, materia: rol === 'DOCENTE' ? materia : null };
     if (!modoEdicion) body.password = password;
 
     const metodo = modoEdicion ? 'PATCH' : 'POST';
