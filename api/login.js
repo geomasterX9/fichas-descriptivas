@@ -1,6 +1,7 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const supabase = require('../lib/_supabase');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
 const { Redis } = require('@upstash/redis');
 
 const MAX_INTENTOS = 5;
@@ -51,7 +52,7 @@ module.exports = async (req, res) => {
 
         const { data, error } = await supabase
             .from('usuarios')
-            .select('id_usuario, usuario, password, nombre_completo, rol')
+            .select('id_usuario, usuario, password, nombre_completo, rol, materia')
             .eq('usuario', sanitize(usuario.trim().toLowerCase()))
             .eq('rol', rol.toUpperCase().trim())
             .single();
@@ -79,7 +80,7 @@ module.exports = async (req, res) => {
             { expiresIn: '8h' }
         );
 
-        res.json({ mensaje: 'Acceso concedido', token, id_usuario: data.id_usuario, nombre_completo: data.nombre_completo, rol: data.rol });
+        res.json({ mensaje: 'Acceso concedido', token, id_usuario: data.id_usuario, nombre_completo: data.nombre_completo, rol: data.rol, materia: data.materia || null });
 
     } catch (e) {
         console.error('Error en login:', e.message);
