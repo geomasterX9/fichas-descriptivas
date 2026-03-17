@@ -149,7 +149,7 @@
                     localStorage.setItem('rolActivo',      data.rol);
                     localStorage.setItem('authToken',      data.token);
                     localStorage.setItem('idUsuario',      data.id_usuario);
-                    localStorage.setItem('materiaActiva',  data.materia || '');
+                    localStorage.setItem('materiaActiva',  JSON.stringify(data.materia || []));
                     registrarLog('LOGIN', `Acceso como ${data.rol}`);
                     btn.innerText = '¡Acceso correcto! ✅';
                     btn.style.background = '#2d9b6f';

@@ -249,21 +249,20 @@
     </div>
 
     <div class="campo" id="campoMateriaWrap" style="display:none">
-      <label>Materia asignada</label>
-      <select id="campoMateria">
-        <option value="">— Sin materia —</option>
-        <option value="ESP">ESP — Español</option>
-        <option value="MAT">MAT — Matemáticas</option>
-        <option value="SLI">SLI — Segunda Lengua: Inglés</option>
-        <option value="CIE">CIE — Ciencias</option>
-        <option value="HIS">HIS — Historia</option>
-        <option value="GMM">GMM — Geografía y Medio Ambiente (1°)</option>
-        <option value="FCE">FCE — Formación Cívica y Ética</option>
-        <option value="ETE">ETE — Educación Tecnológica</option>
-        <option value="EFI">EFI — Educación Física</option>
-        <option value="ART">ART — Artes</option>
-        <option value="ESO">ESO — Orientación</option>
-      </select>
+      <label>Materias asignadas</label>
+      <div id="campoMaterias" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="ESP"> ESP</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="MAT"> MAT</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="SLI"> SLI</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="CIE"> CIE</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="HIS"> HIS</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="GMM"> GMM</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="FCE"> FCE</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="ETE"> ETE</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="EFI"> EFI</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="ART"> ART</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--texto);cursor:pointer;"><input type="checkbox" value="ESO"> ESO</label>
+      </div>
     </div>
 
     <div class="modal-acciones">
@@ -487,7 +486,19 @@
     const rol = document.getElementById('campoRol').value;
     const wrap = document.getElementById('campoMateriaWrap');
     wrap.style.display = rol === 'DOCENTE' ? 'block' : 'none';
-    if (rol !== 'DOCENTE') document.getElementById('campoMateria').value = '';
+    if (rol !== 'DOCENTE') {
+      document.querySelectorAll('#campoMaterias input[type=checkbox]').forEach(cb => cb.checked = false);
+    }
+  }
+
+  function getMaterias() {
+    return Array.from(document.querySelectorAll('#campoMaterias input[type=checkbox]:checked')).map(cb => cb.value);
+  }
+
+  function setMaterias(arr) {
+    document.querySelectorAll('#campoMaterias input[type=checkbox]').forEach(cb => {
+      cb.checked = Array.isArray(arr) && arr.includes(cb.value);
+    });
   }
 
     function abrirModalNuevo() {
@@ -498,6 +509,8 @@
     document.getElementById('campoUsuario').value = '';
     document.getElementById('campoPassword').value = '';
     document.getElementById('campoRol').value = '';
+    document.getElementById('campoMateriaWrap').style.display = 'none';
+    setMaterias([]);
     document.getElementById('campoPasswordWrap').style.display = 'block';
     document.getElementById('campoPassword').required = true;
     document.getElementById('modalAlerta').className = 'alerta';
@@ -516,7 +529,7 @@
     document.getElementById('campoPassword').value = '';
     document.getElementById('campoRol').value = u.rol;
     document.getElementById('campoMateriaWrap').style.display = u.rol === 'DOCENTE' ? 'block' : 'none';
-    document.getElementById('campoMateria').value = u.materia || '';
+    setMaterias(u.materia || []);
     document.getElementById('campoPasswordWrap').style.display = 'none';
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
@@ -551,8 +564,8 @@
     btn.textContent = 'Guardando...';
     btn.disabled = true;
 
-    const materia = document.getElementById('campoMateria').value;
-    const body = { nombre_completo: nombre, usuario, rol, materia: rol === 'DOCENTE' ? materia : null };
+    const materias = getMaterias();
+    const body = { nombre_completo: nombre, usuario, rol, materia: rol === 'DOCENTE' ? materias : null };
     if (!modoEdicion) body.password = password;
 
     const metodo = modoEdicion ? 'PATCH' : 'POST';

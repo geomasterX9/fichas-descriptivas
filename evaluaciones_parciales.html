@@ -235,7 +235,8 @@
 
     // Rol y materia del usuario activo
     const ROL_ACTIVO     = localStorage.getItem('rolActivo') || '';
-    const MATERIA_ACTIVA = localStorage.getItem('materiaActiva') || '';
+    const _materiaRaw = localStorage.getItem('materiaActiva') || '[]';
+    const MATERIAS_ACTIVAS = (() => { try { return JSON.parse(_materiaRaw); } catch { return []; } })();
     // Solo ADMINISTRADOR y DIRECTIVO pueden editar todas las materias
     const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
 
@@ -303,7 +304,7 @@
             const inputs = materias.map(sig => {
                 const m = evMaterias.find(x => x.sigla === sig);
                 const val = m ? m.calif : '';
-                const esMia = PUEDE_TODO || MATERIA_ACTIVA === sig;
+                const esMia = PUEDE_TODO || MATERIAS_ACTIVAS.includes(sig);
                 const cls = !esMia ? 'bloqueado' : (val ? (parseFloat(val) <= 6 ? 'riesgo' : 'ok') : 'pendiente');
                 return `
                 <div class="materia-item">
