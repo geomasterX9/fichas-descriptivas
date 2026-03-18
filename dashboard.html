@@ -154,7 +154,7 @@
         .modal-table tr:hover td { background: #fafbfc; }
         .badge-grupo { background: var(--azul-claro); color: var(--azul); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .badge-riesgo { color: var(--rojo); font-weight: 800; font-size: 15px; }
-        .link-exp { color: var(--azul); text-decoration: none; font-weight: 700; font-size: 12px; background: var(--azul-claro); padding: 5px 12px; border-radius: 8px; }
+        .link-exp { color: var(--azul); text-decoration: none; font-weight: 700; font-size: 12px; background: var(--azul-claro); padding: 5px 12px; border-radius: 8px; cursor: pointer; border: none; font-family: 'Outfit', sans-serif; }
         .link-exp:hover { background: #dbeafe; }
         .modal-footer { padding: 16px 28px; border-top: 1px solid var(--borde); }
         .btn-cerrar-modal {
@@ -396,6 +396,15 @@
             document.getElementById('modalParcial').style.display = 'none';
         }
 
+        function irAExpediente(id) {
+            if (!id || id === 'undefined') {
+                alert('Error: ID de alumno no disponible. Contacta al administrador.');
+                return;
+            }
+            cerrarModalParcial();
+            setTimeout(() => { window.location.href = 'expediente.html?id_alumno=' + id; }, 80);
+        }
+
         function filtrarParcial() {
             const grado = document.getElementById('filtroParcialGrado').value;
             const grupo = document.getElementById('filtroParcialGrupo').value;
@@ -403,13 +412,17 @@
             if (grado) lista = lista.filter(a => String(a.grado) === grado);
             if (grupo) lista = lista.filter(a => a.grupo === grupo);
             document.getElementById('contadorFiltroParcial').textContent = `Mostrando ${lista.length} alumno(s)`;
-            document.getElementById('bodyParcialModal').innerHTML = lista.map(a => `
-                <tr>
+            // Diagnóstico: verificar campos del primer elemento
+            if (lista.length > 0) console.log('[RiesgoParcial] Campos del alumno:', Object.keys(lista[0]), lista[0]);
+            document.getElementById('bodyParcialModal').innerHTML = lista.map(a => {
+                const idAlumno = a.id_alumno || a.id || a.alumno_id || null;
+                return `<tr>
                     <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
                     <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
                     <td>${(a.materias_riesgo || []).map(m => `<span style="background:#fff7ed;color:#92400e;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;margin:2px;display:inline-block;">${m}</span>`).join('')}</td>
-                    <td style="text-align:center;"><a href="expediente.html?id_alumno=${a.id_alumno}" class="link-exp">Ver →</a></td>
-                </tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos en este filtro.</td></tr>`;
+                    <td style="text-align:center;"><button class="link-exp" onclick="irAExpediente(${idAlumno})">Ver →</button></td>
+                </tr>`;
+            }).join('') || `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos en este filtro.</td></tr>`;
         }
 
         async function cargarKpis() {

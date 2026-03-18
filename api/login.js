@@ -1,48 +1,12 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const supabase = require('../lib/_supabase');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Redis } = require('@upstash/redis');
-
-const MAX_INTENTOS = 5;
-const VENTANA_SEG = 15 * 60; // 15 minutos en segundos
-
-// Cliente Redis — usa variables de entorno de Vercel
-const redis = new Redis({
-    url:   process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
-
-async function verificarRateLimit(ip) {
-    const key = `login_intentos:${ip}`;
-    try {
-        // Incrementar contador; si es la primera vez, crear con TTL de 15 min
-        const intentos = await redis.incr(key);
-        if (intentos === 1) {
-            await redis.expire(key, VENTANA_SEG);
-        }
-        if (intentos > MAX_INTENTOS) {
-            const ttl = await redis.ttl(key);
-            const mins = Math.ceil(ttl / 60);
-            return { bloqueado: true, minutosRestantes: mins };
-        }
-        return { bloqueado: false };
-    } catch (e) {
-        // Si Redis falla, permitir el acceso para no bloquear a usuarios legítimos
-        console.error('Redis error en rate limit:', e.message);
-        return { bloqueado: false };
-    }
-}
+const { setSecurityHeaders, sanitize } = require('../lib/_security');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'POST, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
-
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-    const limite = await verificarRateLimit(ip);
-    if (limite.bloqueado) {
-        return res.status(429).json({ error: `Demasiados intentos. Espera ${limite.minutosRestantes} minuto(s).` });
-    }
 
     try {
         const { usuario, password, rol } = req.body || {};
@@ -51,12 +15,12 @@ module.exports = async (req, res) => {
 
         const { data, error } = await supabase
             .from('usuarios')
-            .select('id_usuario, usuario, password, nombre_completo, rol')
-            .eq('usuario', sanitize(usuario.trim().toLowerCase()))
+            .select('id_usuario, usuario, password, nombre_completo, rol, materia')
+            .ilike('usuario', sanitize(usuario.trim()))
             .eq('rol', rol.toUpperCase().trim())
             .single();
 
-        // Siempre bcrypt — las contraseñas ya fueron migradas
+        // Siempre bcrypt para evitar timing attacks
         const hashFalso = '$2a$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
         const hash = data?.password || hashFalso;
         const passwordValido = await bcrypt.compare(password, hash);
@@ -65,12 +29,12 @@ module.exports = async (req, res) => {
             return res.status(401).json({ error: 'Usuario, contraseña o rol incorrectos.' });
         }
 
-        await redis.del(`login_intentos:${ip}`); // Limpiar contador al login exitoso
-
-        // Actualizar token_valido_desde para invalidar sesiones anteriores
+        // Actualizar token_valido_desde ANTES de firmar el token
+        // para que el iat del token sea siempre >= token_valido_desde
+        const ahora = new Date();
         await supabase
             .from('usuarios')
-            .update({ token_valido_desde: new Date().toISOString() })
+            .update({ token_valido_desde: ahora.toISOString() })
             .eq('id_usuario', data.id_usuario);
 
         const token = jwt.sign(
@@ -79,7 +43,14 @@ module.exports = async (req, res) => {
             { expiresIn: '8h' }
         );
 
-        res.json({ mensaje: 'Acceso concedido', token, id_usuario: data.id_usuario, nombre_completo: data.nombre_completo, rol: data.rol });
+        res.json({
+            mensaje: 'Acceso concedido',
+            token,
+            id_usuario: data.id_usuario,
+            nombre_completo: data.nombre_completo,
+            rol: data.rol,
+            materia: data.materia || null
+        });
 
     } catch (e) {
         console.error('Error en login:', e.message);

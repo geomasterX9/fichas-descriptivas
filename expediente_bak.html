@@ -341,17 +341,17 @@
             fotoActualSrc = a['fotos-alumnos'] || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             const puedeEditarFoto = (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO');
             const btnFotoHTML = puedeEditarFoto
-                ? `<button class='btn-foto' onclick='document.getElementById("inputFotoAlumno").click()' title='Cambiar foto'>📷</button>`
+                ? `<button class="btn-foto" onclick="document.getElementById('inputFotoAlumno').click()" title="Cambiar foto">📷</button>`
                 : '';
 
             document.getElementById('perfilDinamico').innerHTML = `
                 <div class="foto-wrapper">
-                    <img src='${fotoActualSrc}' class="foto-alumno" id="imgFotoAlumno">
+                    <img src="${fotoActualSrc}" class="foto-alumno" id="imgFotoAlumno">
                     ${btnFotoHTML}
                 </div>
                 <div class="perfil-info">
                     <div class="perfil-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
-                    <div class='perfil-sub'>Grado: <b>${a.grado}°</b> &nbsp;|&nbsp; Grupo: <b>&quot;${a.grupo}&quot;</b></div>
+                    <div class="perfil-sub">Grado: <b>${a.grado}°</b> &nbsp;|&nbsp; Grupo: <b>"${a.grupo}"</b></div>
                 </div>`;
 
             // Ficha socioeconómica
@@ -407,22 +407,22 @@
                 </div>
                 <!-- Situación de salud — tarjeta destacada -->
                 ${(f.condicion_salud || f.discapacidad) ? `
-                <div class='tarjeta-dato' style='margin-top:12px; border-left:4px solid #f59e0b; background:#fffbeb;'>
+                <div class="tarjeta-dato" style="margin-top:12px; border-left:4px solid #f59e0b; background:#fffbeb;">
                     <h4>🏥 Situación de Salud</h4>
                     ${f.condicion_salud ? `
-                    <div class='fila-dato'>
-                        <span class='fila-label'>Condición médica</span>
-                        <span class='fila-valor' style='color:#92400e; font-weight:600;'>${esc(f.condicion_salud)}</span>
+                    <div class="fila-dato">
+                        <span class="fila-label">Condición médica</span>
+                        <span class="fila-valor" style="color:#92400e; font-weight:600;">${esc(f.condicion_salud)}</span>
                     </div>` : ''}
                     ${f.discapacidad ? `
-                    <div class='fila-dato'>
-                        <span class='fila-label'>Discapacidad</span>
-                        <span class='fila-valor' style='color:#92400e; font-weight:600;'>${esc(f.discapacidad)}</span>
+                    <div class="fila-dato">
+                        <span class="fila-label">Discapacidad</span>
+                        <span class="fila-valor" style="color:#92400e; font-weight:600;">${esc(f.discapacidad)}</span>
                     </div>` : ''}
                 </div>` : `
-                <div style='margin-top:12px; background:#f0fdf6; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; font-size:13px; color:#166534;'>
+                <div style="margin-top:12px; background:#f0fdf6; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; font-size:13px; color:#166534;">
                     ✅ Sin condiciones de salud reportadas
-                </div>`}`;
+                </div>`}
             } else {
                 document.getElementById('contSocio').innerHTML =
                     '<p style="text-align:center; color:var(--muted); padding:20px;">Sin ficha socioeconómica capturada.</p>';
@@ -447,7 +447,7 @@
             if (datosCalificacionesGlobal.length > 0) {
                 const selector = document.getElementById('selectorGrafica');
                 datosCalificacionesGlobal[0].materias.forEach(m =>
-                    selector.innerHTML += `<option value='${m.sigla}'>📚 ${m.sigla}</option>`);
+                    selector.innerHTML += `<option value="${m.sigla}">📚 ${m.sigla}</option>`);
                 if (datosCalificacionesGlobal.length >= 2)
                     document.getElementById('optComparativo').style.display = '';
                 renderBoleta();
@@ -485,7 +485,7 @@
         formData.append('foto', archivo);
         formData.append('id_alumno', idAlumno);
         try {
-            const res = await apiFetch('/api/fotos', { method: 'POST', body: formData });
+            const res = await apiFetch('/api/foto-alumno', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.url) {
                 document.getElementById('imgFotoAlumno').src = data.url + '?t=' + Date.now();
@@ -498,9 +498,6 @@
     }
 
     function renderMotivos() {
-        // Solo docentes pueden ver y llenar motivos de reprobación
-        if (!['DOCENTE'].includes(rolActivo)) return;
-
         // Detectar trimestres con materias reprobadas (calif <= 6)
         const conReprobadas = datosCalificacionesGlobal.filter(c =>
             c.materias && c.materias.some(m => parseFloat(m.calif) <= 6)
