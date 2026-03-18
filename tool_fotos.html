@@ -168,7 +168,7 @@
         for (let i = 0; i < input.files.length; i++) formData.append('fotos', input.files[i]);
 
         try {
-            const res  = await apiFetch('/api/carga-masiva-fotos', { method: 'POST', body: formData });
+            const res  = await apiFetch('/api/fotos?accion=masiva', { method: 'POST', body: formData });
             const data = await res.json();
             loader.style.display = 'none';
 

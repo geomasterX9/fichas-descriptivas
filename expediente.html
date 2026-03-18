@@ -316,7 +316,8 @@
     let fotoActualSrc = '';
 
     window.onload = async () => {
-        if (!idAlumno) return window.location.href = 'buscador.html';
+        if (!idAlumno || idAlumno === 'undefined' || idAlumno === 'null')
+            return window.location.href = 'buscador.html';
 
         if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
             const btn = document.getElementById('btnRegresar');
@@ -340,17 +341,17 @@
             fotoActualSrc = a['fotos-alumnos'] || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             const puedeEditarFoto = (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO');
             const btnFotoHTML = puedeEditarFoto
-                ? `<button class="btn-foto" onclick="document.getElementById('inputFotoAlumno').click()" title="Cambiar foto">📷</button>`
+                ? `<button class='btn-foto' onclick='document.getElementById("inputFotoAlumno").click()' title='Cambiar foto'>📷</button>`
                 : '';
 
             document.getElementById('perfilDinamico').innerHTML = `
                 <div class="foto-wrapper">
-                    <img src="${fotoActualSrc}" class="foto-alumno" id="imgFotoAlumno">
+                    <img src='${fotoActualSrc}' class="foto-alumno" id="imgFotoAlumno">
                     ${btnFotoHTML}
                 </div>
                 <div class="perfil-info">
                     <div class="perfil-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
-                    <div class="perfil-sub">Grado: <b>${a.grado}°</b> &nbsp;|&nbsp; Grupo: <b>"${a.grupo}"</b></div>
+                    <div class='perfil-sub'>Grado: <b>${a.grado}°</b> &nbsp;|&nbsp; Grupo: <b>&quot;${a.grupo}&quot;</b></div>
                 </div>`;
 
             // Ficha socioeconómica
@@ -406,22 +407,22 @@
                 </div>
                 <!-- Situación de salud — tarjeta destacada -->
                 ${(f.condicion_salud || f.discapacidad) ? `
-                <div class="tarjeta-dato" style="margin-top:12px; border-left:4px solid #f59e0b; background:#fffbeb;">
+                <div class='tarjeta-dato' style='margin-top:12px; border-left:4px solid #f59e0b; background:#fffbeb;'>
                     <h4>🏥 Situación de Salud</h4>
                     ${f.condicion_salud ? `
-                    <div class="fila-dato">
-                        <span class="fila-label">Condición médica</span>
-                        <span class="fila-valor" style="color:#92400e; font-weight:600;">${esc(f.condicion_salud)}</span>
+                    <div class='fila-dato'>
+                        <span class='fila-label'>Condición médica</span>
+                        <span class='fila-valor' style='color:#92400e; font-weight:600;'>${esc(f.condicion_salud)}</span>
                     </div>` : ''}
                     ${f.discapacidad ? `
-                    <div class="fila-dato">
-                        <span class="fila-label">Discapacidad</span>
-                        <span class="fila-valor" style="color:#92400e; font-weight:600;">${esc(f.discapacidad)}</span>
+                    <div class='fila-dato'>
+                        <span class='fila-label'>Discapacidad</span>
+                        <span class='fila-valor' style='color:#92400e; font-weight:600;'>${esc(f.discapacidad)}</span>
                     </div>` : ''}
                 </div>` : `
-                <div style="margin-top:12px; background:#f0fdf6; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; font-size:13px; color:#166534;">
+                <div style='margin-top:12px; background:#f0fdf6; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; font-size:13px; color:#166534;'>
                     ✅ Sin condiciones de salud reportadas
-                </div>`}
+                </div>`}`;
             } else {
                 document.getElementById('contSocio').innerHTML =
                     '<p style="text-align:center; color:var(--muted); padding:20px;">Sin ficha socioeconómica capturada.</p>';
@@ -435,7 +436,7 @@
                     <td style="white-space:nowrap; font-size:12px;">${esc(r.fecha)}</td>
                     <td style="font-weight:700;">${esc(r.gravedad)}</td>
                     <td>${esc(r.motivo)}</td>
-                    <td style="font-size:12px; color:var(--muted);">${r.acuerdo ? esc(r.acuerdo) : '<span style="color:#cbd5e1;">—</span>'}</td>
+                    <td style="font-size:12px; color:var(--muted);">${r.acuerdo ? esc(r.acuerdo) : '<span style="color:#cbd5e1;">—</span>'}
                     <td style="font-size:12px; color:var(--muted);">${esc(r.nombre_reporta || '—')}</td>
                   </tr>`).join('')
                 : '<tr><td colspan="5" style="text-align:center; padding:16px; color:var(--muted);">Historial limpio.</td></tr>';
@@ -446,7 +447,7 @@
             if (datosCalificacionesGlobal.length > 0) {
                 const selector = document.getElementById('selectorGrafica');
                 datosCalificacionesGlobal[0].materias.forEach(m =>
-                    selector.innerHTML += `<option value="${m.sigla}">📚 ${m.sigla}</option>`);
+                    selector.innerHTML += `<option value='${m.sigla}'>📚 ${m.sigla}</option>`);
                 if (datosCalificacionesGlobal.length >= 2)
                     document.getElementById('optComparativo').style.display = '';
                 renderBoleta();
@@ -462,7 +463,15 @@
                         <p style="font-size:13px; margin-top:4px;">Se cargarán con la herramienta de importación.</p>
                     </div>`;
             }
-        } catch(e) { console.error('Error cargando expediente', e); }
+        } catch(e) {
+            console.error('Error cargando expediente', e);
+            document.getElementById('perfilDinamico').innerHTML =
+                `<div style="color:#fca5a5; padding:10px;">❌ Error al cargar: ${e.message}</div>`;
+            document.getElementById('contSocio').innerHTML =
+                `<p style="text-align:center; color:var(--rojo); padding:20px; font-weight:600;">
+                    Error al cargar el expediente. Revisa la consola o intenta de nuevo.
+                 </p>`;
+        }
     }
 
     async function subirFotoAlumno(input) {
@@ -476,7 +485,7 @@
         formData.append('foto', archivo);
         formData.append('id_alumno', idAlumno);
         try {
-            const res = await apiFetch('/api/foto-alumno', { method: 'POST', body: formData });
+            const res = await apiFetch('/api/fotos', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.url) {
                 document.getElementById('imgFotoAlumno').src = data.url + '?t=' + Date.now();
@@ -506,14 +515,14 @@
                 <div class="motivos-reprobadas">📚 Materias en riesgo: ${reprobadas}</div>
                 <textarea
                     class="motivos-textarea"
-                    id="motivos-t${c.trimestre}"
+                    id='motivos-t${c.trimestre}'
                     placeholder="Describe los motivos de reprobación en este trimestre..."
                 >${esc(c.motivos_reprobacion || '')}</textarea>
                 <div>
-                    <button class="btn-guardar-motivos" onclick="guardarMotivos(${c.trimestre})">
+                    <button class="btn-guardar-motivos" onclick='guardarMotivos(${c.trimestre})'>
                         💾 Guardar
                     </button>
-                    <span class="motivos-ok" id="ok-t${c.trimestre}">✅ Guardado</span>
+                    <span class="motivos-ok" id='ok-t${c.trimestre}'>✅ Guardado</span>
                 </div>
             </div>`;
         }).join('');
