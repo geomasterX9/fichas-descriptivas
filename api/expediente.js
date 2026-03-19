@@ -69,6 +69,27 @@ module.exports = async (req, res) => {
         return res.json({ exito: true });
     }
 
+    // Calificaciones manuales — solo ADMINISTRADOR
+    if (req.method === 'POST' && tipo === 'calificaciones_manual') {
+        if (usuario.rol !== 'ADMINISTRADOR') {
+            return res.status(403).json({ error: 'Solo el administrador puede capturar calificaciones manualmente.' });
+        }
+        const { id_alumno, trimestre, materias, promedio_trimestral } = req.body || {};
+        if (!id_alumno || !trimestre || !materias || !Array.isArray(materias))
+            return res.status(400).json({ error: 'Faltan parámetros.' });
+        const cicloActivo = await getCicloActivo();
+        const { error } = await supabase.from('calificaciones')
+            .upsert({
+                id_alumno:           parseInt(id_alumno),
+                trimestre:           parseInt(trimestre),
+                materias,
+                promedio_trimestral: promedio_trimestral || null,
+                ciclo_escolar:       cicloActivo
+            }, { onConflict: 'id_alumno,trimestre,ciclo_escolar' });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+
     // Guardar motivos de reprobación — cualquier rol puede registrarlos
     if (req.method === 'POST' && tipo === 'motivos_reprobacion') {
         const { id_alumno, trimestre, motivos_reprobacion } = req.body || {};
