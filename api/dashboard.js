@@ -168,13 +168,16 @@ module.exports = async (req, res) => {
             const ciclo = await getCicloActivo();
             const { data: cals } = await supabase
                 .from('calificaciones')
-                .select('id_alumno, trimestre, materias, motivos_reprobacion, id_usuario_motivos')
+                .select('id_alumno, trimestre, materias, motivos_reprobacion')
                 .eq('ciclo_escolar', ciclo)
-                .not('motivos_reprobacion', 'is', null)
-                .neq('motivos_reprobacion', '');
-            if (!cals || cals.length === 0) return res.json([]);
+                .not('motivos_reprobacion', 'is', null);
+            // Filtrar los que tienen al menos un motivo en el array jsonb
+            const calsConMotivos = (cals || []).filter(c =>
+                Array.isArray(c.motivos_reprobacion) && c.motivos_reprobacion.length > 0
+            );
+            if (calsConMotivos.length === 0) return res.json([]);
 
-            const ids = [...new Set(cals.map(c => c.id_alumno))];
+            const ids = [...new Set(calsConMotivos.map(c => c.id_alumno))];
             const { data: alumnos } = await supabase
                 .from('alumnos')
                 .select('id_alumno, nombre, apellidos, grado, grupo')
@@ -182,16 +185,9 @@ module.exports = async (req, res) => {
                 .eq('ciclo_escolar', ciclo)
                 .order('apellidos', { ascending: true });
 
-            // Obtener nombres de docentes
-            const { data: usuariosDB } = await supabase
-                .from('usuarios')
-                .select('id_usuario, nombre_completo, materia');
-            const mapaUsuarios = {};
-            (usuariosDB || []).forEach(u => { mapaUsuarios[u.id_usuario] = u; });
-
             const lista = [];
             (alumnos || []).forEach(a => {
-                const regsCal = cals.filter(c => c.id_alumno === a.id_alumno);
+                const regsCal = calsConMotivos.filter(c => c.id_alumno === a.id_alumno);
                 regsCal.forEach(c => {
                     const reprobadas = (c.materias || [])
                         .filter(m => parseFloat(m.calif) < 6)
@@ -209,15 +205,6 @@ module.exports = async (req, res) => {
                                 nombre_docente: mv.nombre || '—',
                                 materia_docente: mv.materia || '—'
                             });
-                        });
-                    } else {
-                        lista.push({
-                            ...a,
-                            trimestre: c.trimestre,
-                            materias_reprobadas: reprobadas,
-                            motivos_reprobacion: '—',
-                            nombre_docente: '—',
-                            materia_docente: '—'
                         });
                     }
                 });
