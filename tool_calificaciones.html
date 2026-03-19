@@ -89,6 +89,41 @@
         .log-load  { background: var(--azul-claro); color: var(--azul); border: 1px solid #bfdbfe; }
 
         @media (max-width: 500px) { .filtros-row { gap: 8px; } }
+
+        /* Captura manual */
+        .seccion-titulo {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted); margin-bottom: 14px;
+        }
+        .input-buscar {
+            width: 100%; padding: 10px 14px; border: 1.5px solid var(--borde);
+            border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: var(--blanco); outline: none; margin-bottom: 12px;
+        }
+        .input-buscar:focus { border-color: var(--azul); }
+        .alumno-encontrado {
+            background: var(--azul-claro); border: 1px solid #bfdbfe;
+            border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+            font-size: 14px; font-weight: 700; color: var(--azul); display: none;
+        }
+        .materias-grid-manual {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px; margin-bottom: 20px;
+        }
+        .materia-item-manual { display: flex; flex-direction: column; gap: 4px; }
+        .materia-label-manual {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.6px; color: var(--muted); text-align: center;
+        }
+        .materia-input-manual {
+            width: 100%; padding: 8px; text-align: center;
+            border: 1.5px solid var(--borde); border-radius: 9px;
+            font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            color: var(--texto); outline: none; transition: border-color 0.15s;
+        }
+        .materia-input-manual:focus { border-color: var(--azul); }
+        .materia-input-manual.riesgo { border-color: var(--rojo); background: #fff0f1; color: var(--rojo); }
+        .materia-input-manual.ok { border-color: var(--verde); background: var(--verde-claro); }
     </style>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
@@ -137,6 +172,49 @@
         <div class="log-box" id="log"></div>
     </div>
 
+
+    <!-- CARD CAPTURA MANUAL -->
+    <div class="card">
+        <div class="seccion-titulo">✏️ Captura Manual de Calificaciones</div>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">
+            Para alumnos con cambio de grupo u omisiones en la importación masiva.
+        </p>
+
+        <div class="filtros-row">
+            <div class="filtro-item">
+                <label>Grado</label>
+                <select id="m-g" onchange="actualizarMaterias()">
+                    <option value="1">1°</option>
+                    <option value="2">2°</option>
+                    <option value="3">3°</option>
+                </select>
+            </div>
+            <div class="filtro-item">
+                <label>Trimestre</label>
+                <select id="m-t">
+                    <option value="1">Trimestre 1</option>
+                    <option value="2">Trimestre 2</option>
+                    <option value="3">Trimestre 3</option>
+                </select>
+            </div>
+        </div>
+
+        <label style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted);">ID o nombre del alumno</label>
+        <input type="text" class="input-buscar" id="m-buscar"
+            placeholder="Escribe el ID o nombre del alumno..."
+            oninput="buscarAlumnoManual()">
+        <div id="m-resultados" style="margin-bottom:12px;"></div>
+        <div class="alumno-encontrado" id="m-alumno-sel"></div>
+
+        <div id="m-form" style="display:none;">
+            <div class="materias-grid-manual" id="m-materias"></div>
+            <button class="btn-subir" style="display:block;" onclick="guardarManual()">
+                💾 GUARDAR CALIFICACIONES
+            </button>
+            <div class="log-box" id="m-log"></div>
+        </div>
+    </div>
+
 </div>
 
 <script src="auth-helper.js"></script>
@@ -182,6 +260,167 @@
         }
     }
 </script>
+
+    // ── CAPTURA MANUAL ──────────────────────────────────────
+    const MATERIAS_MANUAL = {
+        1: ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'],
+        2: ['ESP','MAT','SLI','CIE','HIS','FCE','ETE','EFI','ART','ESO'],
+        3: ['ESP','MAT','SLI','CIE','HIS','FCE','ETE','EFI','ART','ESO']
+    };
+
+    let alumnoSelManual = null;
+    let todosAlumnos = [];
+
+    // Cargar todos los alumnos al inicio
+    window.addEventListener('load', async () => {
+        try {
+            const res = await apiFetch('/api/alumnos');
+            if (res) todosAlumnos = await res.json();
+        } catch(e) {}
+    });
+
+    function actualizarMaterias() {
+        if (alumnoSelManual) renderMateriasManual();
+    }
+
+    function buscarAlumnoManual() {
+        const q = document.getElementById('m-buscar').value.trim().toLowerCase();
+        const cont = document.getElementById('m-resultados');
+        if (q.length < 2) { cont.innerHTML = ''; return; }
+
+        const resultados = todosAlumnos.filter(a =>
+            String(a.id_alumno) === q ||
+            `${a.apellidos} ${a.nombre}`.toLowerCase().includes(q)
+        ).slice(0, 6);
+
+        if (resultados.length === 0) {
+            cont.innerHTML = '<div style="font-size:13px; color:var(--muted); padding:8px 0;">Sin resultados.</div>';
+            return;
+        }
+
+        cont.innerHTML = resultados.map(a => `
+            <div onclick="seleccionarAlumnoManual(${a.id_alumno})"
+                style="padding:10px 14px; background:var(--blanco); border:1.5px solid var(--borde);
+                border-radius:10px; margin-bottom:6px; cursor:pointer; font-size:13px;
+                font-weight:600; transition:border-color 0.15s;"
+                onmouseover="this.style.borderColor='var(--azul)'"
+                onmouseout="this.style.borderColor='var(--borde)'">
+                <span style="color:var(--azul); font-weight:800;">#${a.id_alumno}</span>
+                — ${a.apellidos} ${a.nombre}
+                <span style="color:var(--muted); font-weight:400;">${a.grado}° "${a.grupo}"</span>
+            </div>`).join('');
+    }
+
+    async function seleccionarAlumnoManual(id) {
+        alumnoSelManual = todosAlumnos.find(a => a.id_alumno === id);
+        if (!alumnoSelManual) return;
+
+        document.getElementById('m-buscar').value = `${alumnoSelManual.apellidos} ${alumnoSelManual.nombre}`;
+        document.getElementById('m-resultados').innerHTML = '';
+
+        const sel = document.getElementById('m-alumno-sel');
+        sel.textContent = `✅ ${alumnoSelManual.apellidos} ${alumnoSelManual.nombre} — ${alumnoSelManual.grado}° Grupo "${alumnoSelManual.grupo}"`;
+        sel.style.display = 'block';
+
+        await renderMateriasManual();
+        document.getElementById('m-form').style.display = 'block';
+    }
+
+    async function renderMateriasManual() {
+        const grado    = parseInt(document.getElementById('m-g').value);
+        const trimestre = parseInt(document.getElementById('m-t').value);
+        const materias = MATERIAS_MANUAL[grado] || MATERIAS_MANUAL[1];
+
+        // Cargar calificaciones existentes
+        let calExistentes = [];
+        try {
+            const res = await apiFetch(`/api/expediente?tipo=calificaciones&id=${alumnoSelManual.id_alumno}`);
+            if (res) {
+                const data = await res.json();
+                const trimData = data.find(c => c.trimestre === trimestre);
+                if (trimData) calExistentes = trimData.materias || [];
+            }
+        } catch(e) {}
+
+        document.getElementById('m-materias').innerHTML = materias.map(sig => {
+            const existe = calExistentes.find(m => m.sigla === sig);
+            const val = existe ? existe.calif : '';
+            const cls = val ? (parseFloat(val) <= 6 ? 'riesgo' : 'ok') : '';
+            return `
+            <div class="materia-item-manual">
+                <div class="materia-label-manual">${sig}</div>
+                <input type="number" min="5" max="10" step="1"
+                    class="materia-input-manual ${cls}"
+                    id="mc-${sig}" value="${val}" placeholder="—"
+                    oninput="colorearManual(this)"
+                    onblur="validarManual(this)">
+            </div>`;
+        }).join('');
+    }
+
+    function colorearManual(input) {
+        const val = parseFloat(input.value);
+        input.classList.remove('riesgo', 'ok');
+        if (!input.value) return;
+        input.classList.add(val <= 6 ? 'riesgo' : 'ok');
+    }
+
+    function validarManual(input) {
+        if (!input.value) return;
+        let val = Math.round(parseFloat(input.value));
+        if (val < 5) val = 5;
+        if (val > 10) val = 10;
+        input.value = val;
+        colorearManual(input);
+    }
+
+    async function guardarManual() {
+        if (!alumnoSelManual) return;
+        const grado    = parseInt(document.getElementById('m-g').value);
+        const trimestre = parseInt(document.getElementById('m-t').value);
+        const materias = MATERIAS_MANUAL[grado] || MATERIAS_MANUAL[1];
+        const logBox   = document.getElementById('m-log');
+
+        const payload = materias
+            .map(sig => ({ sigla: sig, calif: document.getElementById(`mc-${sig}`)?.value || '' }))
+            .filter(m => m.calif !== '');
+
+        if (payload.length === 0) {
+            logBox.className = 'log-box log-error'; logBox.style.display = 'block';
+            logBox.innerHTML = '❌ Captura al menos una calificación.';
+            return;
+        }
+
+        logBox.className = 'log-box log-load'; logBox.style.display = 'block';
+        logBox.innerHTML = '⏳ Guardando...';
+
+        try {
+            const res = await apiFetch('/api/expediente?tipo=calificaciones_manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_alumno: alumnoSelManual.id_alumno,
+                    trimestre,
+                    materias: payload,
+                    promedio_trimestral: parseFloat(
+                        (payload.reduce((s, m) => s + parseFloat(m.calif), 0) / payload.length).toFixed(1)
+                    )
+                })
+            });
+            if (res && res.ok) {
+                logBox.className = 'log-box log-ok';
+                logBox.innerHTML = `✅ <strong>¡Guardado!</strong> Calificaciones del trimestre ${trimestre} actualizadas para ${alumnoSelManual.apellidos} ${alumnoSelManual.nombre}.`;
+            } else {
+                const data = await res.json();
+                logBox.className = 'log-box log-error';
+                logBox.innerHTML = '❌ Error: ' + (data.error || 'No se pudo guardar.');
+            }
+        } catch(e) {
+            logBox.className = 'log-box log-error';
+            logBox.innerHTML = '❌ Error de conexión.';
+        }
+    }
+
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
