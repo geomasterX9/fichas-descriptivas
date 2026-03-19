@@ -196,14 +196,30 @@ module.exports = async (req, res) => {
                     const reprobadas = (c.materias || [])
                         .filter(m => parseFloat(m.calif) < 6)
                         .map(m => `${m.sigla}: ${m.calif}`).join(', ');
-                    const docente = c.id_usuario_motivos ? mapaUsuarios[c.id_usuario_motivos] : null;
-                    lista.push({
-                        ...a,
-                        trimestre: c.trimestre,
-                        materias_reprobadas: reprobadas,
-                        motivos_reprobacion: c.motivos_reprobacion,
-                        nombre_docente: docente ? docente.nombre_completo : '—'
-                    });
+                    // motivos_reprobacion es ahora un array jsonb
+                    const motivosArr = Array.isArray(c.motivos_reprobacion) ? c.motivos_reprobacion : [];
+                    // Crear una fila por cada motivo registrado
+                    if (motivosArr.length > 0) {
+                        motivosArr.forEach(mv => {
+                            lista.push({
+                                ...a,
+                                trimestre: c.trimestre,
+                                materias_reprobadas: reprobadas,
+                                motivos_reprobacion: mv.texto || '—',
+                                nombre_docente: mv.nombre || '—',
+                                materia_docente: mv.materia || '—'
+                            });
+                        });
+                    } else {
+                        lista.push({
+                            ...a,
+                            trimestre: c.trimestre,
+                            materias_reprobadas: reprobadas,
+                            motivos_reprobacion: '—',
+                            nombre_docente: '—',
+                            materia_docente: '—'
+                        });
+                    }
                 });
             });
             return res.json(lista);

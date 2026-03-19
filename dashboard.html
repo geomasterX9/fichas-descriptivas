@@ -481,7 +481,7 @@
                     <td style="font-weight:600;">T${a.trimestre}</td>
                     <td style="font-size:12px; color:var(--rojo); font-weight:700;">${esc(a.materias_reprobadas || '')}</td>
                     <td style="font-size:12px; color:var(--muted); max-width:220px;">${esc(a.motivos_reprobacion || '—')}</td>
-                    <td style="font-size:12px; color:var(--muted);">${esc(a.nombre_docente || '—')}</td>
+                    <td style="font-size:12px; color:var(--muted);">${esc(a.nombre_docente || '—')} <span style="color:var(--azul); font-weight:700;">${esc(a.materia_docente || '')}</span></td>
                     <td style="text-align:center;"><button class="link-exp" onclick="irMotivosExp(${a.id_alumno})">Ver →</button></td>
                 </tr>`).join('');
         }

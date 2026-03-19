@@ -71,15 +71,49 @@ module.exports = async (req, res) => {
 
     // Guardar motivos de reprobación — cualquier rol puede registrarlos
     if (req.method === 'POST' && tipo === 'motivos_reprobacion') {
-        const { id_alumno, trimestre, motivos_reprobacion } = req.body || {};
+        const { id_alumno, trimestre, motivos_reprobacion, materia } = req.body || {};
         if (!id_alumno || !trimestre) return res.status(400).json({ error: 'Faltan parámetros.' });
         if (typeof motivos_reprobacion !== 'string' || motivos_reprobacion.length > 1000)
             return res.status(400).json({ error: 'El texto no puede exceder 1000 caracteres.' });
+
+        // Obtener nombre del docente
+        const { data: usuarioDB } = await supabase
+            .from('usuarios').select('nombre_completo').eq('id_usuario', usuario.id).single();
+        const nombreDocente = usuarioDB?.nombre_completo || '—';
+
+        // Leer motivos actuales
+        const { data: calActual } = await supabase
+            .from('calificaciones')
+            .select('motivos_reprobacion')
+            .eq('id_alumno', parseInt(id_alumno))
+            .eq('trimestre', parseInt(trimestre))
+            .single();
+
+        let motivosArr = [];
+        if (calActual?.motivos_reprobacion && Array.isArray(calActual.motivos_reprobacion)) {
+            motivosArr = calActual.motivos_reprobacion;
+        }
+
+        // Reemplazar o agregar la entrada de este docente
+        const idx = motivosArr.findIndex(m => m.id_usuario === usuario.id && m.materia === materia);
+        const nuevaEntrada = {
+            id_usuario: usuario.id,
+            nombre: nombreDocente,
+            materia: materia || '',
+            texto: motivos_reprobacion.trim()
+        };
+
+        if (idx >= 0) {
+            motivosArr[idx] = nuevaEntrada;
+        } else {
+            motivosArr.push(nuevaEntrada);
+        }
+
+        // Limpiar entradas vacías
+        motivosArr = motivosArr.filter(m => m.texto && m.texto.trim() !== '');
+
         const { error } = await supabase.from('calificaciones')
-            .update({
-                motivos_reprobacion: motivos_reprobacion.trim() || null,
-                id_usuario_motivos: usuario.id
-            })
+            .update({ motivos_reprobacion: motivosArr.length > 0 ? motivosArr : null })
             .eq('id_alumno', parseInt(id_alumno))
             .eq('trimestre', parseInt(trimestre));
         if (error) return res.status(400).json({ error: error.message });
