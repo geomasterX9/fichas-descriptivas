@@ -190,8 +190,19 @@
                 </select>
             </div>
             <div class="filtro-item">
+                <label>Grupo</label>
+                <select id="m-gr">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                </select>
+            </div>
+            <div class="filtro-item">
                 <label>Trimestre</label>
-                <select id="m-t">
+                <select id="m-t" onchange="actualizarMaterias()">
                     <option value="1">Trimestre 1</option>
                     <option value="2">Trimestre 2</option>
                     <option value="3">Trimestre 3</option>
@@ -318,6 +329,9 @@
 
         document.getElementById('m-buscar').value = `${alumnoSelManual.apellidos} ${alumnoSelManual.nombre}`;
         document.getElementById('m-resultados').innerHTML = '';
+        // Precargar grado y grupo del alumno
+        document.getElementById('m-g').value  = String(alumnoSelManual.grado);
+        document.getElementById('m-gr').value = alumnoSelManual.grupo;
 
         const sel = document.getElementById('m-alumno-sel');
         sel.textContent = `✅ ${alumnoSelManual.apellidos} ${alumnoSelManual.nombre} — ${alumnoSelManual.grado}° Grupo "${alumnoSelManual.grupo}"`;
