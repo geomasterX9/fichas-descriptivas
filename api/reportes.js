@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
 
     else if (req.method === 'POST') {
         try {
-            const { id_alumno, gravedad, motivo, id_usuario, fecha } = req.body || {};
+            const { id_alumno, gravedad, motivo, id_usuario, fecha, acuerdo } = req.body || {};
 
             if (!id_alumno || !gravedad || !motivo || !id_usuario)
                 return res.status(400).json({ error: 'Todos los campos son requeridos.' });
@@ -58,6 +58,7 @@ module.exports = async (req, res) => {
                 id_usuario: parseInt(id_usuario),
                 gravedad,
                 motivo: sanitize(motivo.trim()),
+                acuerdo: acuerdo ? sanitize(acuerdo.trim()) : null,
                 fecha: fecha || new Date().toISOString().split('T')[0]
             };
             const { error } = await supabase.from('reportes_disciplinarios').insert([payload]);
