@@ -456,6 +456,12 @@
             document.getElementById('modalMotivos').style.display = 'none';
         }
 
+        function irMotivosExp(id) {
+            if (!id || id === 'undefined') return;
+            cerrarModalMotivos();
+            setTimeout(() => { window.location.href = 'expediente.html?id_alumno=' + id + '&from=dashboard'; }, 80);
+        }
+
         function filtrarMotivos() {
             const grado = document.getElementById('filtroMotivoGrado').value;
             const grupo = document.getElementById('filtroMotivoGrupo').value;
@@ -475,7 +481,8 @@
                     <td style="font-weight:600;">T${a.trimestre}</td>
                     <td style="font-size:12px; color:var(--rojo); font-weight:700;">${esc(a.materias_reprobadas || '')}</td>
                     <td style="font-size:12px; color:var(--muted); max-width:220px;">${esc(a.motivos_reprobacion || '—')}</td>
-                    <td style="text-align:center;"><button class="link-exp" onclick="irAExpediente(${a.id_alumno})">Ver →</button></td>
+                    <td style="font-size:12px; color:var(--muted);">${esc(a.nombre_docente || '—')}</td>
+                    <td style="text-align:center;"><button class="link-exp" onclick="irMotivosExp(${a.id_alumno})">Ver →</button></td>
                 </tr>`).join('');
         }
 
@@ -656,6 +663,7 @@
                             <th>Trimestre</th>
                             <th>Materias reprobadas</th>
                             <th>Motivos registrados</th>
+                            <th>Registrado por</th>
                             <th style="text-align:center;">Expediente</th>
                         </tr>
                     </thead>

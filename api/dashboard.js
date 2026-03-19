@@ -168,7 +168,7 @@ module.exports = async (req, res) => {
             const ciclo = await getCicloActivo();
             const { data: cals } = await supabase
                 .from('calificaciones')
-                .select('id_alumno, trimestre, materias, motivos_reprobacion')
+                .select('id_alumno, trimestre, materias, motivos_reprobacion, id_usuario_motivos')
                 .eq('ciclo_escolar', ciclo)
                 .not('motivos_reprobacion', 'is', null)
                 .neq('motivos_reprobacion', '');
@@ -182,6 +182,13 @@ module.exports = async (req, res) => {
                 .eq('ciclo_escolar', ciclo)
                 .order('apellidos', { ascending: true });
 
+            // Obtener nombres de docentes
+            const { data: usuariosDB } = await supabase
+                .from('usuarios')
+                .select('id_usuario, nombre_completo, materia');
+            const mapaUsuarios = {};
+            (usuariosDB || []).forEach(u => { mapaUsuarios[u.id_usuario] = u; });
+
             const lista = [];
             (alumnos || []).forEach(a => {
                 const regsCal = cals.filter(c => c.id_alumno === a.id_alumno);
@@ -189,11 +196,13 @@ module.exports = async (req, res) => {
                     const reprobadas = (c.materias || [])
                         .filter(m => parseFloat(m.calif) < 6)
                         .map(m => `${m.sigla}: ${m.calif}`).join(', ');
+                    const docente = c.id_usuario_motivos ? mapaUsuarios[c.id_usuario_motivos] : null;
                     lista.push({
                         ...a,
                         trimestre: c.trimestre,
                         materias_reprobadas: reprobadas,
-                        motivos_reprobacion: c.motivos_reprobacion
+                        motivos_reprobacion: c.motivos_reprobacion,
+                        nombre_docente: docente ? docente.nombre_completo : '—'
                     });
                 });
             });
