@@ -261,10 +261,10 @@
     </div>
 
     <div class="seccion">
-        <div class="seccion-header naranja">II. Historial de Observaciones</div>
+        <div class="seccion-header naranja">II. Historial de Reportes</div>
         <div class="seccion-body">
             <button class="btn-reporte" onclick="window.location.href='captura_reporte.html?id_alumno='+idAlumno">
-                + REGISTRAR OBSERVACIÓN
+                + REGISTRAR REPORTE
             </button>
             <table class="tabla-reportes">
                 <thead>
@@ -498,88 +498,63 @@
     }
 
     function renderMotivos() {
+        // Solo docentes pueden ver y llenar motivos de reprobación
+        if (!['DOCENTE'].includes(rolActivo)) return;
+
+        // Materias asignadas al docente en sesión
         const _raw = localStorage.getItem('materiaActiva') || '[]';
         const materiasDocente = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
-        const esDocente = rolActivo === 'DOCENTE';
 
+        // Detectar trimestres con materias reprobadas (calif < 6, es decir solo 5)
+        // y que correspondan a las materias del docente
         const conReprobadas = datosCalificacionesGlobal.map(c => {
-            const todasReprobadas = (c.materias || []).filter(m => parseFloat(m.calif) < 6);
-            const misReprobadas   = todasReprobadas.filter(m =>
-                materiasDocente.length === 0 || materiasDocente.includes(m.sigla)
+            const reprobadas = (c.materias || []).filter(m =>
+                parseFloat(m.calif) < 6 &&
+                (materiasDocente.length === 0 || materiasDocente.includes(m.sigla))
             );
-            // Motivos ya guardados (array jsonb)
-            const motivosArr = Array.isArray(c.motivos_reprobacion) ? c.motivos_reprobacion : [];
-            return { ...c, _todas: todasReprobadas, _mias: misReprobadas, _motivos: motivosArr };
-        }).filter(c => c._todas.length > 0);
+            return { ...c, _reprobadas: reprobadas };
+        }).filter(c => c._reprobadas.length > 0);
 
-        if (conReprobadas.length === 0) return;
-        if (esDocente && conReprobadas.every(c => c._mias.length === 0)) return;
+        if (conReprobadas.length === 0) return; // Sin reprobadas del docente — no mostrar
 
         document.getElementById('seccionMotivos').style.display = '';
         const cont = document.getElementById('contMotivos');
-        const idUsuario = parseInt(localStorage.getItem('idUsuario'));
-
         cont.innerHTML = conReprobadas.map(c => {
-            const todasStr = c._todas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
-            const misStr   = c._mias.map(m => `${m.sigla}: ${m.calif}`).join(', ');
-
-            if (!esDocente) {
-                // Modo lectura — mostrar todos los motivos registrados por cada docente
-                const motivosHtml = c._motivos.length > 0
-                    ? c._motivos.map(mv => `
-                        <div style="background:#fff; border:1px solid var(--borde); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
-                            <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">
-                                ${esc(mv.nombre || '—')} · ${esc(mv.materia || '—')}
-                            </div>
-                            <div style="font-size:13px; color:var(--texto); line-height:1.6;">${esc(mv.texto || '')}</div>
-                        </div>`).join('')
-                    : `<div style="font-size:12px; color:var(--muted); font-style:italic; padding:8px 0;">Sin motivos registrados aún.</div>`;
-                return `
-                <div class="motivos-card">
-                    <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
-                    <div class="motivos-reprobadas">📚 Materias reprobadas: ${todasStr}</div>
-                    ${motivosHtml}
-                </div>`;
-            }
-
-            // Modo editable — una textarea por cada materia propia reprobada
-            const editables = c._mias.map(m => {
-                const motivoExistente = c._motivos.find(mv => mv.id_usuario === idUsuario && mv.materia === m.sigla);
-                return `
-                <div style="margin-bottom:14px;">
-                    <div style="font-size:11px; font-weight:700; color:#92400e; margin-bottom:6px;">${m.sigla}: ${m.calif}</div>
-                    <textarea class="motivos-textarea" id='motivos-t${c.trimestre}-${m.sigla}'
-                        placeholder="Describe los motivos de reprobación en ${m.sigla}..."
-                    >${esc(motivoExistente?.texto || '')}</textarea>
-                    <div>
-                        <button class="btn-guardar-motivos" onclick='guardarMotivos(${c.trimestre}, "${m.sigla}")'>
-                            💾 Guardar
-                        </button>
-                        <span class="motivos-ok" id='ok-t${c.trimestre}-${m.sigla}'>✅ Guardado</span>
-                    </div>
-                </div>`;
-            }).join('');
-
+            const reprobadas = c._reprobadas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
             return `
             <div class="motivos-card">
                 <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
-                <div class="motivos-reprobadas">📚 Mis materias en riesgo: ${misStr}</div>
-                ${editables}
+                <div class="motivos-reprobadas">📚 Materias en riesgo: ${reprobadas}</div>
+                <textarea
+                    class="motivos-textarea"
+                    id='motivos-t${c.trimestre}'
+                    placeholder="Describe los motivos de reprobación en este trimestre..."
+                >${esc(c.motivos_reprobacion || '')}</textarea>
+                <div>
+                    <button class="btn-guardar-motivos" onclick='guardarMotivos(${c.trimestre})'>
+                        💾 Guardar
+                    </button>
+                    <span class="motivos-ok" id='ok-t${c.trimestre}'>✅ Guardado</span>
+                </div>
             </div>`;
         }).join('');
     }
 
-    async function guardarMotivos(trimestre, materia) {
-        const motivos = document.getElementById(`motivos-t${trimestre}-${materia}`)?.value || '';
-        const okSpan  = document.getElementById(`ok-t${trimestre}-${materia}`);
+    async function guardarMotivos(trimestre) {
+        const motivos = document.getElementById(`motivos-t${trimestre}`).value;
+        const okSpan  = document.getElementById(`ok-t${trimestre}`);
         try {
             const res = await apiFetch('/api/expediente?tipo=motivos_reprobacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_alumno: idAlumno, trimestre, motivos_reprobacion: motivos, materia })
+                body: JSON.stringify({ id_alumno: idAlumno, trimestre, motivos_reprobacion: motivos })
             });
             if (res && res.ok) {
-                if (okSpan) { okSpan.style.display = 'inline'; setTimeout(() => { okSpan.style.display = 'none'; }, 2500); }
+                okSpan.style.display = 'inline';
+                setTimeout(() => { okSpan.style.display = 'none'; }, 2500);
+                // Actualizar datos locales
+                const idx = datosCalificacionesGlobal.findIndex(c => c.trimestre === trimestre);
+                if (idx >= 0) datosCalificacionesGlobal[idx].motivos_reprobacion = motivos;
             }
         } catch(e) { alert('Error al guardar. Intenta de nuevo.'); }
     }
@@ -728,7 +703,7 @@
                 <div style="font-size:13px; color:#64748b; margin-top:4px;">${alumnoSub}</div>
             </div>
             <!-- Historial -->
-            <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#64748b; margin-bottom:8px; border-left:4px solid #f59e0b; padding-left:8px;">Historial de Observaciones</div>
+            <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#64748b; margin-bottom:8px; border-left:4px solid #f59e0b; padding-left:8px;">Historial de Reportes</div>
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <thead>
                     <tr style="background:#f8fafc;">

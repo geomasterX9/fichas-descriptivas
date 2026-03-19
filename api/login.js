@@ -9,15 +9,14 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
 
     try {
-        const { usuario, password, rol } = req.body || {};
-        if (!usuario || !password || !rol) return res.status(400).json({ error: 'Todos los campos son requeridos.' });
+        const { usuario, password } = req.body || {};
+        if (!usuario || !password) return res.status(400).json({ error: 'Usuario y contraseña son requeridos.' });
         if (typeof usuario !== 'string' || usuario.length > 100) return res.status(400).json({ error: 'Datos inválidos.' });
 
         const { data, error } = await supabase
             .from('usuarios')
             .select('id_usuario, usuario, password, nombre_completo, rol, materia')
             .ilike('usuario', sanitize(usuario.trim()))
-            .eq('rol', rol.toUpperCase().trim())
             .single();
 
         // Siempre bcrypt para evitar timing attacks

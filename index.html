@@ -89,16 +89,7 @@
             <p>Técnica 84 • Plataforma Segura</p>
         </div>
         <div class="card-body">
-            <div class="grupo">
-                <label>Tipo de usuario</label>
-                <select id="inRol">
-                    <option value="ADMINISTRADOR">Administrador</option>
-                    <option value="DIRECTIVO">Directivo</option>
-                    <option value="DOCENTE">Docente</option>
-                    <option value="PREFECTO">Prefecto</option>
-                    <option value="TRABAJO SOCIAL">Trabajo Social</option>
-                </select>
-            </div>
+
             <div class="grupo">
                 <label>Usuario</label>
                 <input type="text" id="inUsuario" placeholder="ej. alfonsolopez" autocomplete="username">
@@ -125,12 +116,12 @@
         async function iniciarSesion() {
             const user = document.getElementById('inUsuario').value.trim();
             const pass = document.getElementById('inPassword').value;
-            const rol  = document.getElementById('inRol').value;
+            const rol  = ''; // El backend detecta el rol automáticamente
             const msgError = document.getElementById('msgError');
             const btn = document.getElementById('btnSubmit');
 
             if (!user || !pass) {
-                msgError.innerText = 'Por favor, llena todos los campos.';
+                msgError.innerText = 'Por favor, ingresa tu usuario y contraseña.';
                 msgError.style.display = 'block'; return;
             }
             btn.innerText = 'Verificando...'; btn.disabled = true;
@@ -145,11 +136,10 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    localStorage.setItem('nombreActivo',   data.nombre_completo);
-                    localStorage.setItem('rolActivo',      data.rol);
-                    localStorage.setItem('authToken',      data.token);
-                    localStorage.setItem('idUsuario',      data.id_usuario);
-                    localStorage.setItem('materiaActiva',  JSON.stringify(data.materia || []));
+                    localStorage.setItem('nombreActivo', data.nombre_completo);
+                    localStorage.setItem('rolActivo',    data.rol);
+                    localStorage.setItem('authToken',    data.token);
+                    localStorage.setItem('idUsuario',    data.id_usuario);
                     registrarLog('LOGIN', `Acceso como ${data.rol}`);
                     btn.innerText = '¡Acceso correcto! ✅';
                     btn.style.background = '#2d9b6f';
