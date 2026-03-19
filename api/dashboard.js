@@ -163,6 +163,43 @@ module.exports = async (req, res) => {
             return res.json(lista);
         }
 
+        // Alumnos con motivos de reprobación registrados
+        if (tipo === 'motivos_reprobacion') {
+            const ciclo = await getCicloActivo();
+            const { data: cals } = await supabase
+                .from('calificaciones')
+                .select('id_alumno, trimestre, materias, motivos_reprobacion')
+                .eq('ciclo_escolar', ciclo)
+                .not('motivos_reprobacion', 'is', null)
+                .neq('motivos_reprobacion', '');
+            if (!cals || cals.length === 0) return res.json([]);
+
+            const ids = [...new Set(cals.map(c => c.id_alumno))];
+            const { data: alumnos } = await supabase
+                .from('alumnos')
+                .select('id_alumno, nombre, apellidos, grado, grupo')
+                .in('id_alumno', ids)
+                .eq('ciclo_escolar', ciclo)
+                .order('apellidos', { ascending: true });
+
+            const lista = [];
+            (alumnos || []).forEach(a => {
+                const regsCal = cals.filter(c => c.id_alumno === a.id_alumno);
+                regsCal.forEach(c => {
+                    const reprobadas = (c.materias || [])
+                        .filter(m => parseFloat(m.calif) < 6)
+                        .map(m => `${m.sigla}: ${m.calif}`).join(', ');
+                    lista.push({
+                        ...a,
+                        trimestre: c.trimestre,
+                        materias_reprobadas: reprobadas,
+                        motivos_reprobacion: c.motivos_reprobacion
+                    });
+                });
+            });
+            return res.json(lista);
+        }
+
         // Alumnos en riesgo disciplinario (falta grave o 3+ reportes)
         if (tipo === 'riesgo_disciplinario') {
             const ciclo = await getCicloActivo();

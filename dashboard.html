@@ -250,6 +250,23 @@
             </div>
         </div>
 
+        <!-- TARJETA MOTIVOS DE REPROBACIÓN -->
+        <div id="seccionMotivosAdmin" style="display:none; margin-bottom:24px;">
+            <div class="panel-tools" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; border-left:4px solid var(--rojo);">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div style="background:#fff0f1; border-radius:12px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;">📝</div>
+                    <div>
+                        <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:4px;">Motivos de Reprobación</div>
+                        <div style="font-size:28px; font-weight:900; color:var(--rojo);" id="contadorMotivosAdmin">—</div>
+                        <div style="font-size:12px; color:var(--muted); margin-top:2px;">alumnos con motivos de reprobación registrados</div>
+                    </div>
+                </div>
+                <button onclick="abrirModalMotivos()" style="background:var(--rojo); color:white; border:none; border-radius:10px; padding:12px 22px; font-size:14px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#c0303a'" onmouseout="this.style.background='var(--rojo)'">
+                    Ver detalle →
+                </button>
+            </div>
+        </div>
+
         <!-- GRÁFICA -->
         <div class="panel-grafica">
             <div class="panel-grafica-header">
@@ -349,6 +366,7 @@
             registrarLog('VER_DASHBOARD');
             await cargarKpis();
             cargarRiesgoParcial();
+            cargarMotivosAdmin();
 
             try {
                 const res = await apiFetch('/api/dashboard?tipo=estadisticas');
@@ -408,8 +426,57 @@
                     <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
                     <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
                     <td>${(a.materias_riesgo || []).map(m => `<span style="background:#fff7ed;color:#92400e;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;margin:2px;display:inline-block;">${m}</span>`).join('')}</td>
-                    <td style="text-align:center;"><a href="expediente.html?id_alumno=${a.id_alumno}&from=dashboard" class="link-exp">Ver →</a></td>
+                    <td style="text-align:center;"><a href="expediente.html?id_alumno=${a.id_alumno}" class="link-exp">Ver →</a></td>
                 </tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos en este filtro.</td></tr>`;
+        }
+
+
+        let datosMotivosAdmin = [];
+
+        async function cargarMotivosAdmin() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=motivos_reprobacion');
+                if (!res) return;
+                const data = await res.json();
+                if (!data || !Array.isArray(data) || data.length === 0) return;
+                datosMotivosAdmin = data;
+                document.getElementById('seccionMotivosAdmin').style.display = 'block';
+                document.getElementById('contadorMotivosAdmin').textContent = data.length;
+            } catch(e) { console.error('Error motivos admin:', e); }
+        }
+
+        function abrirModalMotivos() {
+            document.getElementById('modalMotivos').style.display = 'flex';
+            document.getElementById('filtroMotivoGrado').value = '';
+            document.getElementById('filtroMotivoGrupo').value = '';
+            filtrarMotivos();
+        }
+
+        function cerrarModalMotivos() {
+            document.getElementById('modalMotivos').style.display = 'none';
+        }
+
+        function filtrarMotivos() {
+            const grado = document.getElementById('filtroMotivoGrado').value;
+            const grupo = document.getElementById('filtroMotivoGrupo').value;
+            let lista = [...datosMotivosAdmin];
+            if (grado) lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo) lista = lista.filter(a => a.grupo === grupo);
+            document.getElementById('contadorFiltroMotivos').textContent = `Mostrando ${lista.length} alumno(s)`;
+            const tbody = document.getElementById('bodyMotivos');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">Sin registros con estos filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map(a => `
+                <tr>
+                    <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
+                    <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
+                    <td style="font-weight:600;">T${a.trimestre}</td>
+                    <td style="font-size:12px; color:var(--rojo); font-weight:700;">${esc(a.materias_reprobadas || '')}</td>
+                    <td style="font-size:12px; color:var(--muted); max-width:220px;">${esc(a.motivos_reprobacion || '—')}</td>
+                    <td style="text-align:center;"><button class="link-exp" onclick="irAExpediente(${a.id_alumno})">Ver →</button></td>
+                </tr>`).join('');
         }
 
         async function cargarKpis() {
@@ -526,7 +593,7 @@
                             <td><span class="badge-grupo">${a.grado}°"${a.grupo}"</span></td>
                             <td class="badge-riesgo">${a.promedio}</td>
                             <td style="font-size:11px; color:var(--muted);">${esc(a.materiasRiesgo)}</td>
-                            <td><a href="expediente.html?id_alumno=${a.id_alumno}&from=dashboard" class="link-exp">Ver expediente</a></td>
+                            <td><a href="expediente.html?id_alumno=${a.id_alumno}" class="link-exp">Ver expediente</a></td>
                         </tr>`).join('');
                 } else {
                     document.getElementById('m-tit').innerText = '📋 Historial General de Reportes';
@@ -557,5 +624,49 @@
         });
       }
     </script>
+
+    <!-- MODAL MOTIVOS DE REPROBACIÓN -->
+    <div class="modal-overlay" id="modalMotivos">
+        <div class="modal-contenido" style="max-width:980px;">
+            <div class="modal-header">
+                <div class="modal-titulo">📝 Motivos de Reprobación Registrados</div>
+                <button class="modal-cerrar" onclick="cerrarModalMotivos()">✕</button>
+            </div>
+            <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <select id="filtroMotivoGrado" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grados</option>
+                    <option value="1">1° Grado</option>
+                    <option value="2">2° Grado</option>
+                    <option value="3">3° Grado</option>
+                </select>
+                <select id="filtroMotivoGrupo" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grupos</option>
+                    <option value="A">Grupo A</option><option value="B">Grupo B</option>
+                    <option value="C">Grupo C</option><option value="D">Grupo D</option>
+                    <option value="E">Grupo E</option><option value="F">Grupo F</option>
+                </select>
+                <span id="contadorFiltroMotivos" style="font-size:13px; color:var(--muted); font-weight:600; margin-left:4px;"></span>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <table class="modal-table" id="tablaMotivos">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Grado/Grupo</th>
+                            <th>Trimestre</th>
+                            <th>Materias reprobadas</th>
+                            <th>Motivos registrados</th>
+                            <th style="text-align:center;">Expediente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyMotivos"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarModalMotivos()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

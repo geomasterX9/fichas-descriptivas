@@ -498,33 +498,54 @@
     }
 
     function renderMotivos() {
-        // Solo docentes pueden ver y llenar motivos de reprobación
-        if (!['DOCENTE'].includes(rolActivo)) return;
-
-        // Materias asignadas al docente en sesión
+        // Materias asignadas al docente en sesión (solo aplica si es DOCENTE)
         const _raw = localStorage.getItem('materiaActiva') || '[]';
         const materiasDocente = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
+        const esDocente = rolActivo === 'DOCENTE';
 
-        // Detectar trimestres con materias reprobadas (calif < 6, es decir solo 5)
-        // y que correspondan a las materias del docente
+        // Todos los trimestres con al menos una materia reprobada (calif < 6)
         const conReprobadas = datosCalificacionesGlobal.map(c => {
-            const reprobadas = (c.materias || []).filter(m =>
-                parseFloat(m.calif) < 6 &&
-                (materiasDocente.length === 0 || materiasDocente.includes(m.sigla))
+            // Todas las materias reprobadas del trimestre
+            const todasReprobadas = (c.materias || []).filter(m => parseFloat(m.calif) < 6);
+            // Materias editables por este docente (las suyas)
+            const misReprobadas = todasReprobadas.filter(m =>
+                materiasDocente.length === 0 || materiasDocente.includes(m.sigla)
             );
-            return { ...c, _reprobadas: reprobadas };
-        }).filter(c => c._reprobadas.length > 0);
+            return { ...c, _todas: todasReprobadas, _mias: misReprobadas };
+        }).filter(c => c._todas.length > 0);
 
-        if (conReprobadas.length === 0) return; // Sin reprobadas del docente — no mostrar
+        if (conReprobadas.length === 0) return;
+
+        // Docente: solo mostrar si tiene materias reprobadas propias
+        if (esDocente && conReprobadas.every(c => c._mias.length === 0)) return;
 
         document.getElementById('seccionMotivos').style.display = '';
         const cont = document.getElementById('contMotivos');
         cont.innerHTML = conReprobadas.map(c => {
-            const reprobadas = c._reprobadas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
+            const todasStr = c._todas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
+            const misStr   = c._mias.map(m => `${m.sigla}: ${m.calif}`).join(', ');
+
+            // Docente sin materias propias reprobadas en este trimestre — solo lectura
+            const puedeEditar = esDocente && c._mias.length > 0;
+
+            if (!esDocente) {
+                // Modo lectura para Admin, Directivo, Prefecto, Trabajo Social
+                return `
+                <div class="motivos-card">
+                    <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
+                    <div class="motivos-reprobadas">📚 Materias reprobadas: ${todasStr}</div>
+                    ${c.motivos_reprobacion
+                        ? `<div style="font-size:13px; color:var(--texto); background:#fff; border:1px solid var(--borde); border-radius:10px; padding:12px 14px; line-height:1.6;">${esc(c.motivos_reprobacion)}</div>`
+                        : `<div style="font-size:12px; color:var(--muted); font-style:italic; padding:8px 0;">Sin motivos registrados aún.</div>`
+                    }
+                </div>`;
+            }
+
+            // Modo editable para docente con materias propias reprobadas
             return `
             <div class="motivos-card">
                 <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
-                <div class="motivos-reprobadas">📚 Materias en riesgo: ${reprobadas}</div>
+                <div class="motivos-reprobadas">📚 Mis materias en riesgo: ${misStr}</div>
                 <textarea
                     class="motivos-textarea"
                     id='motivos-t${c.trimestre}'
