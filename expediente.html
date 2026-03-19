@@ -319,10 +319,24 @@
         if (!idAlumno || idAlumno === 'undefined' || idAlumno === 'null')
             return window.location.href = 'buscador.html';
 
-        if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
-            const btn = document.getElementById('btnRegresar');
-            btn.href = 'dashboard.html';
+        // Navegación contextual según ?from=
+        const from = new URLSearchParams(window.location.search).get('from');
+        const btn  = document.getElementById('btnRegresar');
+        const DESTINOS = {
+            'dashboard':  { href: 'dashboard.html',               label: '← Dashboard' },
+            'buscador':   { href: 'buscador.html',                label: '← Directorio' },
+            'alertas':    { href: 'alertas_disciplinarias.html',  label: '← Alertas' },
+            'fichas':     { href: 'tool_fichas.html',             label: '← Fichas' },
+            'reporte':    { href: `captura_reporte.html?id_alumno=${idAlumno}`, label: '← Reporte' },
+        };
+        if (from && DESTINOS[from]) {
+            btn.href      = DESTINOS[from].href;
+            btn.innerText = DESTINOS[from].label;
+        } else if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
+            btn.href      = 'dashboard.html';
             btn.innerText = '← Dashboard';
+        }
+        if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
             document.getElementById('btnBuscador').style.display = '';
         }
         if (['ADMINISTRADOR','DIRECTIVO','TRABAJO SOCIAL'].includes(rolActivo)) {

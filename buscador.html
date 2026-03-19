@@ -145,12 +145,6 @@
             border-radius: 9px; font-size: 12px; font-weight: 700;
             font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
         }
-        .btn-cambiar-grupo {
-            background: #fffbeb; color: #92400e;
-            border: 1px solid #fde68a; padding: 8px 14px;
-            border-radius: 9px; font-size: 12px; font-weight: 700;
-            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
-        }
 
         /* MODAL */
         .modal-overlay {
@@ -397,8 +391,7 @@
             if (rolUsuario === 'ADMINISTRADOR') {
                 accionAdmin = esBaja
                     ? `<button class="btn-reactivar-directa" onclick="actualizarEstatus('${a.id_alumno}','ACTIVO')">Reactivar</button>`
-                    : `<button class="btn-cambiar-grupo" onclick="abrirCambioGrupo('${a.id_alumno}')">🔀 Cambiar grupo</button>
-                       <button class="btn-baja-directa" onclick="actualizarEstatus('${a.id_alumno}','BAJA')">Dar Baja</button>`;
+                    : `<button class="btn-baja-directa" onclick="actualizarEstatus('${a.id_alumno}','BAJA')">Dar Baja</button>`;
             }
             cont.innerHTML += `
                 <div class="tarjeta-alumno ${esBaja ? 'tarjeta-baja' : ''}">
@@ -465,65 +458,6 @@
         } catch { alert('Error de conexión.'); }
     }
 
-
-    let idAlumnoCambio = null;
-
-    function abrirCambioGrupo(idAlumno) {
-        const alumno = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumno));
-        if (!alumno) return;
-        idAlumnoCambio = idAlumno;
-        document.getElementById('lblAlumnoCambio').textContent =
-            `${alumno.apellidos} ${alumno.nombre} — Actual: ${alumno.grado}° Grupo "${alumno.grupo}"`;
-        document.getElementById('ng_grado').value = String(alumno.grado);
-        document.getElementById('ng_grupo').value = alumno.grupo;
-        document.getElementById('modalCambioGrupo').style.display = 'flex';
-    }
-
-    function cerrarCambioGrupo() {
-        document.getElementById('modalCambioGrupo').style.display = 'none';
-        idAlumnoCambio = null;
-    }
-
-    async function confirmarCambioGrupo() {
-        if (!idAlumnoCambio) return;
-        const alumno  = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumnoCambio));
-        const nuevoGrado = document.getElementById('ng_grado').value;
-        const nuevoGrupo = document.getElementById('ng_grupo').value;
-
-        if (String(alumno.grado) === nuevoGrado && alumno.grupo === nuevoGrupo) {
-            alert('El alumno ya está en ese grado y grupo.');
-            return;
-        }
-        if (!confirm(`¿Mover a ${alumno.apellidos} ${alumno.nombre} al ${nuevoGrado}° Grupo "${nuevoGrupo}"?`)) return;
-
-        try {
-            const res = await apiFetch('/api/alumnos', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id_alumno: parseInt(idAlumnoCambio),
-                    grado: parseInt(nuevoGrado),
-                    grupo: nuevoGrupo,
-                    status: 'ACTIVO'
-                })
-            });
-            if (res && res.ok) {
-                const idx = todosLosAlumnos.findIndex(a => String(a.id_alumno) === String(idAlumnoCambio));
-                if (idx !== -1) {
-                    todosLosAlumnos[idx].grado  = parseInt(nuevoGrado);
-                    todosLosAlumnos[idx].grupo  = nuevoGrupo;
-                    todosLosAlumnos[idx].status = 'ACTIVO';
-                }
-                cerrarCambioGrupo();
-                buscarAlumno();
-                alert(`✅ ${alumno.apellidos} ${alumno.nombre} movido al ${nuevoGrado}° Grupo "${nuevoGrupo}" correctamente.`);
-            } else {
-                const err = await res.json();
-                alert('Error: ' + err.error);
-            }
-        } catch { alert('Error de conexión.'); }
-    }
-
     function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
 </script>
     <script>
@@ -534,35 +468,5 @@
         });
       }
     </script>
-
-<!-- MODAL CAMBIAR GRUPO -->
-<div class="modal-overlay" id="modalCambioGrupo" style="display:none; align-items:center; justify-content:center;">
-    <div class="modal-content">
-        <div class="modal-header-row">
-            <div class="modal-titulo">🔀 Cambiar Grupo</div>
-            <button class="modal-cerrar" onclick="cerrarCambioGrupo()">✕</button>
-        </div>
-        <div id="lblAlumnoCambio" style="font-size:14px; font-weight:700; color:var(--azul); margin-bottom:16px; background:var(--azul-claro); padding:10px 14px; border-radius:10px;"></div>
-        <div class="modal-grid">
-            <div class="modal-campo">
-                <label>Nuevo Grado</label>
-                <select id="ng_grado">
-                    <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
-                </select>
-            </div>
-            <div class="modal-campo">
-                <label>Nuevo Grupo</label>
-                <select id="ng_grupo">
-                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
-                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
-                </select>
-            </div>
-        </div>
-        <div class="modal-btns" style="margin-top:22px;">
-            <button class="btn-cancelar" onclick="cerrarCambioGrupo()">Cancelar</button>
-            <button class="btn-guardar-alumno" onclick="confirmarCambioGrupo()">Confirmar Cambio</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>

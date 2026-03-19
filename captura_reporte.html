@@ -148,7 +148,7 @@
 
     window.onload = async () => {
         if (!idAlumno) return window.location.href = 'buscador.html';
-        document.getElementById('linkVolver').href = `expediente.html?id_alumno=${idAlumno}`;
+        document.getElementById('linkVolver').href = `expediente.html?id_alumno=${idAlumno}&from=reporte`;
         document.getElementById('fecha-falta').valueAsDate = new Date();
         document.getElementById('fecha-positiva').valueAsDate = new Date();
         try {
@@ -192,7 +192,7 @@
             if (res && res.ok) {
                 alert(gravedad === 'Positiva' ? '⭐ ¡Reconocimiento guardado correctamente!' : '✅ Reporte guardado correctamente.');
                 registrarLog('REGISTRAR_OBSERVACION', `Alumno ID: ${idAlumno}, Gravedad: ${gravedad}`);
-                window.location.href = `expediente.html?id_alumno=${idAlumno}`;
+                window.location.href = `expediente.html?id_alumno=${idAlumno}&from=reporte`;
             } else {
                 const err = await res.json();
                 alert('Error al guardar: ' + err.error);

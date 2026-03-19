@@ -219,7 +219,7 @@
                 ? '<span class="chip-ok">✅ Completada</span>'
                 : '<span class="chip-pend">⏳ Pendiente</span>'}</td>
             <td>${a.ficha_completada
-                ? `<a href="expediente.html?id_alumno=${a.id_alumno}" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#eff6ff;color:#1B4F8A;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">📋 Ver expediente</a>`
+                ? `<a href="expediente.html?id_alumno=${a.id_alumno}&from=fichas" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#eff6ff;color:#1B4F8A;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">📋 Ver expediente</a>`
                 : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}</td>
         </tr>`).join('');
     }

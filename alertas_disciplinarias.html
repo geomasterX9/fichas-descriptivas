@@ -183,7 +183,7 @@
             const iconoClass= esGrave ? 'grave' : 'moderado';
             const icono     = esGrave ? '🔴' : '🟡';
             return `
-            <a href="expediente.html?id_alumno=${a.id_alumno}" class="alumno-card ${tipoClass}">
+            <a href="expediente.html?id_alumno=${a.id_alumno}&from=alertas" class="alumno-card ${tipoClass}">
                 <div class="card-icono ${iconoClass}">${icono}</div>
                 <div class="card-info">
                     <div class="card-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
@@ -213,7 +213,7 @@
                 const tipoClass = esGrave ? 'grave' : 'moderado';
                 const icono = esGrave ? '🔴' : '🟡';
                 return `
-                <a href="expediente.html?id_alumno=${a.id_alumno}" class="alumno-card ${tipoClass}">
+                <a href="expediente.html?id_alumno=${a.id_alumno}&from=alertas" class="alumno-card ${tipoClass}">
                     <div class="card-icono ${tipoClass}">${icono}</div>
                     <div class="card-info">
                         <div class="card-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
