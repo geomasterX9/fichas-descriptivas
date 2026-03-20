@@ -568,52 +568,113 @@
                 return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
             });
 
-            const titulo = [
+            const subtitulo = [
                 trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
                 grado ? `${grado}° Grado` : '',
                 grupo ? `Grupo ${grupo}` : ''
-            ].filter(Boolean).join(' · ') || 'Todos';
+            ].filter(Boolean).join(' · ') || 'Todos los grupos';
 
-            let html = `<html><head><meta charset="UTF-8">
-            <style>
-                body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; }
-                h2 { font-size: 14px; color: #1B4F8A; margin-bottom: 4px; }
-                p  { font-size: 11px; color: #64748b; margin-bottom: 16px; }
-                table { width: 100%; border-collapse: collapse; }
-                th { background: #1B4F8A; color: white; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
-                td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-                tr:nth-child(even) td { background: #f8fafc; }
-                .rec { font-weight: 700; color: #7c3aed; }
-                .ok  { font-weight: 700; color: #166534; }
-            </style></head><body>
-            <h2>EST 84 — Alumnos a Recuperación</h2>
-            <p>${titulo} &nbsp;|&nbsp; Generado el ${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})}</p>
-            <table><thead><tr>
-                <th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Trim.</th><th>Materias en recuperación</th>
-            </tr></thead><tbody>`;
+            const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
 
-            lista.forEach((a, i) => {
-                const mats = a.materias_recuperacion.map(m => {
-                    const rec = (a.recuperacion || []).find(r => r.sigla === m.sigla);
-                    const califRec = rec ? rec.calif_recuperacion : null;
-                    return califRec
-                        ? `${m.sigla}: ${m.calif} → <span class="ok">${califRec} ✓</span>`
-                        : `<span class="rec">${m.sigla}: ${m.calif}</span>`;
-                }).join('<br>');
-                html += `<tr>
-                    <td>${i+1}</td>
-                    <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
-                    <td>${a.grado}° "${a.grupo}"</td>
-                    <td>T${a.trimestre}</td>
-                    <td>${mats}</td>
-                </tr>`;
+            // Obtener docentes únicos de los datos actuales
+            const docentesMap = {};
+            lista.forEach(a => {
+                a.materias_recuperacion.forEach(m => {
+                    if (!docentesMap[m.sigla]) docentesMap[m.sigla] = m.sigla;
+                });
             });
 
-            html += `</tbody></table></body></html>`;
+            // Generar secciones de firma por cada combinación grado/grupo/trimestre
+            const grupos = [...new Set(lista.map(a => `T${a.trimestre}-${a.grado}°-${a.grupo}`))];
+
+            let firmasHtml = grupos.map(g => {
+                const [t, gr, gp] = g.split('-');
+                return `<div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px;">
+                    <div style="font-size:10px; color:#64748b; margin-bottom:20px;">${t} · ${gr} Grado · Grupo ${gp}</div>
+                    <div style="display:flex; gap:40px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px;">
+                            <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                            <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del docente</div>
+                            <div style="font-size:10px; text-align:center; color:#374151; margin-top:2px;">Materia: ________________</div>
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                            <div style="font-size:10px; text-align:center; color:#374151;">Vo.Bo. Director(a)</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                @page { size: letter; margin: 15mm 12mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+                /* HEADER INSTITUCIONAL */
+                .header-inst {
+                    display: flex; align-items: center; justify-content: space-between;
+                    border-bottom: 3px solid #1B4F8A; padding-bottom: 10px; margin-bottom: 14px;
+                }
+                .header-center { text-align: center; flex: 1; }
+                .header-sep    { font-size: 9px; color: #64748b; }
+                .header-title  { font-size: 13px; font-weight: 700; color: #1B4F8A; margin: 3px 0; }
+                .header-sub    { font-size: 10px; color: #374151; }
+                /* TABLA */
+                h3 { font-size: 12px; color: #1B4F8A; margin: 0 0 2px; }
+                p  { font-size: 10px; color: #64748b; margin: 0 0 12px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                th { background: #1B4F8A; color: white; padding: 7px 8px; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+                td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; font-size: 10px; }
+                tr:nth-child(even) td { background: #f8fafc; }
+                .rec  { font-weight: 700; color: #7c3aed; }
+                .ok   { font-weight: 700; color: #166534; }
+                .num  { color: #64748b; font-size: 10px; }
+            </style></head><body>
+            <!-- HEADER INSTITUCIONAL -->
+            <div class="header-inst">
+                <div style="width:70px; height:60px; display:flex; align-items:center; justify-content:center;">
+                    <div style="font-size:28px;">🎓</div>
+                </div>
+                <div class="header-center">
+                    <div class="header-sep">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                    <div class="header-title">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
+                    <div class="header-sub">CLAVE: 24DST0092Z</div>
+                    <div class="header-sub">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+                </div>
+                <div style="width:70px; text-align:right; font-size:9px; color:#64748b;">
+                    Ciclo Escolar<br><b style="font-size:11px;">2025-2026</b>
+                </div>
+            </div>
+            <h3>Lista de Alumnos — Período de Recuperación</h3>
+            <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha}</p>
+            <table>
+                <thead><tr>
+                    <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Trim.</th><th>Materia</th><th>Cal. Original</th><th>Cal. Recuperación</th>
+                </tr></thead>
+                <tbody>`;
+
+            let num = 1;
+            lista.forEach(a => {
+                a.materias_recuperacion.forEach(m => {
+                    const rec = (a.recuperacion || []).find(r => r.sigla === m.sigla);
+                    const califRec = rec ? rec.calif_recuperacion : '';
+                    html += `<tr>
+                        <td class="num">${num++}</td>
+                        <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                        <td>${a.grado}° &quot;${a.grupo}&quot;</td>
+                        <td>T${a.trimestre}</td>
+                        <td class="rec">${esc(m.sigla)}</td>
+                        <td style="color:#e63946; font-weight:700;">${m.calif}</td>
+                        <td class="${califRec ? 'ok' : ''}">${califRec || '—'}</td>
+                    </tr>`;
+                });
+            });
+
+            html += `</tbody></table>${firmasHtml}</body></html>`;
+
             const win = window.open('', '_blank');
             win.document.write(html);
             win.document.close();
-            win.print();
+            setTimeout(() => win.print(), 500);
         }
 
         function irRecExp(id) {
@@ -889,6 +950,7 @@
                     <option value="D">D</option><option value="E">E</option><option value="F">F</option>
                 </select>
                 <span id="contadorFiltroRec" style="font-size:13px; color:var(--muted); font-weight:600;"></span>
+                <button onclick="exportarRecuperacionPDF()" style="padding:8px 18px; background:#1B4F8A; color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#163f6e'" onmouseout="this.style.background='#1B4F8A'">🖨️ Exportar PDF</button>
             </div>
             <div class="modal-body" style="padding:0; overflow-x:auto;">
                 <table class="modal-table" id="tablaRecuperacion">
