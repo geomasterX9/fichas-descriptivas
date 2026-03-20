@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumnos a Recuperación — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --rojo: #e63946; --morado: #7c3aed; --morado-claro: #f5f3ff;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+        .navbar {
+            background: var(--morado); padding: 0 24px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(124,58,237,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { color: white; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .btn-nav { text-decoration: none; color: rgba(255,255,255,0.85); font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s; }
+        .btn-nav:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        .contenedor { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+
+        .filtros-card {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 16px; padding: 18px 20px; margin-bottom: 20px;
+            display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+        }
+        .filtro-grupo { display: flex; flex-direction: column; gap: 5px; }
+        .filtro-grupo label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+        select { padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--texto); background: var(--blanco); outline: none; }
+        select:focus { border-color: var(--morado); }
+        .badge-count { background: var(--morado-claro); color: var(--morado); border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700; align-self: center; }
+
+        .alumno-card {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 16px; padding: 20px; margin-bottom: 14px;
+            border-left: 4px solid var(--morado);
+        }
+        .alumno-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .alumno-nombre { font-weight: 800; font-size: 15px; }
+        .alumno-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .badge-trim { background: var(--morado-claro); color: var(--morado); border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; margin-left: auto; }
+
+        .materias-rec { display: flex; flex-wrap: wrap; gap: 10px; }
+        .materia-rec-item {
+            background: #faf5ff; border: 1.5px solid #e9d5ff;
+            border-radius: 12px; padding: 12px 14px; min-width: 140px;
+        }
+        .materia-rec-sigla { font-size: 13px; font-weight: 800; color: var(--morado); margin-bottom: 4px; }
+        .materia-rec-orig { font-size: 11px; color: var(--muted); margin-bottom:8px; }
+        .materia-rec-input {
+            width: 100%; padding: 8px; border: 1.5px solid #e9d5ff; border-radius: 8px;
+            font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            color: var(--morado); text-align: center; outline: none;
+        }
+        .materia-rec-input:focus { border-color: var(--morado); }
+        .materia-rec-input.guardado { border-color: var(--verde); background: var(--verde-claro); color: var(--verde); }
+        .materia-rec-input.bloqueado { background: #f8fafc; color: #cbd5e1; cursor: not-allowed; }
+        .btn-guardar-rec {
+            margin-top: 8px; width: 100%; padding: 7px; border: none; border-radius: 8px;
+            background: var(--morado); color: white; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-guardar-rec:hover { background: #6d28d9; }
+        .btn-guardar-rec:disabled { opacity: 0.5; cursor: not-allowed; }
+        .rec-ok { font-size: 11px; color: var(--verde); font-weight: 700; margin-top: 4px; display: none; text-align: center; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty-state .icono { font-size: 48px; margin-bottom: 12px; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">📋 Alumnos a Recuperación</div>
+    <a href="inicio.html" class="btn-nav">← Volver</a>
+</nav>
+
+<div class="contenedor">
+    <div class="filtros-card">
+        <div class="filtro-grupo">
+            <label>Grado</label>
+            <select id="filtroGrado" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Grupo</label>
+            <select id="filtroGrupo" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Trimestre</label>
+            <select id="filtroTrimestre" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="1">T1</option><option value="2">T2</option><option value="3">T3</option>
+            </select>
+        </div>
+        <span class="badge-count" id="conteo">—</span>
+    </div>
+
+    <div id="listaRecuperacion">
+        <div class="empty-state"><div class="icono">⏳</div><p>Cargando...</p></div>
+    </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+
+    const ROL = localStorage.getItem('rolActivo') || '';
+    const _raw = localStorage.getItem('materiaActiva') || '[]';
+    const MATERIAS_DOCENTE = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
+    const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL);
+
+    let todos = [];
+
+    window.onload = async () => {
+        try {
+            const params = (!PUEDE_TODO && MATERIAS_DOCENTE.length > 0)
+                ? `&materias=${MATERIAS_DOCENTE.join(',')}`
+                : '';
+            const res = await apiFetch(`/api/dashboard?tipo=recuperacion${params}`);
+            if (!res) return;
+            todos = await res.json();
+            filtrar();
+        } catch(e) {
+            document.getElementById('listaRecuperacion').innerHTML =
+                '<div class="empty-state"><div class="icono">❌</div><p>Error al cargar.</p></div>';
+        }
+    };
+
+    function filtrar() {
+        const grado     = document.getElementById('filtroGrado').value;
+        const grupo     = document.getElementById('filtroGrupo').value;
+        const trimestre = document.getElementById('filtroTrimestre').value;
+
+        let lista = [...todos];
+        if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+        if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+        if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+
+        document.getElementById('conteo').textContent = `${lista.length} registro(s)`;
+        const cont = document.getElementById('listaRecuperacion');
+
+        if (lista.length === 0) {
+            cont.innerHTML = '<div class="empty-state"><div class="icono">✅</div><p style="font-weight:700;">Sin alumnos en recuperación con estos filtros.</p></div>';
+            return;
+        }
+
+        cont.innerHTML = lista.map((a, idx) => {
+            const materiasHtml = a.materias_recuperacion.map(m => {
+                const recObj = (a.recuperacion || []).find(r => r.sigla === m.sigla);
+                const califRec = recObj ? recObj.calif_recuperacion : '';
+                const puedeEditar = PUEDE_TODO || MATERIAS_DOCENTE.includes(m.sigla);
+                return `
+                <div class="materia-rec-item">
+                    <div class="materia-rec-sigla">${esc(m.sigla)}</div>
+                    <div class="materia-rec-orig">Cal. original: ${m.calif}</div>
+                    <input type="number" min="5" max="10" step="1"
+                        class="materia-rec-input ${califRec ? 'guardado' : ''} ${!puedeEditar ? 'bloqueado' : ''}"
+                        id="rec-${idx}-${m.sigla}"
+                        value="${califRec}"
+                        placeholder="${puedeEditar ? '—' : 'N/A'}"
+                        ${!puedeEditar ? 'disabled' : ''}>
+                    ${puedeEditar ? `
+                    <button class="btn-guardar-rec" onclick="guardarRec(${a.id_alumno}, ${a.trimestre}, '${m.sigla}', 'rec-${idx}-${m.sigla}', 'ok-${idx}-${m.sigla}')">
+                        💾 Guardar
+                    </button>
+                    <div class="rec-ok" id="ok-${idx}-${m.sigla}">✅ Guardado</div>
+                    ` : ''}
+                </div>`;
+            }).join('');
+
+            return `
+            <div class="alumno-card">
+                <div class="alumno-header">
+                    <div>
+                        <div class="alumno-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                        <div class="alumno-sub">${a.grado}° Grupo "${a.grupo}"</div>
+                    </div>
+                    <span class="badge-trim">T${a.trimestre}</span>
+                </div>
+                <div class="materias-rec">${materiasHtml}</div>
+            </div>`;
+        }).join('');
+    }
+
+    async function guardarRec(idAlumno, trimestre, sigla, inputId, okId) {
+        const input = document.getElementById(inputId);
+        const okEl  = document.getElementById(okId);
+        const calif = parseFloat(input.value);
+
+        if (isNaN(calif) || calif < 5 || calif > 10) {
+            input.style.borderColor = 'var(--rojo)';
+            return;
+        }
+
+        try {
+            const res = await apiFetch('/api/expediente?tipo=recuperacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: idAlumno, trimestre, sigla, calif_recuperacion: calif })
+            });
+            if (res && res.ok) {
+                input.classList.add('guardado');
+                input.style.borderColor = '';
+                if (okEl) { okEl.style.display = 'block'; setTimeout(() => { okEl.style.display = 'none'; }, 2500); }
+                // Actualizar datos locales
+                const reg = todos.find(a => a.id_alumno === idAlumno && a.trimestre === trimestre);
+                if (reg) {
+                    reg.recuperacion = reg.recuperacion || [];
+                    const idx = reg.recuperacion.findIndex(r => r.sigla === sigla);
+                    if (idx >= 0) reg.recuperacion[idx].calif_recuperacion = calif;
+                    else reg.recuperacion.push({ sigla, calif_recuperacion: calif });
+                }
+            } else {
+                input.style.borderColor = 'var(--rojo)';
+            }
+        } catch(e) { input.style.borderColor = 'var(--rojo)'; }
+    }
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .catch(err => console.warn('SW no registrado:', err));
+        });
+    }
+</script>
+</body>
+</html>

@@ -163,6 +163,57 @@ module.exports = async (req, res) => {
             return res.json(lista);
         }
 
+        // Alumnos a recuperación (materias con calif 5 en calificaciones finales)
+        if (tipo === 'recuperacion') {
+            const ciclo = await getCicloActivo();
+            const rolParam = req.query.rol || null;
+            const materiasParam = req.query.materias ? req.query.materias.split(',') : null;
+
+            const { data: cals } = await supabase
+                .from('calificaciones')
+                .select('id_alumno, trimestre, materias, recuperacion, ciclo_escolar')
+                .eq('ciclo_escolar', ciclo);
+            if (!cals || cals.length === 0) return res.json([]);
+
+            // Filtrar trimestres con materias en 5
+            const enRecuperacion = [];
+            cals.forEach(c => {
+                const materiasEn5 = (c.materias || []).filter(m => parseFloat(m.calif) === 5);
+                if (materiasEn5.length === 0) return;
+                // Filtrar por materia si aplica (docente)
+                const materiasFiltradas = materiasParam
+                    ? materiasEn5.filter(m => materiasParam.includes(m.sigla))
+                    : materiasEn5;
+                if (materiasFiltradas.length === 0) return;
+                enRecuperacion.push({
+                    id_alumno: c.id_alumno,
+                    trimestre: c.trimestre,
+                    materias_recuperacion: materiasFiltradas,
+                    recuperacion: c.recuperacion || []
+                });
+            });
+            if (enRecuperacion.length === 0) return res.json([]);
+
+            const ids = [...new Set(enRecuperacion.map(e => e.id_alumno))];
+            const { data: alumnos } = await supabase
+                .from('alumnos')
+                .select('id_alumno, nombre, apellidos, grado, grupo')
+                .in('id_alumno', ids)
+                .eq('ciclo_escolar', ciclo)
+                .order('apellidos', { ascending: true });
+
+            const lista = [];
+            (alumnos || []).forEach(a => {
+                const regs = enRecuperacion.filter(e => e.id_alumno === a.id_alumno);
+                regs.forEach(r => {
+                    lista.push({ ...a, trimestre: r.trimestre,
+                        materias_recuperacion: r.materias_recuperacion,
+                        recuperacion: r.recuperacion });
+                });
+            });
+            return res.json(lista);
+        }
+
         // Alumnos con motivos de reprobación registrados
         if (tipo === 'motivos_reprobacion') {
             const ciclo = await getCicloActivo();

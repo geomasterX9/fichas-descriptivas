@@ -444,6 +444,14 @@
             // Calificaciones
             const resCal = await apiFetch(`/api/expediente?tipo=calificaciones&id=${idAlumno}`);
             datosCalificacionesGlobal = await resCal.json();
+            // Cargar datos de recuperacion
+            const resRec = await apiFetch(`/api/expediente?tipo=recuperacion&id=${idAlumno}`);
+            const datosRecuperacion = await resRec.json();
+            // Mezclar recuperacion en datosCalificacionesGlobal
+            datosCalificacionesGlobal = datosCalificacionesGlobal.map(c => {
+                const recTrim = (datosRecuperacion || []).find(r => r.trimestre === c.trimestre);
+                return { ...c, recuperacion: recTrim?.recuperacion || [] };
+            });
             if (datosCalificacionesGlobal.length > 0) {
                 const selector = document.getElementById('selectorGrafica');
                 datosCalificacionesGlobal[0].materias.forEach(m =>
@@ -498,88 +506,63 @@
     }
 
     function renderMotivos() {
+        // Solo docentes pueden ver y llenar motivos de reprobación
+        if (!['DOCENTE'].includes(rolActivo)) return;
+
+        // Materias asignadas al docente en sesión
         const _raw = localStorage.getItem('materiaActiva') || '[]';
         const materiasDocente = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
-        const esDocente = rolActivo === 'DOCENTE';
-        const idUsuario = parseInt(localStorage.getItem('idUsuario'));
 
-        // Trimestres con materias reprobadas (calif < 6)
+        // Detectar trimestres con materias reprobadas (calif < 6, es decir solo 5)
+        // y que correspondan a las materias del docente
         const conReprobadas = datosCalificacionesGlobal.map(c => {
-            const todasReprobadas = (c.materias || []).filter(m => parseFloat(m.calif) < 6);
-            const misReprobadas   = todasReprobadas.filter(m =>
-                materiasDocente.length === 0 || materiasDocente.includes(m.sigla)
+            const reprobadas = (c.materias || []).filter(m =>
+                parseFloat(m.calif) < 6 &&
+                (materiasDocente.length === 0 || materiasDocente.includes(m.sigla))
             );
-            const motivosArr = Array.isArray(c.motivos_reprobacion) ? c.motivos_reprobacion : [];
-            return { ...c, _todas: todasReprobadas, _mias: misReprobadas, _motivos: motivosArr };
-        }).filter(c => c._todas.length > 0);
+            return { ...c, _reprobadas: reprobadas };
+        }).filter(c => c._reprobadas.length > 0);
 
-        if (conReprobadas.length === 0) return;
-        if (esDocente && conReprobadas.every(c => c._mias.length === 0)) return;
+        if (conReprobadas.length === 0) return; // Sin reprobadas del docente — no mostrar
 
         document.getElementById('seccionMotivos').style.display = '';
         const cont = document.getElementById('contMotivos');
-
         cont.innerHTML = conReprobadas.map(c => {
-            const todasStr = c._todas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
-            const misStr   = c._mias.map(m => `${m.sigla}: ${m.calif}`).join(', ');
-
-            if (!esDocente) {
-                // Modo lectura — todos los roles ven los motivos registrados
-                const motivosHtml = c._motivos.length > 0
-                    ? c._motivos.map(mv => `
-                        <div style="background:#fff; border:1px solid var(--borde); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
-                            <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">
-                                ${esc(mv.nombre || '—')} · ${esc(mv.materia || '—')}
-                            </div>
-                            <div style="font-size:13px; color:var(--texto); line-height:1.6;">${esc(mv.texto || '')}</div>
-                        </div>`).join('')
-                    : `<div style="font-size:12px; color:var(--muted); font-style:italic; padding:8px 0;">Sin motivos registrados aún.</div>`;
-                return `
-                <div class="motivos-card">
-                    <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
-                    <div class="motivos-reprobadas">📚 Materias reprobadas: ${todasStr}</div>
-                    ${motivosHtml}
-                </div>`;
-            }
-
-            // Modo editable — una textarea por cada materia propia reprobada
-            const editables = c._mias.map(m => {
-                const motivoExistente = c._motivos.find(mv => mv.id_usuario === idUsuario && mv.materia === m.sigla);
-                return `
-                <div style="margin-bottom:14px;">
-                    <div style="font-size:11px; font-weight:700; color:#92400e; margin-bottom:6px;">${m.sigla}: ${m.calif}</div>
-                    <textarea class="motivos-textarea" id='motivos-t${c.trimestre}-${m.sigla}'
-                        placeholder="Describe los motivos de reprobación en ${m.sigla}..."
-                    >${esc(motivoExistente?.texto || '')}</textarea>
-                    <div>
-                        <button class="btn-guardar-motivos" onclick='guardarMotivos(${c.trimestre}, "${m.sigla}")'>
-                            💾 Guardar
-                        </button>
-                        <span class="motivos-ok" id='ok-t${c.trimestre}-${m.sigla}'>✅ Guardado</span>
-                    </div>
-                </div>`;
-            }).join('');
-
+            const reprobadas = c._reprobadas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
             return `
             <div class="motivos-card">
                 <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
-                <div class="motivos-reprobadas">📚 Mis materias en riesgo: ${misStr}</div>
-                ${editables}
+                <div class="motivos-reprobadas">📚 Materias en riesgo: ${reprobadas}</div>
+                <textarea
+                    class="motivos-textarea"
+                    id='motivos-t${c.trimestre}'
+                    placeholder="Describe los motivos de reprobación en este trimestre..."
+                >${esc(c.motivos_reprobacion || '')}</textarea>
+                <div>
+                    <button class="btn-guardar-motivos" onclick='guardarMotivos(${c.trimestre})'>
+                        💾 Guardar
+                    </button>
+                    <span class="motivos-ok" id='ok-t${c.trimestre}'>✅ Guardado</span>
+                </div>
             </div>`;
         }).join('');
     }
 
-    async function guardarMotivos(trimestre, materia) {
-        const motivos = document.getElementById(`motivos-t${trimestre}-${materia}`)?.value || '';
-        const okSpan  = document.getElementById(`ok-t${trimestre}-${materia}`);
+    async function guardarMotivos(trimestre) {
+        const motivos = document.getElementById(`motivos-t${trimestre}`).value;
+        const okSpan  = document.getElementById(`ok-t${trimestre}`);
         try {
             const res = await apiFetch('/api/expediente?tipo=motivos_reprobacion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_alumno: idAlumno, trimestre, motivos_reprobacion: motivos, materia })
+                body: JSON.stringify({ id_alumno: idAlumno, trimestre, motivos_reprobacion: motivos })
             });
             if (res && res.ok) {
-                if (okSpan) { okSpan.style.display = 'inline'; setTimeout(() => { okSpan.style.display = 'none'; }, 2500); }
+                okSpan.style.display = 'inline';
+                setTimeout(() => { okSpan.style.display = 'none'; }, 2500);
+                // Actualizar datos locales
+                const idx = datosCalificacionesGlobal.findIndex(c => c.trimestre === trimestre);
+                if (idx >= 0) datosCalificacionesGlobal[idx].motivos_reprobacion = motivos;
             }
         } catch(e) { alert('Error al guardar. Intenta de nuevo.'); }
     }
@@ -591,7 +574,22 @@
         html += `<th class="promedio-cell">PROM</th></tr></thead><tbody>`;
         datosCalificacionesGlobal.forEach(c => {
             html += `<tr><td><b>T${c.trimestre}</b></td>`;
-            c.materias.forEach(m => html += `<td>${m.calif}</td>`);
+            c.materias.forEach(m => {
+                const recObj = (c.recuperacion || []).find(r => r.sigla === m.sigla);
+                if (recObj) {
+                    // Mostrar calificación de recuperación con badge R
+                    const color = recObj.calif_recuperacion >= 6 ? '#166534' : '#92400e';
+                    const bg    = recObj.calif_recuperacion >= 6 ? '#f0fdf6' : '#fffbeb';
+                    html += `<td style="position:relative;">
+                        <span style="font-weight:800;">${recObj.calif_recuperacion}</span>
+                        <span style="position:absolute;top:4px;right:4px;background:${bg};color:${color};border-radius:4px;font-size:9px;font-weight:800;padding:1px 4px;">R</span>
+                    </td>`;
+                } else {
+                    const calif = parseFloat(m.calif);
+                    const color = calif < 6 ? 'var(--rojo)' : 'inherit';
+                    html += `<td style="color:${color};font-weight:${calif < 6 ? '800' : '400'};">${m.calif}</td>`;
+                }
+            });
             html += `<td class="promedio-cell">${c.promedio_trimestral.toFixed(1)}</td></tr>`;
         });
         document.getElementById('contBoleta').innerHTML = html + `</tbody></table>`;

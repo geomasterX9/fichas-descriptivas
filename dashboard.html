@@ -267,6 +267,23 @@
             </div>
         </div>
 
+        <!-- TARJETA ALUMNOS A RECUPERACIÓN -->
+        <div id="seccionRecuperacion" style="display:none; margin-bottom:24px;">
+            <div class="panel-tools" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; border-left:4px solid #7c3aed;">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div style="background:#f5f3ff; border-radius:12px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;">📋</div>
+                    <div>
+                        <div style="font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:4px;">Alumnos a Recuperación</div>
+                        <div style="font-size:28px; font-weight:900; color:#7c3aed;" id="contadorRecuperacion">—</div>
+                        <div style="font-size:12px; color:var(--muted); margin-top:2px;">alumnos con materias en período de recuperación</div>
+                    </div>
+                </div>
+                <button onclick="abrirModalRecuperacion()" style="background:#7c3aed; color:white; border:none; border-radius:10px; padding:12px 22px; font-size:14px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+                    Ver detalle →
+                </button>
+            </div>
+        </div>
+
         <!-- GRÁFICA -->
         <div class="panel-grafica">
             <div class="panel-grafica-header">
@@ -367,6 +384,7 @@
             await cargarKpis();
             cargarRiesgoParcial();
             cargarMotivosAdmin();
+            cargarRecuperacion();
 
             try {
                 const res = await apiFetch('/api/dashboard?tipo=estadisticas');
@@ -430,6 +448,108 @@
                 </tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos en este filtro.</td></tr>`;
         }
 
+
+
+        let datosRecuperacion = [];
+
+        async function cargarRecuperacion() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=recuperacion');
+                if (!res) return;
+                const data = await res.json();
+                if (!data || !Array.isArray(data) || data.length === 0) return;
+                datosRecuperacion = data;
+                // Contar alumnos únicos
+                const uniqueIds = new Set(data.map(a => a.id_alumno));
+                document.getElementById('seccionRecuperacion').style.display = 'block';
+                document.getElementById('contadorRecuperacion').textContent = uniqueIds.size;
+            } catch(e) { console.error('Error recuperacion:', e); }
+        }
+
+        function abrirModalRecuperacion() {
+            document.getElementById('modalRecuperacion').style.display = 'flex';
+            document.getElementById('filtroRecGrado').value = '';
+            document.getElementById('filtroRecGrupo').value = '';
+            document.getElementById('filtroRecTrimestre').value = '';
+            filtrarRecuperacion();
+        }
+
+        function cerrarModalRecuperacion() {
+            document.getElementById('modalRecuperacion').style.display = 'none';
+        }
+
+        function filtrarRecuperacion() {
+            const grado     = document.getElementById('filtroRecGrado').value;
+            const grupo     = document.getElementById('filtroRecGrupo').value;
+            const trimestre = document.getElementById('filtroRecTrimestre').value;
+            let lista = [...datosRecuperacion];
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            document.getElementById('contadorFiltroRec').textContent = `Mostrando ${lista.length} registro(s)`;
+            const tbody = document.getElementById('bodyRecuperacion');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos con estos filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map(a => {
+                const materiasHtml = a.materias_recuperacion.map(m => {
+                    const recObj = (a.recuperacion || []).find(r => r.sigla === m.sigla);
+                    const califRec = recObj ? recObj.calif_recuperacion : null;
+                    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="font-weight:800;color:#7c3aed;min-width:36px;">${esc(m.sigla)}</span>
+                        <span style="background:#f5f3ff;color:#7c3aed;border-radius:6px;padding:2px 8px;font-size:12px;">Orig: ${m.calif}</span>
+                        <input type="number" min="5" max="10" step="1"
+                            value="${califRec || ''}"
+                            placeholder="Cal. rec."
+                            style="width:80px;padding:5px 8px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;color:#7c3aed;text-align:center;"
+                            onchange="guardarRecuperacion(${a.id_alumno}, ${a.trimestre}, '${m.sigla}', this.value, this)">
+                        ${califRec ? `<span style="background:#f0fdf6;color:#166534;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">✅ ${califRec}</span>` : ''}
+                    </div>`;
+                }).join('');
+                return `<tr>
+                    <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
+                    <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
+                    <td style="font-weight:600;">T${a.trimestre}</td>
+                    <td>${materiasHtml}</td>
+                    <td style="text-align:center;"><button class="link-exp" onclick="irRecExp(${a.id_alumno})">Ver →</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function guardarRecuperacion(idAlumno, trimestre, sigla, valor, inputEl) {
+            const calif = parseFloat(valor);
+            if (isNaN(calif) || calif < 5 || calif > 10) {
+                inputEl.style.borderColor = 'var(--rojo)';
+                return;
+            }
+            inputEl.style.borderColor = '#e9d5ff';
+            try {
+                const res = await apiFetch('/api/expediente?tipo=recuperacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_alumno: idAlumno, trimestre, sigla, calif_recuperacion: calif })
+                });
+                if (res && res.ok) {
+                    inputEl.style.borderColor = 'var(--verde)';
+                    // Actualizar datos locales
+                    const reg = datosRecuperacion.find(a => a.id_alumno === idAlumno && a.trimestre === trimestre);
+                    if (reg) {
+                        const idx = (reg.recuperacion || []).findIndex(r => r.sigla === sigla);
+                        if (idx >= 0) reg.recuperacion[idx].calif_recuperacion = calif;
+                        else { reg.recuperacion = reg.recuperacion || []; reg.recuperacion.push({sigla, calif_recuperacion: calif}); }
+                    }
+                    setTimeout(() => { inputEl.style.borderColor = '#e9d5ff'; filtrarRecuperacion(); }, 1500);
+                } else {
+                    inputEl.style.borderColor = 'var(--rojo)';
+                }
+            } catch(e) { inputEl.style.borderColor = 'var(--rojo)'; }
+        }
+
+        function irRecExp(id) {
+            cerrarModalRecuperacion();
+            setTimeout(() => { window.location.href = 'expediente.html?id_alumno=' + id + '&from=dashboard'; }, 80);
+        }
 
         let datosMotivosAdmin = [];
 
@@ -672,6 +792,50 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-cerrar-modal" onclick="cerrarModalMotivos()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL ALUMNOS A RECUPERACIÓN -->
+    <div class="modal-overlay" id="modalRecuperacion">
+        <div class="modal-contenido" style="max-width:1000px;">
+            <div class="modal-header">
+                <div class="modal-titulo">📋 Alumnos a Recuperación</div>
+                <button class="modal-cerrar" onclick="cerrarModalRecuperacion()">✕</button>
+            </div>
+            <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <select id="filtroRecGrado" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grados</option>
+                    <option value="1">1° Grado</option><option value="2">2° Grado</option><option value="3">3° Grado</option>
+                </select>
+                <select id="filtroRecGrupo" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grupos</option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                </select>
+                <select id="filtroRecTrimestre" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los trimestres</option>
+                    <option value="1">Trimestre 1</option><option value="2">Trimestre 2</option><option value="3">Trimestre 3</option>
+                </select>
+                <span id="contadorFiltroRec" style="font-size:13px; color:var(--muted); font-weight:600;"></span>
+            </div>
+            <div class="modal-body" style="padding:0; overflow-x:auto;">
+                <table class="modal-table" id="tablaRecuperacion">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Grado/Grupo</th>
+                            <th>Trim.</th>
+                            <th>Materias (calificación de recuperación)</th>
+                            <th style="text-align:center;">Expediente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyRecuperacion"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarModalRecuperacion()">Cerrar</button>
             </div>
         </div>
     </div>

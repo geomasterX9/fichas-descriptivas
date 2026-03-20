@@ -71,49 +71,12 @@ module.exports = async (req, res) => {
 
     // Guardar motivos de reprobación — cualquier rol puede registrarlos
     if (req.method === 'POST' && tipo === 'motivos_reprobacion') {
-        const { id_alumno, trimestre, motivos_reprobacion, materia } = req.body || {};
+        const { id_alumno, trimestre, motivos_reprobacion } = req.body || {};
         if (!id_alumno || !trimestre) return res.status(400).json({ error: 'Faltan parámetros.' });
         if (typeof motivos_reprobacion !== 'string' || motivos_reprobacion.length > 1000)
             return res.status(400).json({ error: 'El texto no puede exceder 1000 caracteres.' });
-
-        // Obtener nombre del docente
-        const { data: usuarioDB } = await supabase
-            .from('usuarios').select('nombre_completo').eq('id_usuario', usuario.id).single();
-        const nombreDocente = usuarioDB?.nombre_completo || '—';
-
-        // Leer motivos actuales
-        const { data: calActual } = await supabase
-            .from('calificaciones')
-            .select('motivos_reprobacion')
-            .eq('id_alumno', parseInt(id_alumno))
-            .eq('trimestre', parseInt(trimestre))
-            .single();
-
-        let motivosArr = [];
-        if (calActual?.motivos_reprobacion && Array.isArray(calActual.motivos_reprobacion)) {
-            motivosArr = calActual.motivos_reprobacion;
-        }
-
-        // Reemplazar o agregar la entrada de este docente
-        const idx = motivosArr.findIndex(m => m.id_usuario === usuario.id && m.materia === materia);
-        const nuevaEntrada = {
-            id_usuario: usuario.id,
-            nombre: nombreDocente,
-            materia: materia || '',
-            texto: motivos_reprobacion.trim()
-        };
-
-        if (idx >= 0) {
-            motivosArr[idx] = nuevaEntrada;
-        } else {
-            motivosArr.push(nuevaEntrada);
-        }
-
-        // Limpiar entradas vacías
-        motivosArr = motivosArr.filter(m => m.texto && m.texto.trim() !== '');
-
         const { error } = await supabase.from('calificaciones')
-            .update({ motivos_reprobacion: motivosArr.length > 0 ? motivosArr : null })
+            .update({ motivos_reprobacion: motivos_reprobacion.trim() || null })
             .eq('id_alumno', parseInt(id_alumno))
             .eq('trimestre', parseInt(trimestre));
         if (error) return res.status(400).json({ error: error.message });
@@ -127,6 +90,73 @@ module.exports = async (req, res) => {
         const cicloActivo = await getCicloActivo();
         const { error } = await supabase.from('datos_socioeconomicos')
             .upsert({ ...req.body, ciclo_escolar: cicloActivo }, { onConflict: 'id_alumno' });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+
+
+    // GET recuperacion de un alumno
+    if (req.method === 'GET' && tipo === 'recuperacion') {
+        const { data } = await supabase.from('calificaciones')
+            .select('trimestre, materias, recuperacion')
+            .eq('id_alumno', parseInt(id))
+            .eq('ciclo_escolar', ciclo)
+            .order('trimestre', { ascending: true });
+        return res.json(data || []);
+    }
+
+    // POST guardar/actualizar calificacion de recuperacion
+    if (req.method === 'POST' && tipo === 'recuperacion') {
+        const { id_alumno, trimestre, sigla, calif_recuperacion } = req.body || {};
+        if (!id_alumno || !trimestre || !sigla || calif_recuperacion === undefined)
+            return res.status(400).json({ error: 'Faltan parámetros.' });
+
+        const califNum = parseFloat(calif_recuperacion);
+        if (isNaN(califNum) || califNum < 5 || califNum > 10)
+            return res.status(400).json({ error: 'Calificación inválida (5-10).' });
+
+        // Verificar permisos: admin puede todo, docente solo su materia
+        if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'DIRECTIVO') {
+            const { data: uDB } = await supabase
+                .from('usuarios').select('materia').eq('id_usuario', usuario.id).single();
+            const materias = Array.isArray(uDB?.materia) ? uDB.materia : [];
+            if (!materias.includes(sigla))
+                return res.status(403).json({ error: 'Solo puedes editar tus materias asignadas.' });
+        }
+
+        // Leer recuperacion actual
+        const { data: calActual } = await supabase
+            .from('calificaciones')
+            .select('recuperacion, materias')
+            .eq('id_alumno', parseInt(id_alumno))
+            .eq('trimestre', parseInt(trimestre))
+            .eq('ciclo_escolar', ciclo)
+            .single();
+
+        if (!calActual) return res.status(404).json({ error: 'No se encontró el registro de calificaciones.' });
+
+        // Obtener calif original
+        const materiaObj = (calActual.materias || []).find(m => m.sigla === sigla);
+        const califOriginal = materiaObj ? materiaObj.calif : null;
+
+        let recuperacionArr = Array.isArray(calActual.recuperacion) ? [...calActual.recuperacion] : [];
+        const idx = recuperacionArr.findIndex(r => r.sigla === sigla);
+        const nuevaEntrada = { sigla, calif_original: califOriginal, calif_recuperacion: califNum };
+
+        if (idx >= 0) recuperacionArr[idx] = nuevaEntrada;
+        else recuperacionArr.push(nuevaEntrada);
+
+        // Actualizar también la calificación en el array materias
+        const materiasActualizadas = (calActual.materias || []).map(m =>
+            m.sigla === sigla ? { ...m, calif: String(califNum) } : m
+        );
+
+        const { error } = await supabase.from('calificaciones')
+            .update({ recuperacion: recuperacionArr, materias: materiasActualizadas })
+            .eq('id_alumno', parseInt(id_alumno))
+            .eq('trimestre', parseInt(trimestre))
+            .eq('ciclo_escolar', ciclo);
+
         if (error) return res.status(400).json({ error: error.message });
         return res.json({ exito: true });
     }
