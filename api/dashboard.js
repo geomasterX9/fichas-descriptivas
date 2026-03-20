@@ -1,7 +1,7 @@
 const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial'];
+const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion'];
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
