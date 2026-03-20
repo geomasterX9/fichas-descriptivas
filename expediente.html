@@ -444,6 +444,15 @@
             // Calificaciones
             const resCal = await apiFetch(`/api/expediente?tipo=calificaciones&id=${idAlumno}`);
             datosCalificacionesGlobal = await resCal.json();
+            // Cargar recuperacion y mezclar con calificaciones
+            try {
+                const resRec = await apiFetch(`/api/expediente?tipo=recuperacion&id=${idAlumno}`);
+                const datosRec = resRec ? await resRec.json() : [];
+                datosCalificacionesGlobal = datosCalificacionesGlobal.map(c => {
+                    const recTrim = (datosRec || []).find(r => r.trimestre === c.trimestre);
+                    return { ...c, recuperacion: recTrim?.recuperacion || [] };
+                });
+            } catch(e) { console.warn('No se pudo cargar recuperacion:', e); }
             if (datosCalificacionesGlobal.length > 0) {
                 const selector = document.getElementById('selectorGrafica');
                 datosCalificacionesGlobal[0].materias.forEach(m =>
@@ -566,7 +575,21 @@
         html += `<th class="promedio-cell">PROM</th></tr></thead><tbody>`;
         datosCalificacionesGlobal.forEach(c => {
             html += `<tr><td><b>T${c.trimestre}</b></td>`;
-            c.materias.forEach(m => html += `<td>${m.calif}</td>`);
+            c.materias.forEach(m => {
+                const recObj = (c.recuperacion || []).find(r => r.sigla === m.sigla);
+                if (recObj) {
+                    const color = recObj.calif_recuperacion >= 6 ? '#166534' : '#92400e';
+                    const bg    = recObj.calif_recuperacion >= 6 ? '#f0fdf6' : '#fffbeb';
+                    html += `<td style="position:relative; padding-top:18px;">
+                        <span style="font-weight:800;">${recObj.calif_recuperacion}</span>
+                        <span style="position:absolute;top:4px;right:4px;background:${bg};color:${color};border-radius:4px;font-size:9px;font-weight:800;padding:1px 4px;">R</span>
+                    </td>`;
+                } else {
+                    const calif = parseFloat(m.calif);
+                    const color = calif < 6 ? 'var(--rojo)' : 'inherit';
+                    html += `<td style="color:${color};font-weight:${calif < 6 ? '800' : '400'};">${m.calif}</td>`;
+                }
+            });
             html += `<td class="promedio-cell">${c.promedio_trimestral.toFixed(1)}</td></tr>`;
         });
         document.getElementById('contBoleta').innerHTML = html + `</tbody></table>`;
