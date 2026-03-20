@@ -468,6 +468,7 @@
 
         function abrirModalRecuperacion() {
             document.getElementById('modalRecuperacion').style.display = 'flex';
+            document.getElementById('filtroRecMateria').value = '';
             document.getElementById('filtroRecGrado').value = '';
             document.getElementById('filtroRecGrupo').value = '';
             document.getElementById('filtroRecTrimestre').value = '';
@@ -479,13 +480,23 @@
         }
 
         function filtrarRecuperacion() {
+            const materia   = document.getElementById('filtroRecMateria').value;
             const grado     = document.getElementById('filtroRecGrado').value;
             const grupo     = document.getElementById('filtroRecGrupo').value;
             const trimestre = document.getElementById('filtroRecTrimestre').value;
             let lista = [...datosRecuperacion];
+            if (materia)   lista = lista.filter(a => a.materias_recuperacion.some(m => m.sigla === materia));
             if (grado)     lista = lista.filter(a => String(a.grado) === grado);
             if (grupo)     lista = lista.filter(a => a.grupo === grupo);
             if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            // Ordenar: materia → grupo → apellidos
+            lista.sort((a, b) => {
+                const matA = a.materias_recuperacion.map(m => m.sigla).sort()[0] || '';
+                const matB = b.materias_recuperacion.map(m => m.sigla).sort()[0] || '';
+                if (matA !== matB) return matA.localeCompare(matB);
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
             document.getElementById('contadorFiltroRec').textContent = `Mostrando ${lista.length} registro(s)`;
             const tbody = document.getElementById('bodyRecuperacion');
             if (lista.length === 0) {
@@ -805,6 +816,15 @@
                 <button class="modal-cerrar" onclick="cerrarModalRecuperacion()">✕</button>
             </div>
             <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <select id="filtroRecMateria" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:#7c3aed; background:#f5f3ff;">
+                    <option value="">Todas las materias</option>
+                    <option value="ESP">ESP</option><option value="MAT">MAT</option>
+                    <option value="SLI">SLI</option><option value="CIE">CIE</option>
+                    <option value="HIS">HIS</option><option value="GMM">GMM</option>
+                    <option value="FCE">FCE</option><option value="ETE">ETE</option>
+                    <option value="EFI">EFI</option><option value="ART">ART</option>
+                    <option value="ESO">ESO</option>
+                </select>
                 <select id="filtroRecGrado" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
                     <option value="">Todos los grados</option>
                     <option value="1">1° Grado</option><option value="2">2° Grado</option><option value="3">3° Grado</option>
