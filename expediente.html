@@ -444,14 +444,6 @@
             // Calificaciones
             const resCal = await apiFetch(`/api/expediente?tipo=calificaciones&id=${idAlumno}`);
             datosCalificacionesGlobal = await resCal.json();
-            // Cargar datos de recuperacion
-            const resRec = await apiFetch(`/api/expediente?tipo=recuperacion&id=${idAlumno}`);
-            const datosRecuperacion = await resRec.json();
-            // Mezclar recuperacion en datosCalificacionesGlobal
-            datosCalificacionesGlobal = datosCalificacionesGlobal.map(c => {
-                const recTrim = (datosRecuperacion || []).find(r => r.trimestre === c.trimestre);
-                return { ...c, recuperacion: recTrim?.recuperacion || [] };
-            });
             if (datosCalificacionesGlobal.length > 0) {
                 const selector = document.getElementById('selectorGrafica');
                 datosCalificacionesGlobal[0].materias.forEach(m =>
@@ -574,22 +566,7 @@
         html += `<th class="promedio-cell">PROM</th></tr></thead><tbody>`;
         datosCalificacionesGlobal.forEach(c => {
             html += `<tr><td><b>T${c.trimestre}</b></td>`;
-            c.materias.forEach(m => {
-                const recObj = (c.recuperacion || []).find(r => r.sigla === m.sigla);
-                if (recObj) {
-                    // Mostrar calificación de recuperación con badge R
-                    const color = recObj.calif_recuperacion >= 6 ? '#166534' : '#92400e';
-                    const bg    = recObj.calif_recuperacion >= 6 ? '#f0fdf6' : '#fffbeb';
-                    html += `<td style="position:relative;">
-                        <span style="font-weight:800;">${recObj.calif_recuperacion}</span>
-                        <span style="position:absolute;top:4px;right:4px;background:${bg};color:${color};border-radius:4px;font-size:9px;font-weight:800;padding:1px 4px;">R</span>
-                    </td>`;
-                } else {
-                    const calif = parseFloat(m.calif);
-                    const color = calif < 6 ? 'var(--rojo)' : 'inherit';
-                    html += `<td style="color:${color};font-weight:${calif < 6 ? '800' : '400'};">${m.calif}</td>`;
-                }
-            });
+            c.materias.forEach(m => html += `<td>${m.calif}</td>`);
             html += `<td class="promedio-cell">${c.promedio_trimestral.toFixed(1)}</td></tr>`;
         });
         document.getElementById('contBoleta').innerHTML = html + `</tbody></table>`;
@@ -684,15 +661,142 @@
     }
 
     async function descargarPDF() {
-        const ctx = await prepararPDF();
-        await html2pdf().set({
-            margin: 12,
-            filename: `Expediente_${idAlumno}.pdf`,
-            html2canvas: { scale: 2, useCORS: true, allowTaint: false },
-            jsPDF: { format: 'letter' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        }).from(document.querySelector('.contenido')).save();
-        restaurarDespuesPDF(ctx);
+        // Obtener datos del alumno
+        const nombre    = document.querySelector('.perfil-nombre')?.innerText || '';
+        const gradoGrup = document.querySelector('.perfil-sub')?.innerText || '';
+        const fecha     = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+
+        // Foto en base64
+        let fotoB64 = '';
+        if (fotoActualSrc) {
+            try { fotoB64 = await imagenABase64(fotoActualSrc) || ''; } catch {}
+        }
+
+        // Datos socioeconómicos
+        const socioEl = document.getElementById('contSocio');
+        const socioHTML = socioEl ? socioEl.innerHTML : '';
+
+        // Historial de reportes
+        const reportesEl = document.getElementById('listaReportes');
+        const reportesHTML = reportesEl ? reportesEl.innerHTML : '';
+
+        // Boleta de calificaciones
+        const boletaEl = document.getElementById('contBoleta');
+        const boletaHTML = boletaEl ? boletaEl.innerHTML : '';
+
+        // Motivos de reprobación (si los hay)
+        const motivosEl = document.getElementById('contMotivos');
+        const motivosHTML = motivosEl ? motivosEl.innerHTML : '';
+        const secMotivos = document.getElementById('seccionMotivos');
+        const hayMotivos = secMotivos && secMotivos.style.display !== 'none' && motivosHTML.trim() !== '';
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 14mm 12mm; }
+            * { box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; margin: 0; }
+            /* HEADER */
+            .header-inst { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1B4F8A; padding-bottom:10px; margin-bottom:14px; }
+            .header-center { text-align:center; flex:1; padding:0 10px; }
+            .header-sep   { font-size:9px; color:#555; font-weight:600; }
+            .header-title { font-size:14px; font-weight:800; color:#1B4F8A; margin:3px 0; }
+            .header-sub   { font-size:10px; color:#555; }
+            /* PERFIL */
+            .perfil { display:flex; align-items:center; gap:16px; background:#1B4F8A; color:white; border-radius:10px; padding:14px 18px; margin-bottom:14px; }
+            .perfil img { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.3); }
+            .perfil-ico { width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:28px; }
+            .perfil-nombre { font-size:16px; font-weight:800; }
+            .perfil-sub    { font-size:12px; opacity:0.8; margin-top:3px; }
+            /* SECCIONES */
+            .seccion { border:1px solid #e2e8f0; border-radius:8px; margin-bottom:12px; overflow:hidden; page-break-inside:avoid; }
+            .seccion-header { background:#1B4F8A; color:white; padding:8px 14px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; }
+            .seccion-header.naranja { background:#f59e0b; }
+            .seccion-header.verde   { background:#2d9b6f; }
+            .seccion-body  { padding:12px 14px; }
+            /* TABLAS */
+            table { width:100%; border-collapse:collapse; font-size:10px; }
+            th { background:#f8fafc; padding:7px 8px; text-align:left; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; border-bottom:2px solid #e2e8f0; }
+            td { padding:7px 8px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+            tr:last-child td { border-bottom:none; }
+            .badge-rojo  { color:#e63946; font-weight:800; }
+            .badge-verde { color:#2d9b6f; font-weight:800; }
+            .badge-rec   { background:#f5f3ff; color:#7c3aed; border-radius:4px; font-size:9px; font-weight:800; padding:1px 5px; }
+            /* DATOS SOCIO */
+            .grid-socio { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+            .tarjeta-dato { background:#f8fafc; border-radius:6px; padding:10px 12px; }
+            .tarjeta-dato h4 { font-size:10px; font-weight:700; color:#1B4F8A; margin-bottom:6px; }
+            .fila-dato { display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #f1f5f9; font-size:10px; }
+            .fila-label { color:#64748b; min-width:100px; font-weight:600; }
+            .fila-valor { color:#1a2332; }
+            /* MOTIVOS */
+            .motivos-card { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+            .motivos-trim { font-size:10px; font-weight:800; color:#92400e; margin-bottom:4px; }
+            .motivos-mat  { font-size:9px; color:#b45309; margin-bottom:6px; }
+            .motivos-txt  { font-size:10px; color:#1a2332; line-height:1.5; }
+            .no-print { display:none !important; }
+        </style></head><body>
+
+        <!-- HEADER INSTITUCIONAL -->
+        <div class="header-inst">
+            <div style="width:65px; text-align:center; font-size:32px;">🎓</div>
+            <div class="header-center">
+                <div class="header-sep">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                <div class="header-title">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
+                <div class="header-sub">CLAVE: 24DST0092Z</div>
+                <div class="header-sub">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+            </div>
+            <div style="width:65px; text-align:right; font-size:9px; color:#64748b; line-height:1.6;">
+                Generado<br><b>${fecha}</b>
+            </div>
+        </div>
+
+        <!-- PERFIL ALUMNO -->
+        <div class="perfil">
+            ${fotoB64 ? `<img src="${fotoB64}" alt="foto">` : '<div class="perfil-ico">🎓</div>'}
+            <div>
+                <div class="perfil-nombre">${nombre}</div>
+                <div class="perfil-sub">${gradoGrup}</div>
+            </div>
+        </div>
+
+        <!-- I. DATOS SOCIOECONÓMICOS -->
+        <div class="seccion">
+            <div class="seccion-header">I. Datos Socioeconómicos</div>
+            <div class="seccion-body">${socioHTML}</div>
+        </div>
+
+        <!-- II. HISTORIAL DE REPORTES -->
+        <div class="seccion">
+            <div class="seccion-header naranja">II. Historial de Reportes</div>
+            <div class="seccion-body">
+                <table>
+                    <thead><tr>
+                        <th>Fecha</th><th>Gravedad</th><th>Motivo</th><th>Acuerdo</th><th>Reportado por</th>
+                    </tr></thead>
+                    <tbody>${reportesHTML}</tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- III. RENDIMIENTO ACADÉMICO -->
+        <div class="seccion">
+            <div class="seccion-header verde">III. Rendimiento Académico</div>
+            <div class="seccion-body">${boletaHTML}</div>
+        </div>
+
+        ${hayMotivos ? `
+        <!-- IV. MOTIVOS DE REPROBACIÓN -->
+        <div class="seccion">
+            <div class="seccion-header naranja">IV. Motivos de Reprobación</div>
+            <div class="seccion-body">${motivosHTML}</div>
+        </div>` : ''}
+
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 600);
     }
 
     async function descargarReporteDisc() {
