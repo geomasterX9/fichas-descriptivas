@@ -200,6 +200,7 @@ module.exports = async (req, res) => {
                 .select('id_alumno, nombre, apellidos, grado, grupo')
                 .in('id_alumno', ids)
                 .eq('ciclo_escolar', ciclo)
+                .eq('status', 'ACTIVO')
                 .order('apellidos', { ascending: true });
 
             const lista = [];

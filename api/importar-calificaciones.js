@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
 
         if (![1, 2, 3].includes(trimestre)) return res.status(400).json({ error: 'Trimestre no reconocido en el PDF.' });
 
-        const { data: alumnos } = await supabase.from('alumnos').select('*');
+        const { data: alumnos } = await supabase.from('alumnos').select('*').eq('status', 'ACTIVO');
         let contador = 0;
 
         for (const alumno of alumnos) {
