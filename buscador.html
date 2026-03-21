@@ -335,6 +335,8 @@
     let todosLosAlumnos = [];
     let rolUsuario = '';
     const modoReporte = new URLSearchParams(window.location.search).get('modo') === 'reporte';
+    const _rawG2 = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_DOCENTE_BUS = (() => { try { return JSON.parse(_rawG2); } catch { return []; } })();
 
     window.onload = async () => {
         const nombre = localStorage.getItem('nombreActivo');
@@ -372,6 +374,11 @@
 
         const filtrados = todosLosAlumnos.filter(a => {
             const nm = `${a.apellidos} ${a.nombre}`.toUpperCase();
+            // En modo reporte, docentes solo ven sus grupos asignados
+            const esDocente = rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO';
+            if (modoReporte && esDocente && GRUPOS_DOCENTE_BUS.length > 0) {
+                if (!GRUPOS_DOCENTE_BUS.includes(`${a.grado}${a.grupo}`)) return false;
+            }
             return nm.includes(busqueda)
                 && (grado   === '' || a.grado.toString() === grado)
                 && (grupo   === '' || a.grupo === grupo)

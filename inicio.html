@@ -250,16 +250,19 @@
                 if (grupos.length > 0) {
                     data = data.filter(a => grupos.includes(`${a.grado}${a.grupo}`));
                 }
-                if (data && data.length > 0) {
-                    const btn = document.getElementById('btnAlertas');
-                    btn.style.display = 'flex';
+                // Siempre mostrar el botón con el conteo correcto
+                const btn = document.getElementById('btnAlertas');
+                btn.style.display = 'flex';
+                document.getElementById('badgeAlertas').textContent = data.length;
+                if (data.length > 0) {
                     btn.classList.add('alerta-activa');
-                    document.getElementById('badgeAlertas').textContent = data.length;
                     const graves = data.filter(a => a.reportes_graves > 0).length;
                     document.getElementById('descAlertas').textContent =
                         graves > 0
                             ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
                             : `${data.length} alumno(s) con 3 o más reportes`;
+                } else {
+                    document.getElementById('descAlertas').textContent = 'Sin alertas en tus grupos.';
                 }
             } catch(e) { /* silencioso */ }
         }
