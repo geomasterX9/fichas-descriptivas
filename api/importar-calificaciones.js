@@ -45,14 +45,20 @@ module.exports = async (req, res) => {
                 const calificacionesDetectadas = fragmento.match(/(10(\.0)?|[5-9](\.\d)?)/g);
                 if (calificacionesDetectadas) {
                     let materiasArr = [];
-                    if (alumno.grado == 1 && calificacionesDetectadas.length >= 11) {
+                    let promedioReal = null;
+                    if (alumno.grado == 1 && calificacionesDetectadas.length >= 12) {
                         ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'].forEach((s, i) => materiasArr.push({ sigla: s, calif: calificacionesDetectadas[i] }));
-                    } else if ((alumno.grado == 2 || alumno.grado == 3) && calificacionesDetectadas.length >= 10) {
+                        promedioReal = parseFloat(calificacionesDetectadas[11]);
+                    } else if ((alumno.grado == 2 || alumno.grado == 3) && calificacionesDetectadas.length >= 11) {
                         ['ESP','MAT','SLI','CIE','HIS','FCE','ETE','EFI','ART','ESO'].forEach((s, i) => materiasArr.push({ sigla: s, calif: calificacionesDetectadas[i] }));
+                        promedioReal = parseFloat(calificacionesDetectadas[10]);
+                    }
+                    // Fallback: calcular si no se pudo extraer del PDF
+                    if (!promedioReal && materiasArr.length > 0) {
+                        const suma = materiasArr.reduce((acc, m) => acc + parseFloat(m.calif), 0);
+                        promedioReal = parseFloat((suma / materiasArr.length).toFixed(1));
                     }
                     if (materiasArr.length > 0) {
-                        const suma = materiasArr.reduce((acc, m) => acc + parseFloat(m.calif), 0);
-                        const promedioReal = parseFloat((suma / materiasArr.length).toFixed(1));
                         await supabase.from('calificaciones').delete().match({ id_alumno: alumno.id_alumno, trimestre });
                         await supabase.from('calificaciones').insert({ id_alumno: alumno.id_alumno, trimestre, promedio_trimestral: promedioReal, materias: materiasArr });
                         contador++;
