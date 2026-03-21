@@ -135,11 +135,21 @@
     verificarSesion();
     let todosAlumnos = [];
 
+    const _rawG = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_ACTIVOS = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
+    const ROL_ACTIVO = localStorage.getItem('rolActivo') || '';
+    const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
+
+    function filtrarPorGrupos(lista) {
+        if (PUEDE_TODO || GRUPOS_ACTIVOS.length === 0) return lista;
+        return lista.filter(a => GRUPOS_ACTIVOS.includes(`${a.grado}${a.grupo}`));
+    }
+
     async function cargar() {
         // Intentar desde sessionStorage primero (ya cargado en inicio.html)
         const cached = sessionStorage.getItem('alertas_disciplinarias');
         if (cached) {
-            todosAlumnos = JSON.parse(cached);
+            todosAlumnos = filtrarPorGrupos(JSON.parse(cached));
             renderizar(todosAlumnos);
             return;
         }
@@ -147,7 +157,8 @@
         try {
             const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
             if (!res) return;
-            todosAlumnos = await res.json();
+            const data = await res.json();
+            todosAlumnos = filtrarPorGrupos(data);
             renderizar(todosAlumnos);
         } catch(e) {
             document.getElementById('lista').innerHTML = `<div class="empty"><div class="empty-icono">❌</div><div class="empty-titulo">Error al cargar</div></div>`;
