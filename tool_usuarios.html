@@ -248,6 +248,12 @@
       </select>
     </div>
 
+    <div class="campo">
+      <label>Nombre para saludo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(opcional)</span></label>
+      <input type="text" id="campoNombreCorto" placeholder="Ej: ISRAEL, MARI, PROFE JUAN" maxlength="40">
+      <div class="hint">Así aparecerá en el saludo de bienvenida</div>
+    </div>
+
     <div class="modal-acciones">
       <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
       <button class="btn-guardar" id="btnGuardar" onclick="guardarUsuario()">Guardar</button>
@@ -477,6 +483,7 @@
     document.getElementById('campoPassword').required = true;
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
+    document.getElementById('campoNombreCorto').value = '';
     document.getElementById('campoNombre').focus();
   }
 
@@ -490,6 +497,7 @@
     document.getElementById('campoUsuario').value = u.usuario;
     document.getElementById('campoPassword').value = '';
     document.getElementById('campoRol').value = u.rol;
+    document.getElementById('campoNombreCorto').value = u.nombre_corto || '';
     document.getElementById('campoPasswordWrap').style.display = 'none';
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
@@ -524,7 +532,8 @@
     btn.textContent = 'Guardando...';
     btn.disabled = true;
 
-    const body = { nombre_completo: nombre, usuario, rol };
+    const nombre_corto = document.getElementById('campoNombreCorto').value.trim();
+    const body = { nombre_completo: nombre, usuario, rol, nombre_corto: nombre_corto || null };
     if (!modoEdicion) body.password = password;
 
     const metodo = modoEdicion ? 'PATCH' : 'POST';
