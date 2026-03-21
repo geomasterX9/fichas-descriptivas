@@ -44,7 +44,7 @@ async function requireAuth(req, res, recurso) {
 
         if (usuarioDB?.token_valido_desde) {
             const validoDesde = new Date(usuarioDB.token_valido_desde).getTime() / 1000;
-            const MARGEN_SEG = 5;
+            const MARGEN_SEG = 10;
             if (usuario.iat < (validoDesde - MARGEN_SEG)) {
                 res.status(401).json({ error: 'Sesión invalidada. Vuelve a iniciar sesión.' });
                 return null;

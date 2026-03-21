@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
 
         const { data, error } = await supabase
             .from('usuarios')
-            .select('id_usuario, usuario, password, nombre_completo, rol, materia, nombre_corto, grupos')
+            .select('id_usuario, usuario, password, nombre_completo, rol, materia, nombre_corto')
             .ilike('usuario', sanitize(usuario.trim()))
             .single();
 
@@ -30,10 +30,12 @@ module.exports = async (req, res) => {
 
         // Actualizar token_valido_desde ANTES de firmar el token
         // para que el iat del token sea siempre >= token_valido_desde
-        const ahora = new Date();
+        // Fijar token_valido_desde 15s antes del iat para evitar race conditions
+        const ahoraMs = Date.now();
+        const tvd = new Date(ahoraMs - 15000);
         await supabase
             .from('usuarios')
-            .update({ token_valido_desde: ahora.toISOString() })
+            .update({ token_valido_desde: tvd.toISOString() })
             .eq('id_usuario', data.id_usuario);
 
         const token = jwt.sign(
@@ -49,8 +51,7 @@ module.exports = async (req, res) => {
             nombre_completo: data.nombre_completo,
             rol: data.rol,
             materia: data.materia || null,
-            nombre_corto: data.nombre_corto || null,
-            grupos: data.grupos || null
+            nombre_corto: data.nombre_corto || null
         });
 
     } catch (e) {
