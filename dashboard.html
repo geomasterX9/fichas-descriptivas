@@ -468,7 +468,13 @@
 
         function abrirModalRecuperacion() {
             document.getElementById('modalRecuperacion').style.display = 'flex';
-            document.getElementById('filtroRecTrimestre').value = '';
+            // Preseleccionar el trimestre más reciente
+            if (datosRecuperacion.length > 0) {
+                const maxTrim = Math.max(...datosRecuperacion.map(a => a.trimestre));
+                document.getElementById('filtroRecTrimestre').value = String(maxTrim);
+            } else {
+                document.getElementById('filtroRecTrimestre').value = '';
+            }
             document.getElementById('filtroRecGrado').value = '';
             document.getElementById('filtroRecGrupo').value = '';
             filtrarRecuperacion();
