@@ -237,8 +237,42 @@
     const ROL_ACTIVO     = localStorage.getItem('rolActivo') || '';
     const _materiaRaw = localStorage.getItem('materiaActiva') || '[]';
     const MATERIAS_ACTIVAS = (() => { try { return JSON.parse(_materiaRaw); } catch { return []; } })();
+    const _gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_ACTIVOS = (() => { try { return JSON.parse(_gruposRaw); } catch { return []; } })();
     // Solo ADMINISTRADOR y DIRECTIVO pueden editar todas las materias
     const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
+
+    // Poblar selectores de grado y grupo según grupos asignados al docente
+    function inicializarSelectores() {
+        if (PUEDE_TODO || GRUPOS_ACTIVOS.length === 0) return; // Admin ve todo
+        const selGrado = document.getElementById('selGrado');
+        const selGrupo = document.getElementById('selGrupo');
+        // Extraer grados y grupos únicos de los grupos asignados
+        const grados = [...new Set(GRUPOS_ACTIVOS.map(g => g[0]))].sort();
+        const grupos  = [...new Set(GRUPOS_ACTIVOS.map(g => g[1]))].sort();
+        // Filtrar opciones de grado
+        Array.from(selGrado.options).forEach(opt => {
+            opt.style.display = grados.includes(opt.value) ? '' : 'none';
+        });
+        selGrado.value = grados[0] || '1';
+        // Filtrar opciones de grupo
+        Array.from(selGrupo.options).forEach(opt => {
+            opt.style.display = grupos.includes(opt.value) ? '' : 'none';
+        });
+        selGrupo.value = grupos[0] || 'A';
+        // Al cambiar grado, reajustar grupos disponibles para ese grado
+        selGrado.addEventListener('change', () => {
+            const gradoSel = selGrado.value;
+            const gruposDelGrado = GRUPOS_ACTIVOS
+                .filter(g => g[0] === gradoSel)
+                .map(g => g[1]);
+            Array.from(selGrupo.options).forEach(opt => {
+                opt.style.display = gruposDelGrado.includes(opt.value) ? '' : 'none';
+            });
+            selGrupo.value = gruposDelGrado[0] || selGrupo.value;
+        });
+    }
+    inicializarSelectores();
 
     // Materias por grado
     const MATERIAS = {
