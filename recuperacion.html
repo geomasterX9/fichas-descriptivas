@@ -184,7 +184,8 @@
         const trimestre = document.getElementById('filtroTrimestre').value;
         const grado     = document.getElementById('filtroGrado').value;
         const grupo     = document.getElementById('filtroGrupo').value;
-        const materia   = document.getElementById('filtroMateria').value;
+        const materiaEl = document.getElementById('filtroMateria');
+        const materia   = materiaEl ? materiaEl.value : '';
 
         let lista = [...todos];
         if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
