@@ -239,9 +239,17 @@
         // Consultar alumnos en riesgo disciplinario
         async function cargarAlertas() {
             try {
+                const _rawG  = localStorage.getItem('gruposActivos') || '[]';
+                const grupos = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
                 const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
                 if (!res) return;
-                const data = await res.json();
+                let data = await res.json();
+                // Guardar todos en sessionStorage para la pantalla de alertas (ella filtra sola)
+                sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
+                // Filtrar por grupos del docente para el badge
+                if (grupos.length > 0) {
+                    data = data.filter(a => grupos.includes(`${a.grado}${a.grupo}`));
+                }
                 if (data && data.length > 0) {
                     const btn = document.getElementById('btnAlertas');
                     btn.style.display = 'flex';
@@ -252,8 +260,6 @@
                         graves > 0
                             ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
                             : `${data.length} alumno(s) con 3 o más reportes`;
-                    // Guardar en sessionStorage para usarlo en la pantalla de alertas
-                    sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
                 }
             } catch(e) { /* silencioso */ }
         }
