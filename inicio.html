@@ -230,7 +230,9 @@
 
         const hora = new Date().getHours();
         const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
-        document.getElementById('saludo').textContent = `${saludo}, ${nombre.split(' ')[0]} 👋`;
+        const nombreCorto = localStorage.getItem('nombreCorto') || '';
+        const nombreSaludo = nombreCorto || nombre.split(' ').slice(-1)[0];
+        document.getElementById('saludo').textContent = `${saludo}, ${nombreSaludo} 👋`;
 
         if (rol === 'TRABAJO SOCIAL') document.getElementById('btnReporte').style.display = 'none';
 
