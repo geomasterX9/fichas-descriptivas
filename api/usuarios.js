@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
         const { data, error } = await supabase
             .from('usuarios')
-            .select('id_usuario, nombre_completo, usuario, rol, materia, nombre_corto, token_valido_desde')
+            .select('id_usuario, nombre_completo, usuario, rol, materia, nombre_corto, grupos, token_valido_desde')
             .order('nombre_completo', { ascending: true });
         if (error) return res.status(500).json({ error: 'Error al cargar usuarios.' });
         return res.json(data || []);
@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
 
     // ── POST: crear nuevo usuario ──
     if (req.method === 'POST') {
-        const { nombre_completo, usuario: user, password, rol, nombre_corto } = req.body || {};
+        const { nombre_completo, usuario: user, password, rol, nombre_corto, grupos } = req.body || {};
 
         if (!nombre_completo || !user || !password || !rol)
             return res.status(400).json({ error: 'Todos los campos son requeridos.' });
@@ -53,6 +53,7 @@ module.exports = async (req, res) => {
             password:        hash,
             rol:             rol.toUpperCase(),
             nombre_corto:    nombre_corto ? sanitize(nombre_corto.trim()) : null,
+            grupos:          Array.isArray(grupos) ? grupos : null,
             token_valido_desde: new Date().toISOString()
         }]).select('id_usuario, nombre_completo, usuario, rol').single();
 
@@ -83,7 +84,7 @@ module.exports = async (req, res) => {
 
     // ── PATCH: editar usuario (nombre, rol o contraseña) — solo ADMINISTRADOR ──
     if (req.method === 'PATCH') {
-        const { id_usuario, nombre_completo, rol, password, usuario: user, nombre_corto } = req.body || {};
+        const { id_usuario, nombre_completo, rol, password, usuario: user, nombre_corto, grupos } = req.body || {};
         if (!id_usuario || isNaN(parseInt(id_usuario)))
             return res.status(400).json({ error: 'ID de usuario inválido.' });
 
@@ -96,6 +97,7 @@ module.exports = async (req, res) => {
         if (user)            cambios.usuario = sanitize(user.trim().toUpperCase());
         if (rol && ROLES_VALIDOS.includes(rol.toUpperCase())) cambios.rol = rol.toUpperCase();
         if (nombre_corto !== undefined) cambios.nombre_corto = nombre_corto ? sanitize(nombre_corto.trim()) : null;
+        if (grupos !== undefined) cambios.grupos = Array.isArray(grupos) ? grupos : null;
         if (password) {
             if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
             cambios.password = await bcrypt.hash(password, 12);

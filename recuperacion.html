@@ -140,6 +140,8 @@
     const ROL = localStorage.getItem('rolActivo') || '';
     const _raw = localStorage.getItem('materiaActiva') || '[]';
     const MATERIAS_DOCENTE = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
+    const _rawG = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_DOCENTE = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
     const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL);
 
     let todos = [];
@@ -178,12 +180,15 @@
         if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
         if (grado)     lista = lista.filter(a => String(a.grado) === grado);
         if (grupo)     lista = lista.filter(a => a.grupo === grupo);
-        // Filtro de materia: si docente y no seleccionó materia específica,
-        // mostrar solo alumnos con alguna de sus materias reprobadas
+        // Filtro materia: manual o automático por materias del docente
         if (materia) {
             lista = lista.filter(a => a.materias_recuperacion.some(m => m.sigla === materia));
         } else if (!PUEDE_TODO && MATERIAS_DOCENTE.length > 0) {
             lista = lista.filter(a => a.materias_recuperacion.some(m => MATERIAS_DOCENTE.includes(m.sigla)));
+        }
+        // Filtro grupos: docente solo ve sus grupos asignados
+        if (!PUEDE_TODO && GRUPOS_DOCENTE.length > 0) {
+            lista = lista.filter(a => GRUPOS_DOCENTE.includes(`${a.grado}${a.grupo}`));
         }
 
         // Ordenar: trimestre → grado → grupo → apellido

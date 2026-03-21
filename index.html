@@ -142,6 +142,7 @@
                     localStorage.setItem('idUsuario',      data.id_usuario);
                     localStorage.setItem('materiaActiva',  JSON.stringify(data.materia || []));
                     localStorage.setItem('nombreCorto',     data.nombre_corto || '');
+                    localStorage.setItem('gruposActivos',   JSON.stringify(data.grupos || []));
                     registrarLog('LOGIN', `Acceso como ${data.rol}`);
                     btn.innerText = '¡Acceso correcto! ✅';
                     btn.style.background = '#2d9b6f';

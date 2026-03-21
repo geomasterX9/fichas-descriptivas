@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
 
         const { data, error } = await supabase
             .from('usuarios')
-            .select('id_usuario, usuario, password, nombre_completo, rol, materia, nombre_corto')
+            .select('id_usuario, usuario, password, nombre_completo, rol, materia, nombre_corto, grupos')
             .ilike('usuario', sanitize(usuario.trim()))
             .single();
 
@@ -49,7 +49,8 @@ module.exports = async (req, res) => {
             nombre_completo: data.nombre_completo,
             rol: data.rol,
             materia: data.materia || null,
-            nombre_corto: data.nombre_corto || null
+            nombre_corto: data.nombre_corto || null,
+            grupos: data.grupos || null
         });
 
     } catch (e) {

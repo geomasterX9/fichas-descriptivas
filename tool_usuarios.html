@@ -238,7 +238,7 @@
     </div>
     <div class="campo">
       <label>Rol</label>
-      <select id="campoRol">
+      <select id="campoRol" onchange="toggleCampoGrupos()">
         <option value="">— Selecciona un rol —</option>
         <option value="ADMINISTRADOR">ADMINISTRADOR</option>
         <option value="DIRECTIVO">DIRECTIVO</option>
@@ -252,6 +252,30 @@
       <label>Nombre para saludo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(opcional)</span></label>
       <input type="text" id="campoNombreCorto" placeholder="Ej: ISRAEL, MARI, PROFE JUAN" maxlength="40">
       <div class="hint">Así aparecerá en el saludo de bienvenida</div>
+    </div>
+
+    <div class="campo" id="campoGruposWrap" style="display:none">
+      <label>Grupos asignados <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(selecciona los que imparte)</span></label>
+      <div id="campoGrupos" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1A"> 1°A</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1B"> 1°B</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1C"> 1°C</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1D"> 1°D</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1E"> 1°E</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1F"> 1°F</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2A"> 2°A</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2B"> 2°B</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2C"> 2°C</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2D"> 2°D</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2E"> 2°E</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2F"> 2°F</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3A"> 3°A</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3B"> 3°B</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3C"> 3°C</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3D"> 3°D</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3E"> 3°E</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3F"> 3°F</label>
+      </div>
     </div>
 
     <div class="modal-acciones">
@@ -484,6 +508,8 @@
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
     document.getElementById('campoNombreCorto').value = '';
+    setGrupos([]);
+    document.getElementById('campoGruposWrap').style.display = 'none';
     document.getElementById('campoNombre').focus();
   }
 
@@ -498,6 +524,9 @@
     document.getElementById('campoPassword').value = '';
     document.getElementById('campoRol').value = u.rol;
     document.getElementById('campoNombreCorto').value = u.nombre_corto || '';
+    const rolActual = u.rol;
+    document.getElementById('campoGruposWrap').style.display = (rolActual === 'DOCENTE' || rolActual === 'PREFECTO') ? 'block' : 'none';
+    setGrupos(u.grupos || []);
     document.getElementById('campoPasswordWrap').style.display = 'none';
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
@@ -505,6 +534,23 @@
 
   function cerrarModal() {
     document.getElementById('modalUsuario').classList.remove('open');
+  }
+
+  function toggleCampoGrupos() {
+    const rol = document.getElementById('campoRol').value;
+    const wrap = document.getElementById('campoGruposWrap');
+    wrap.style.display = (rol === 'DOCENTE' || rol === 'PREFECTO') ? 'block' : 'none';
+    if (rol !== 'DOCENTE' && rol !== 'PREFECTO') setGrupos([]);
+  }
+
+  function getGrupos() {
+    return Array.from(document.querySelectorAll('#campoGrupos input[type=checkbox]:checked')).map(cb => cb.value);
+  }
+
+  function setGrupos(arr) {
+    document.querySelectorAll('#campoGrupos input[type=checkbox]').forEach(cb => {
+      cb.checked = Array.isArray(arr) && arr.includes(cb.value);
+    });
   }
 
   async function guardarUsuario() {
@@ -533,7 +579,8 @@
     btn.disabled = true;
 
     const nombre_corto = document.getElementById('campoNombreCorto').value.trim();
-    const body = { nombre_completo: nombre, usuario, rol, nombre_corto: nombre_corto || null };
+    const grupos = getGrupos();
+    const body = { nombre_completo: nombre, usuario, rol, nombre_corto: nombre_corto || null, grupos: grupos.length > 0 ? grupos : null };
     if (!modoEdicion) body.password = password;
 
     const metodo = modoEdicion ? 'PATCH' : 'POST';
