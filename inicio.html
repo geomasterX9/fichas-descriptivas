@@ -228,11 +228,9 @@
         document.getElementById('headerNombre').textContent = nombre;
         document.getElementById('headerRol').textContent    = rol;
 
-        const nombreCorto = localStorage.getItem('nombreCorto') || '';
         const hora = new Date().getHours();
         const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
-        const nombreSaludo = nombreCorto || nombre.split(' ').slice(-1)[0];
-        document.getElementById('saludo').textContent = `${saludo}, ${nombreSaludo} 👋`;
+        document.getElementById('saludo').textContent = `${saludo}, ${nombre.split(' ')[0]} 👋`;
 
         if (rol === 'TRABAJO SOCIAL') document.getElementById('btnReporte').style.display = 'none';
 
@@ -262,12 +260,18 @@
 
         async function cargarRecuperacionDocente() {
             try {
-                const _raw = localStorage.getItem('materiaActiva') || '[]';
+                const _raw  = localStorage.getItem('materiaActiva') || '[]';
+                const _rawG = localStorage.getItem('gruposActivos') || '[]';
                 const materias = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
+                const grupos   = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
                 const params = materias.length > 0 ? `&materias=${materias.join(',')}` : '';
                 const res = await apiFetch(`/api/dashboard?tipo=recuperacion${params}`);
                 if (!res) return;
-                const data = await res.json();
+                let data = await res.json();
+                // Filtrar por grupos asignados al docente
+                if (grupos.length > 0) {
+                    data = data.filter(a => grupos.includes(`${a.grado}${a.grupo}`));
+                }
                 if (data && data.length > 0) {
                     const btn = document.getElementById('btnRecuperacion');
                     btn.style.display = 'flex';

@@ -159,9 +159,19 @@
                 const maxTrim = Math.max(...todos.map(a => a.trimestre));
                 document.getElementById('filtroTrimestre').value = String(maxTrim);
             }
-            // Si es docente, preseleccionar su primera materia
-            if (!PUEDE_TODO && MATERIAS_DOCENTE.length === 1) {
-                document.getElementById('filtroMateria').value = MATERIAS_DOCENTE[0];
+            // Para docentes: ocultar selector de materia y mostrar etiqueta fija
+            if (!PUEDE_TODO) {
+                const wrap = document.getElementById('filtroMateriaWrap');
+                const select = document.getElementById('filtroMateria');
+                if (MATERIAS_DOCENTE.length > 0) {
+                    // Reemplazar select por etiqueta con sus materias
+                    wrap.innerHTML = `<label>Materia</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+                            ${MATERIAS_DOCENTE.map(m => `<span style="background:#f5f3ff;color:#7c3aed;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700;">${m}</span>`).join('')}
+                        </div>`;
+                } else {
+                    wrap.style.display = 'none';
+                }
             }
             filtrar();
         } catch(e) {
