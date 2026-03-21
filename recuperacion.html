@@ -178,7 +178,13 @@
         if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
         if (grado)     lista = lista.filter(a => String(a.grado) === grado);
         if (grupo)     lista = lista.filter(a => a.grupo === grupo);
-        if (materia)   lista = lista.filter(a => a.materias_recuperacion.some(m => m.sigla === materia));
+        // Filtro de materia: si docente y no seleccionó materia específica,
+        // mostrar solo alumnos con alguna de sus materias reprobadas
+        if (materia) {
+            lista = lista.filter(a => a.materias_recuperacion.some(m => m.sigla === materia));
+        } else if (!PUEDE_TODO && MATERIAS_DOCENTE.length > 0) {
+            lista = lista.filter(a => a.materias_recuperacion.some(m => MATERIAS_DOCENTE.includes(m.sigla)));
+        }
 
         // Ordenar: trimestre → grado → grupo → apellido
         lista.sort((a, b) => {
