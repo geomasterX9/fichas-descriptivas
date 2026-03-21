@@ -49,15 +49,18 @@ function verificarSesion() {
         return false;
     }
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+            '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join('')));
         if (payload.exp && Date.now() / 1000 > payload.exp) {
             alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
             cerrarSesionYRedirigir();
             return false;
         }
     } catch (e) {
-        cerrarSesionYRedirigir();
-        return false;
+        // No cerrar sesión por error de decodificación — dejar que el servidor valide
+        console.warn('No se pudo decodificar token localmente:', e.message);
     }
     return true;
 }
