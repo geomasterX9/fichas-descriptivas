@@ -411,9 +411,12 @@
                     </div>
                     <div class="acciones-tarjeta">
                         ${accionAdmin}
-                        <a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}&from=buscador" class="btn-abrir">
-                            ${modoReporte ? 'Reporte' : 'Expediente'}
-                        </a>
+                        ${(esBaja && (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL'))
+                            ? `<span style="background:#fff0f1;color:#e63946;border:1px solid #fecdd3;border-radius:9px;padding:8px 16px;font-size:12px;font-weight:800;">BAJA</span>`
+                            : `<a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}&from=buscador" class="btn-abrir">
+                                ${modoReporte ? 'Reporte' : 'Expediente'}
+                               </a>`
+                        }
                     </div>
                 </div>`;
         });
