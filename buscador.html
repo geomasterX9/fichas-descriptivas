@@ -351,7 +351,7 @@
             document.getElementById('btnRegresoAdmin').style.display = 'block';
         }
         if (rolUsuario === 'DIRECTIVO') document.getElementById('btnRegresoAdmin').style.display = 'block';
-        if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO') document.getElementById('btnRegreso').style.display = 'block';
+        if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL') document.getElementById('btnRegreso').style.display = 'block';
         if (modoReporte) document.getElementById('bannerReporte').style.display = 'block';
 
         await cargarDatos();
