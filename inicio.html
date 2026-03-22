@@ -223,7 +223,7 @@
 
         if (!rol) window.location.href = 'index.html';
         if (rol === 'ADMINISTRADOR' || rol === 'DIRECTIVO') window.location.href = 'dashboard.html';
-        else if (rol === 'TRABAJO SOCIAL') window.location.href = 'buscador.html';
+        // TRABAJO SOCIAL permanece en inicio.html
 
         document.getElementById('headerNombre').textContent = nombre;
         document.getElementById('headerRol').textContent    = rol;
