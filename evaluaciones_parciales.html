@@ -336,7 +336,7 @@
 
         lista.innerHTML = alumnosActuales.map(a => {
             const evMaterias = evaluacionesActuales[a.id_alumno] || [];
-            const tieneRiesgo = evMaterias.some(m => parseFloat(m.calif) <= 6);
+            const tieneRiesgo = evMaterias.length > 0 && evMaterias.some(m => m.calif !== null && m.calif !== '' && parseFloat(m.calif) <= 6);
             const fotoSrc = a['fotos-alumnos'] || a.foto_url;
             const foto = fotoSrc
                 ? `<img src="${fotoSrc}" class="alumno-foto" onerror="this.outerHTML='<div class=alumno-foto-placeholder>🎓</div>'">`
@@ -416,7 +416,7 @@
                 ok.style.display = 'inline';
                 setTimeout(() => { ok.style.display = 'none'; }, 2500);
             }
-            const tieneRiesgo = payload.some(m => parseFloat(m.calif) <= 6);
+            const tieneRiesgo = payload.length > 0 && payload.some(m => m.calif !== null && m.calif !== '' && parseFloat(m.calif) <= 6);
             const chip = document.getElementById(`riesgo-${idAlumno}`);
             if (chip) chip.style.display = tieneRiesgo ? 'inline-block' : 'none';
             evaluacionesActuales[idAlumno] = payload;
