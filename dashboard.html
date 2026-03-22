@@ -372,6 +372,7 @@
         window.onload = async () => {
             const nombre = localStorage.getItem('nombreActivo');
             const rol    = localStorage.getItem('rolActivo');
+            window.ROL_DASHBOARD = rol;
             if (!nombre) return window.location.href = 'index.html';
 
             document.getElementById('headerNombre').textContent = nombre.split(' ')[0];
@@ -512,11 +513,14 @@
                     return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                         <span style="font-weight:800;color:#7c3aed;min-width:36px;">${esc(m.sigla)}</span>
                         <span style="background:#f5f3ff;color:#7c3aed;border-radius:6px;padding:2px 8px;font-size:12px;">Orig: ${m.calif}</span>
-                        <input type="number" min="5" max="10" step="1"
-                            value="${califRec || ''}"
-                            placeholder="Cal. rec."
-                            style="width:80px;padding:5px 8px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;color:#7c3aed;text-align:center;"
-                            onchange="guardarRecuperacion(${a.id_alumno}, ${a.trimestre}, '${m.sigla}', this.value, this)">
+                        ${(window.ROL_DASHBOARD === 'ADMINISTRADOR')
+                            ? `<input type="number" min="5" max="10" step="1"
+                                value="${califRec || ''}"
+                                placeholder="Cal. rec."
+                                style="width:80px;padding:5px 8px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;color:#7c3aed;text-align:center;"
+                                onchange="guardarRecuperacion(${a.id_alumno}, ${a.trimestre}, '${m.sigla}', this.value, this)">`
+                            : `<span style="width:80px;display:inline-block;padding:5px 8px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;font-weight:700;color:#7c3aed;text-align:center;background:#faf5ff;">${califRec || '—'}</span>`
+                        }
                         ${califRec ? `<span style="background:#f0fdf6;color:#166534;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">✅ ${califRec}</span>` : ''}
                     </div>`;
                 }).join('');
