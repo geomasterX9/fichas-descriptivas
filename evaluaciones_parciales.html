@@ -240,7 +240,14 @@
     const _gruposRaw = localStorage.getItem('gruposActivos') || '[]';
     const GRUPOS_ACTIVOS = (() => { try { return JSON.parse(_gruposRaw); } catch { return []; } })();
     // Solo ADMINISTRADOR y DIRECTIVO pueden editar todas las materias
-    const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
+    const PUEDE_TODO   = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
+    const SOLO_LECTURA = ROL_ACTIVO === 'PREFECTO';
+
+    // Ocultar controles de edición para prefecto
+    if (SOLO_LECTURA) {
+        document.getElementById('excelBar').style.display = 'none';
+        document.getElementById('btnGuardarTodos').style.display = 'none';
+    }
 
     // Poblar selectores de grado y grupo según grupos asignados al docente
     function inicializarSelectores() {
@@ -338,8 +345,8 @@
             const inputs = materias.map(sig => {
                 const m = evMaterias.find(x => x.sigla === sig);
                 const val = m ? m.calif : '';
-                const esMia = PUEDE_TODO || MATERIAS_ACTIVAS.includes(sig);
-                const cls = !esMia ? 'bloqueado' : (val ? (parseFloat(val) <= 6 ? 'riesgo' : 'ok') : 'pendiente');
+                const esMia = !SOLO_LECTURA && (PUEDE_TODO || MATERIAS_ACTIVAS.includes(sig));
+                const cls = (!esMia || SOLO_LECTURA) ? 'bloqueado' : (val ? (parseFloat(val) <= 6 ? 'riesgo' : 'ok') : 'pendiente');
                 return `
                 <div class="materia-item">
                     <div class="materia-label" style="${esMia ? '' : 'color:#cbd5e1;'}">${sig}</div>
@@ -348,7 +355,7 @@
                         id="cal-${a.id_alumno}-${sig}"
                         value="${val}"
                         placeholder="${esMia ? '?' : '—'}"
-                        ${esMia ? 'oninput="colorearInput(this)" onblur="validarInput(this)"' : 'disabled'}
+                        ${(esMia && !SOLO_LECTURA) ? 'oninput="colorearInput(this)" onblur="validarInput(this)"' : 'disabled'}
                         >
                 </div>`;
             }).join('');
@@ -368,9 +375,9 @@
                 <div class="materias-grid">${inputs}</div>
                 <div class="alumno-footer">
                     <span class="chip-guardado" id="ok-${a.id_alumno}">✅ Guardado</span>
-                    <button class="btn-guardar-alumno" onclick="guardarAlumno(${a.id_alumno}, ${grado}, ${trimestre})">
+                    ${SOLO_LECTURA ? '' : `<button class="btn-guardar-alumno" onclick="guardarAlumno(${a.id_alumno}, ${grado}, ${trimestre})">
                         💾 Guardar
-                    </button>
+                    </button>`}
                 </div>
             </div>`;
         }).join('');
