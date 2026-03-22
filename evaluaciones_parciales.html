@@ -192,7 +192,7 @@
         </div>
         <div class="filtro-grupo">
             <label>Trimestre</label>
-            <select id="selTrimestre">
+            <select id="selTrimestre" onchange="recargaSiGrupoActivo()">
                 <option value="1">Trimestre 1</option>
                 <option value="2">Trimestre 2</option>
                 <option value="3">Trimestre 3</option>
@@ -290,6 +290,11 @@
 
     let alumnosActuales = [];
     let evaluacionesActuales = {}; // id_alumno → {materias}
+    let grupoYaCargado = false;
+
+    function recargaSiGrupoActivo() {
+        if (grupoYaCargado) cargarGrupo();
+    }
 
     async function cargarGrupo() {
         const grado     = document.getElementById('selGrado').value;
@@ -322,6 +327,7 @@
                 }
             }));
 
+            grupoYaCargado = true;
             renderAlumnos(parseInt(grado), parseInt(trimestre));
         document.getElementById('excelBar').classList.add('visible');
         document.getElementById('btnGuardarTodos').classList.add('visible');
