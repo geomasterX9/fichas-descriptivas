@@ -240,8 +240,8 @@
     const _gruposRaw = localStorage.getItem('gruposActivos') || '[]';
     const GRUPOS_ACTIVOS = (() => { try { return JSON.parse(_gruposRaw); } catch { return []; } })();
     // Solo ADMINISTRADOR y DIRECTIVO pueden editar todas las materias
-    const PUEDE_TODO   = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
-    const SOLO_LECTURA = ROL_ACTIVO === 'PREFECTO';
+    const PUEDE_TODO   = ROL_ACTIVO === 'ADMINISTRADOR';
+    const SOLO_LECTURA = ['PREFECTO', 'DIRECTIVO', 'TRABAJO SOCIAL'].includes(ROL_ACTIVO);
 
     // Ocultar controles de edición para prefecto
     if (SOLO_LECTURA) {
