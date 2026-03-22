@@ -374,9 +374,9 @@
 
         const filtrados = todosLosAlumnos.filter(a => {
             const nm = `${a.apellidos} ${a.nombre}`.toUpperCase();
-            // En modo reporte, docentes solo ven sus grupos asignados
+            // Docentes y prefectos solo ven sus grupos asignados (en cualquier modo)
             const esDocente = rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO';
-            if (modoReporte && esDocente && GRUPOS_DOCENTE_BUS.length > 0) {
+            if (esDocente && GRUPOS_DOCENTE_BUS.length > 0) {
                 if (!GRUPOS_DOCENTE_BUS.includes(`${a.grado}${a.grupo}`)) return false;
             }
             return nm.includes(busqueda)
