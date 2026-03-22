@@ -225,7 +225,7 @@
         <a href="buscador.html" class="btn-nav" id="btnBuscador" style="display:none">🔍 Buscador</a>
     </div>
     <div class="navbar-right">
-        <button class="btn-reporte-disc" id="btnReporteDisc" onclick="descargarReporteDisc()" style="display:none">📋 Reporte</button>
+        <button class="btn-reporte-disc" id="btnReporteDisc" onclick="descargarReporteDisc()" style="display:none">📤 Compartir</button>
         <button class="btn-pdf" onclick="descargarPDF()">🖨️ PDF</button>
         <a href="#" onclick="cerrarSesion()" class="btn-nav salir">Salir 👋</a>
     </div>
@@ -325,7 +325,7 @@
             btn.innerText = '← Dashboard';
             document.getElementById('btnBuscador').style.display = '';
         }
-        if (['ADMINISTRADOR','DIRECTIVO','TRABAJO SOCIAL'].includes(rolActivo)) {
+        if (['ADMINISTRADOR','DIRECTIVO'].includes(rolActivo)) {
             document.getElementById('btnReporteDisc').style.display = '';
         }
 
