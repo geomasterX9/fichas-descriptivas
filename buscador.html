@@ -249,9 +249,9 @@
         📋 Selecciona el alumno al que deseas registrarle un reporte
     </div>
 
-    <!-- Botón nuevo alumno -->
+    <!-- Botón nuevo alumno + PDF -->
     <div class="barra-acciones">
-        <div></div>
+        <button onclick="exportarBuscadorPDF()" style="display:inline-flex; align-items:center; gap:8px; background:var(--azul-claro); color:var(--azul); border:1.5px solid #bfdbfe; padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='var(--azul-claro)'">🖨️ Exportar PDF</button>
         <button class="btn-alta" id="btnNuevoAlumno" onclick="abrirModal()">+ Nuevo Alumno</button>
     </div>
 
@@ -520,6 +520,118 @@
     }
 
     function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+
+    async function getConfigInst() {
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+            if (res) return await res.json();
+        } catch(e) {}
+        return {};
+    }
+
+    function headerInstHTML(cfg) {
+        const nombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const clave     = cfg.clave_escuela     || '';
+        const direccion = cfg.direccion_escuela || '';
+        const ciclo     = cfg.ciclo_activo      || '';
+        const logoIzq   = cfg.logo_izquierdo    || '';
+        const logoDer   = cfg.logo_derecho      || '';
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+            <div style="width:90px;text-align:center;">
+                ${logoIzq ? `<img src="${logoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+            </div>
+            <div style="flex:1;text-align:center;padding:0 16px;">
+                <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${nombre}</div>
+                ${clave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div style="font-size:10px;color:#555;">${direccion}</div>` : ''}
+                ${ciclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${ciclo}</div>` : ''}
+            </div>
+            <div style="width:90px;text-align:center;">
+                ${logoDer ? `<img src="${logoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+            </div>
+        </div>`;
+    }
+
+    async function exportarBuscadorPDF() {
+        const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+        const estatus  = document.getElementById('filtroEstatus').value;
+
+        // Aplicar los mismos filtros que buscarAlumno()
+        const lista = todosLosAlumnos.filter(a => {
+            const nm = `${a.apellidos} ${a.nombre}`.toUpperCase();
+            const esDocente = rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO';
+            if (esDocente && GRUPOS_DOCENTE_BUS.length > 0) {
+                if (!GRUPOS_DOCENTE_BUS.includes(`${a.grado}${a.grupo}`)) return false;
+            }
+            return nm.includes(busqueda)
+                && (grado   === '' || a.grado.toString() === grado)
+                && (grupo   === '' || a.grupo === grupo)
+                && (estatus === '' || (a.status || 'ACTIVO') === estatus);
+        });
+
+        const filtrosDesc = [
+            busqueda ? `Búsqueda: "${busqueda}"` : '',
+            grado  ? `${grado}° Grado` : '',
+            grupo  ? `Grupo ${grupo}` : '',
+            estatus ? estatus : ''
+        ].filter(Boolean).join(' · ') || 'Todos los alumnos';
+
+        const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+        const cfg   = await getConfigInst();
+
+        let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 15mm 12mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+            table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+            th { background:#1B4F8A; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+            td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:middle; font-size:10px; }
+            tr:nth-child(even) td { background:#f8fafc; }
+            .activo { color:#2d9b6f; font-weight:700; }
+            .baja   { color:#94a3b8; font-weight:700; }
+            .mut    { color:#64748b; }
+            h3 { font-size:12px; color:#1B4F8A; margin:0 0 2px; }
+            p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+        </style></head><body>
+        ${headerInstHTML(cfg)}
+        <h3>🎓 Lista de Alumnos</h3>
+        <p>${filtrosDesc} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+        <table><thead><tr>
+            <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Estatus</th>
+        </tr></thead><tbody>`;
+
+        lista.forEach((a, i) => {
+            const esBaja = a.status === 'BAJA';
+            html += `<tr>
+                <td class="mut">${i + 1}</td>
+                <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                <td>${a.grado}° Grupo "${a.grupo}"</td>
+                <td class="${esBaja ? 'baja' : 'activo'}">${esBaja ? 'BAJA' : 'ACTIVO'}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>
+        <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Responsable</div>
+            </div>
+        </div>
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
 </script>
     <script>
       if ('serviceWorker' in navigator) {

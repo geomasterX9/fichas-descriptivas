@@ -348,8 +348,9 @@
                     <tbody id="bodyParcialModal"></tbody>
                 </table>
             </div>
-            <div class="modal-footer">
-                <button class="btn-cerrar-modal" onclick="cerrarModalParcial()">Cerrar</button>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:12px;">
+                <button onclick="exportarParcialPDF()" style="padding:10px 20px; background:#f59e0b; color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">🖨️ Exportar PDF</button>
+                <button class="btn-cerrar-modal" style="width:auto; padding:10px 20px;" onclick="cerrarModalParcial()">Cerrar</button>
             </div>
         </div>
     </div>
@@ -655,6 +656,152 @@
             });
 
             html += `</tbody></table>${firmasHtml}</body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+        }
+
+        async function exportarParcialPDF() {
+            const trimestre = document.getElementById('filtroParcialTrimestre').value;
+            const grado     = document.getElementById('filtroParcialGrado').value;
+            const grupo     = document.getElementById('filtroParcialGrupo').value;
+            let lista = [...datosRiesgoParcial];
+            if (trimestre) lista = lista.filter(a => a.materias_riesgo && a.materias_riesgo.some(m => m.startsWith(`T${trimestre}`)));
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            lista.sort((a, b) => {
+                if (a.grado !== b.grado) return a.grado - b.grado;
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
+
+            const subtitulo = [
+                trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
+                grado ? `${grado}° Grado` : '',
+                grupo ? `Grupo ${grupo}` : ''
+            ].filter(Boolean).join(' · ') || 'Todos';
+
+            const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+            const cfg   = await getConfigInst();
+
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                @page { size: letter; margin: 15mm 12mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+                table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+                th { background:#f59e0b; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+                td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; font-size:10px; }
+                tr:nth-child(even) td { background:#fffbeb; }
+                .chip { background:#fff7ed; color:#92400e; border-radius:4px; padding:2px 6px; font-size:9px; font-weight:700; display:inline-block; margin:1px; }
+                h3 { font-size:12px; color:#92400e; margin:0 0 2px; }
+                p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+            </style></head><body>
+            ${headerInstHTML(cfg)}
+            <h3>⚠️ Riesgo Académico — Evaluaciones Parciales</h3>
+            <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+            <table><thead><tr>
+                <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Materias en riesgo</th>
+            </tr></thead><tbody>`;
+
+            lista.forEach((a, i) => {
+                const materias = (a.materias_riesgo || []).map(m => `<span class="chip">${esc(m)}</span>`).join(' ');
+                html += `<tr>
+                    <td style="color:#64748b;">${i + 1}</td>
+                    <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                    <td>${a.grado}° "${a.grupo}"</td>
+                    <td>${materias}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>
+            <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Responsable</div>
+                </div>
+            </div>
+            </body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+        }
+
+        async function exportarMotivosPDF() {
+            const trimestre = document.getElementById('filtroMotivoTrimestre').value;
+            const grado     = document.getElementById('filtroMotivoGrado').value;
+            const grupo     = document.getElementById('filtroMotivoGrupo').value;
+            let lista = [...datosMotivosAdmin];
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            lista.sort((a, b) => {
+                if (a.trimestre !== b.trimestre) return a.trimestre - b.trimestre;
+                if (a.grado !== b.grado) return a.grado - b.grado;
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
+
+            const subtitulo = [
+                trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
+                grado ? `${grado}° Grado` : '',
+                grupo ? `Grupo ${grupo}` : ''
+            ].filter(Boolean).join(' · ') || 'Todos';
+
+            const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+            const cfg   = await getConfigInst();
+
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                @page { size: letter; margin: 15mm 12mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+                table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+                th { background:#e63946; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+                td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; font-size:10px; }
+                tr:nth-child(even) td { background:#fff0f1; }
+                h3 { font-size:12px; color:#e63946; margin:0 0 2px; }
+                p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+                .rep { color:#e63946; font-weight:700; }
+                .mut { color:#64748b; }
+            </style></head><body>
+            ${headerInstHTML(cfg)}
+            <h3>📝 Motivos de Reprobación Registrados</h3>
+            <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} registro(s)</p>
+            <table><thead><tr>
+                <th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Trim.</th><th>Materias reprobadas</th><th>Motivos</th><th>Registrado por</th>
+            </tr></thead><tbody>`;
+
+            lista.forEach((a, i) => {
+                html += `<tr>
+                    <td class="mut">${i + 1}</td>
+                    <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                    <td>${a.grado}° "${a.grupo}"</td>
+                    <td style="font-weight:700;">T${a.trimestre}</td>
+                    <td class="rep">${esc(a.materias_reprobadas || '—')}</td>
+                    <td class="mut" style="max-width:180px;">${esc(a.motivos_reprobacion || '—')}</td>
+                    <td class="mut">${esc(a.nombre_docente || '—')} <b style="color:#1B4F8A;">${esc(a.materia_docente || '')}</b></td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>
+            <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Responsable</div>
+                </div>
+            </div>
+            </body></html>`;
 
             const win = window.open('', '_blank');
             win.document.write(html);
@@ -1033,8 +1180,9 @@
                     <tbody id="bodyMotivos"></tbody>
                 </table>
             </div>
-            <div class="modal-footer">
-                <button class="btn-cerrar-modal" onclick="cerrarModalMotivos()">Cerrar</button>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:12px;">
+                <button onclick="exportarMotivosPDF()" style="padding:10px 20px; background:var(--rojo); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#c0303a'" onmouseout="this.style.background='var(--rojo)'">🖨️ Exportar PDF</button>
+                <button class="btn-cerrar-modal" style="width:auto; padding:10px 20px;" onclick="cerrarModalMotivos()">Cerrar</button>
             </div>
         </div>
     </div>

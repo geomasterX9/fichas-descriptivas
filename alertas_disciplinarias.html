@@ -106,7 +106,10 @@
 
 <nav class="navbar">
     <div class="navbar-brand">⚠️ Alertas Disciplinarias</div>
-    <a href="inicio.html" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">← Volver al Inicio</a>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <button onclick="exportarAlertasPDF()" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;">🖨️ PDF</button>
+        <a href="inicio.html" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">← Volver al Inicio</a>
+    </div>
 </nav>
 
 <div class="contenedor">
@@ -237,6 +240,113 @@
                     <div class="card-flecha">›</div>
                 </a>`;
             }).join('');
+    }
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function getConfigInst() {
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+            if (res) return await res.json();
+        } catch(e) {}
+        return {};
+    }
+
+    function headerInstHTML(cfg) {
+        const nombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const clave     = cfg.clave_escuela     || '';
+        const direccion = cfg.direccion_escuela || '';
+        const ciclo     = cfg.ciclo_activo      || '';
+        const logoIzq   = cfg.logo_izquierdo    || '';
+        const logoDer   = cfg.logo_derecho      || '';
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+            <div style="width:90px;text-align:center;">
+                ${logoIzq ? `<img src="${logoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+            </div>
+            <div style="flex:1;text-align:center;padding:0 16px;">
+                <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${nombre}</div>
+                ${clave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div style="font-size:10px;color:#555;">${direccion}</div>` : ''}
+                ${ciclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${ciclo}</div>` : ''}
+            </div>
+            <div style="width:90px;text-align:center;">
+                ${logoDer ? `<img src="${logoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+            </div>
+        </div>`;
+    }
+
+    async function exportarAlertasPDF() {
+        // Tomar la lista actualmente visible (filtro activo)
+        const btnActivo = document.querySelector('.filtro-btn.activo');
+        const tipoActivo = btnActivo ? btnActivo.textContent.trim() : 'Todos';
+
+        // Reconstruir lista según filtro activo
+        let lista = [...todosAlumnos];
+        const filtroActivo = btnActivo ? btnActivo.getAttribute('onclick') : '';
+        if (filtroActivo && filtroActivo.includes("'grave'"))     lista = lista.filter(a => a.reportes_graves > 0);
+        if (filtroActivo && filtroActivo.includes("'multiples'")) lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+
+        lista.sort((a, b) => {
+            if (a.grado !== b.grado) return a.grado - b.grado;
+            if (a.grupo !== b.grupo) return String(a.grupo).localeCompare(String(b.grupo));
+            return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+        });
+
+        const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+        const cfg   = await getConfigInst();
+
+        let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 15mm 12mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+            table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+            th { background:#92400e; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+            td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:middle; font-size:10px; }
+            tr:nth-child(even) td { background:#fffbeb; }
+            .grave   { color:#e63946; font-weight:700; }
+            .moderado{ color:#f59e0b; font-weight:700; }
+            .mut     { color:#64748b; }
+            h3 { font-size:12px; color:#92400e; margin:0 0 2px; }
+            p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+        </style></head><body>
+        ${headerInstHTML(cfg)}
+        <h3>🚨 Alertas Disciplinarias</h3>
+        <p>Filtro: ${tipoActivo} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+        <table><thead><tr>
+            <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Nivel</th><th>Faltas graves</th><th>Total reportes</th>
+        </tr></thead><tbody>`;
+
+        lista.forEach((a, i) => {
+            const esGrave = a.reportes_graves > 0;
+            html += `<tr>
+                <td class="mut">${i + 1}</td>
+                <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                <td>${a.grado}° Grupo "${a.grupo}"</td>
+                <td class="${esGrave ? 'grave' : 'moderado'}">${esGrave ? '🔴 GRAVE' : '🟡 MODERADO'}</td>
+                <td class="grave">${a.reportes_graves > 0 ? a.reportes_graves : '—'}</td>
+                <td style="font-weight:700;">${a.total_reportes}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>
+        <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Prefecto / T. Social</div>
+            </div>
+        </div>
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
     }
 
     window.onload = cargar;
