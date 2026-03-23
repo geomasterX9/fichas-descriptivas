@@ -1,7 +1,7 @@
 const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion'];
+const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional'];
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
@@ -262,6 +262,32 @@ module.exports = async (req, res) => {
                 });
             });
             return res.json(lista);
+        }
+
+        // ── Configuración institucional ──────────────────────────────
+        if (tipo === 'config_institucional') {
+            if (req.method === 'GET') {
+                const { data } = await supabase
+                    .from('configuracion')
+                    .select('clave, valor')
+                    .in('clave', ['nombre_escuela','clave_escuela','direccion_escuela','logo_izquierdo','logo_derecho','ciclo_activo']);
+                const cfg = {};
+                (data || []).forEach(r => { cfg[r.clave] = r.valor; });
+                return res.json(cfg);
+            }
+            if (req.method === 'POST') {
+                if (usuario.rol !== 'ADMINISTRADOR')
+                    return res.status(403).json({ error: 'Solo el administrador puede modificar la configuración institucional.' });
+                const body = req.body || {};
+                const claves = ['nombre_escuela','clave_escuela','direccion_escuela','logo_izquierdo','logo_derecho','ciclo_activo'];
+                await Promise.all(
+                    claves.filter(c => body[c] !== undefined).map(clave =>
+                        supabase.from('configuracion')
+                            .upsert({ clave, valor: body[clave], updated_at: new Date().toISOString() })
+                    )
+                );
+                return res.json({ exito: true });
+            }
         }
 
         // Alumnos en riesgo disciplinario (falta grave o 3+ reportes)

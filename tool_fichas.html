@@ -110,6 +110,7 @@
             </select>
         </div>
         <span class="badge" id="conteo">—</span>
+        <button onclick="exportarFichasPDF()" style="padding:9px 18px;background:var(--azul);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#163f6e'" onmouseout="this.style.background='var(--azul)'">🖨️ Exportar PDF</button>
     </div>
 
     <div class="tabla-wrap">
@@ -133,6 +134,76 @@
     const BASE = window.location.origin;
     let todos = [];
     let filtrados = [];
+
+    async function obtenerConfigInstitucional() {
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+            if (res) return await res.json();
+        } catch(e) {}
+        return {};
+    }
+
+    async function exportarFichasPDF() {
+        const cfg = await obtenerConfigInstitucional();
+        const nombre   = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const clave    = cfg.clave_escuela     || '';
+        const direccion= cfg.direccion_escuela || '';
+        const ciclo    = cfg.ciclo_activo      || '';
+        const logoIzq  = cfg.logo_izquierdo    || '';
+        const logoDer  = cfg.logo_derecho      || '';
+        const fecha    = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+
+        const grado = document.getElementById('filtroGrado').value;
+        const grupo = document.getElementById('filtroGrupo').value;
+        const ficha = document.getElementById('filtroFicha').value;
+        const subtitulo = [grado ? `${grado}° Grado` : '', grupo ? `Grupo ${grupo}` : '', ficha === 'completada' ? 'Completadas' : ficha === 'pendiente' ? 'Pendientes' : ''].filter(Boolean).join(' · ') || 'Todos';
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 14mm 12mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+            .header-inst { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1B4F8A; padding-bottom:10px; margin-bottom:14px; }
+            .header-logo { width:65px; height:55px; object-fit:contain; }
+            .header-logo-ph { width:65px; height:55px; display:flex; align-items:center; justify-content:center; font-size:28px; }
+            .header-center { text-align:center; flex:1; padding:0 10px; }
+            .header-sep { font-size:9px; color:#555; font-weight:600; }
+            .header-title { font-size:14px; font-weight:800; color:#1B4F8A; margin:3px 0; }
+            .header-sub { font-size:10px; color:#555; }
+            h3 { font-size:12px; color:#1B4F8A; margin:0 0 2px; }
+            p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+            table { width:100%; border-collapse:collapse; }
+            th { background:#1B4F8A; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+            td { padding:6px 8px; border-bottom:1px solid #e2e8f0; font-size:10px; }
+            tr:nth-child(even) td { background:#f8fafc; }
+            .ok { color:#166534; font-weight:700; }
+            .pend { color:#92400e; font-weight:700; }
+        </style></head><body>
+        <div class="header-inst">
+            ${logoIzq ? `<img src="${logoIzq}" class="header-logo">` : '<div class="header-logo-ph">🎓</div>'}
+            <div class="header-center">
+                <div class="header-title">${nombre}</div>
+                ${clave ? `<div class="header-sub">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div class="header-sub">${direccion}</div>` : ''}
+                ${ciclo ? `<div class="header-sub">Ciclo Escolar ${ciclo}</div>` : ''}
+            </div>
+            ${logoDer ? `<img src="${logoDer}" class="header-logo">` : '<div class="header-logo-ph">🏫</div>'}
+        </div>
+        <h3>Seguimiento de Fichas Socioeconómicas</h3>
+        <p>${subtitulo} &nbsp;|&nbsp; Generado el ${fecha}</p>
+        <table><thead><tr><th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Estado</th></tr></thead><tbody>
+        ${filtrados.map((a,i) => `<tr>
+            <td>${i+1}</td>
+            <td><b>${a.apellidos} ${a.nombre}</b></td>
+            <td>${a.grado}° "${a.grupo}"</td>
+            <td class="${a.ficha_completada ? 'ok' : 'pend'}">${a.ficha_completada ? '✅ Completada' : '⏳ Pendiente'}</td>
+        </tr>`).join('')}
+        </tbody></table></body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
 
     window.onload = async () => {
         try {

@@ -230,6 +230,7 @@
                 <a href="tool_usuarios.html"       class="tool-btn tool-verde">👥 Gestión de Usuarios</a>
                 <a href="tool_logs.html"           class="tool-btn tool-gris">📋 Logs de Actividad</a>
                 <a href="tool_ciclo.html"          class="tool-btn tool-rojo">🔄 Cierre de Ciclo Escolar</a>
+                <button onclick="abrirConfigInstitucional()" class="tool-btn" style="background:#f0f9ff;color:#0369a1;border-color:#bae6fd;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Configuración Institucional</button>
             </div>
         </div>
 
@@ -688,7 +689,63 @@
                 });
             });
 
-            html += `</tbody></table>${firmasHtml}</body></html>`;
+            html += `</tbody></table>${firmasHtml}
+    <!-- MODAL CONFIGURACIÓN INSTITUCIONAL -->
+    <div class="modal-overlay" id="modalConfigInst">
+        <div class="modal-contenido" style="max-width:600px;">
+            <div class="modal-header">
+                <div class="modal-titulo">⚙️ Configuración Institucional</div>
+                <button class="modal-cerrar" onclick="cerrarConfigInstitucional()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:24px; display:flex; flex-direction:column; gap:16px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <!-- Logo izquierdo -->
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Izquierdo</label>
+                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoIzq').click()">
+                            <img id="prevLogoIzq" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
+                            <div id="lblLogoIzq" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
+                        </div>
+                        <input type="file" id="inputLogoIzq" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoIzq','lblLogoIzq','logoIzqB64')">
+                    </div>
+                    <!-- Logo derecho -->
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Derecho</label>
+                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoDer').click()">
+                            <img id="prevLogoDer" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
+                            <div id="lblLogoDer" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
+                        </div>
+                        <input type="file" id="inputLogoDer" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoDer','lblLogoDer','logoDerB64')">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Nombre de la Escuela</label>
+                    <input type="text" id="cfgNombre" maxlength="100" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Clave del Centro</label>
+                        <input type="text" id="cfgClave" maxlength="20" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Ciclo Escolar</label>
+                        <input type="text" id="cfgCiclo" maxlength="10" placeholder="2025-2026" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Dirección</label>
+                    <input type="text" id="cfgDireccion" maxlength="150" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                </div>
+                <div id="cfgMensaje" style="font-size:13px;font-weight:700;text-align:center;display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarConfigInstitucional()">Cancelar</button>
+                <button onclick="guardarConfigInstitucional()" style="background:var(--azul);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+</body></html>`;
 
             const win = window.open('', '_blank');
             win.document.write(html);
@@ -757,6 +814,89 @@
                     <td style="font-size:12px; color:var(--muted);">${esc(a.nombre_docente || '—')} <span style="color:var(--azul); font-weight:700;">${esc(a.materia_docente || '')}</span></td>
                     <td style="text-align:center;"><button class="link-exp" onclick="irMotivosExp(${a.id_alumno})">Ver →</button></td>
                 </tr>`).join('');
+        }
+
+
+        // Almacenes temporales de logos en base64
+        let logoIzqB64 = '';
+        let logoDerB64 = '';
+
+        async function abrirConfigInstitucional() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+                if (!res) return;
+                const cfg = await res.json();
+                document.getElementById('cfgNombre').value    = cfg.nombre_escuela || '';
+                document.getElementById('cfgClave').value     = cfg.clave_escuela || '';
+                document.getElementById('cfgDireccion').value = cfg.direccion_escuela || '';
+                document.getElementById('cfgCiclo').value     = cfg.ciclo_activo || '';
+                if (cfg.logo_izquierdo) {
+                    logoIzqB64 = cfg.logo_izquierdo;
+                    document.getElementById('prevLogoIzq').src = cfg.logo_izquierdo;
+                    document.getElementById('prevLogoIzq').style.display = 'block';
+                    document.getElementById('lblLogoIzq').textContent = '✅ Logo cargado';
+                }
+                if (cfg.logo_derecho) {
+                    logoDerB64 = cfg.logo_derecho;
+                    document.getElementById('prevLogoDer').src = cfg.logo_derecho;
+                    document.getElementById('prevLogoDer').style.display = 'block';
+                    document.getElementById('lblLogoDer').textContent = '✅ Logo cargado';
+                }
+            } catch(e) {}
+            document.getElementById('cfgMensaje').style.display = 'none';
+            document.getElementById('modalConfigInst').style.display = 'flex';
+        }
+
+        function cerrarConfigInstitucional() {
+            document.getElementById('modalConfigInst').style.display = 'none';
+        }
+
+        function previewLogo(input, imgId, lblId, varName) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const b64 = e.target.result;
+                if (varName === 'logoIzqB64') logoIzqB64 = b64;
+                else logoDerB64 = b64;
+                document.getElementById(imgId).src = b64;
+                document.getElementById(imgId).style.display = 'block';
+                document.getElementById(lblId).textContent = '✅ ' + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function guardarConfigInstitucional() {
+            const msg = document.getElementById('cfgMensaje');
+            msg.style.display = 'none';
+            const body = {
+                nombre_escuela:    document.getElementById('cfgNombre').value.trim(),
+                clave_escuela:     document.getElementById('cfgClave').value.trim(),
+                direccion_escuela: document.getElementById('cfgDireccion').value.trim(),
+            };
+            if (logoIzqB64) body.logo_izquierdo = logoIzqB64;
+            if (logoDerB64) body.logo_derecho   = logoDerB64;
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=config_institucional', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (res && res.ok) {
+                    msg.textContent = '✅ Configuración guardada correctamente.';
+                    msg.style.color = 'var(--verde)';
+                    msg.style.display = 'block';
+                    setTimeout(() => cerrarConfigInstitucional(), 1500);
+                } else {
+                    msg.textContent = '❌ Error al guardar.';
+                    msg.style.color = 'var(--rojo)';
+                    msg.style.display = 'block';
+                }
+            } catch(e) {
+                msg.textContent = '❌ Error de conexión.';
+                msg.style.color = 'var(--rojo)';
+                msg.style.display = 'block';
+            }
         }
 
         async function cargarKpis() {
@@ -996,6 +1136,62 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-cerrar-modal" onclick="cerrarModalRecuperacion()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL CONFIGURACIÓN INSTITUCIONAL -->
+    <div class="modal-overlay" id="modalConfigInst">
+        <div class="modal-contenido" style="max-width:600px;">
+            <div class="modal-header">
+                <div class="modal-titulo">⚙️ Configuración Institucional</div>
+                <button class="modal-cerrar" onclick="cerrarConfigInstitucional()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:24px; display:flex; flex-direction:column; gap:16px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <!-- Logo izquierdo -->
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Izquierdo</label>
+                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoIzq').click()">
+                            <img id="prevLogoIzq" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
+                            <div id="lblLogoIzq" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
+                        </div>
+                        <input type="file" id="inputLogoIzq" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoIzq','lblLogoIzq','logoIzqB64')">
+                    </div>
+                    <!-- Logo derecho -->
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Derecho</label>
+                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoDer').click()">
+                            <img id="prevLogoDer" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
+                            <div id="lblLogoDer" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
+                        </div>
+                        <input type="file" id="inputLogoDer" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoDer','lblLogoDer','logoDerB64')">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Nombre de la Escuela</label>
+                    <input type="text" id="cfgNombre" maxlength="100" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Clave del Centro</label>
+                        <input type="text" id="cfgClave" maxlength="20" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Ciclo Escolar</label>
+                        <input type="text" id="cfgCiclo" maxlength="10" placeholder="2025-2026" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Dirección</label>
+                    <input type="text" id="cfgDireccion" maxlength="150" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                </div>
+                <div id="cfgMensaje" style="font-size:13px;font-weight:700;text-align:center;display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarConfigInstitucional()">Cancelar</button>
+                <button onclick="guardarConfigInstitucional()" style="background:var(--azul);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">💾 Guardar</button>
             </div>
         </div>
     </div>
