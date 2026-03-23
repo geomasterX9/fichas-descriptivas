@@ -286,7 +286,10 @@
                 if (data && data.length > 0) {
                     const btn = document.getElementById('btnRecuperacion');
                     btn.style.display = 'flex';
-                    const unicos = new Set(data.map(a => a.id_alumno));
+                    // Filtrar por trimestre más reciente (mismo criterio que recuperacion.html)
+                    const maxTrim = Math.max(...data.map(a => a.trimestre));
+                    const dataDelTrim = data.filter(a => a.trimestre === maxTrim);
+                    const unicos = new Set(dataDelTrim.map(a => a.id_alumno));
                     document.getElementById('badgeRecuperacion').textContent = unicos.size;
                     sessionStorage.setItem('recuperacion_docente', JSON.stringify(data));
                 }
