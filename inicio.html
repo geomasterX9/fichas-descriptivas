@@ -170,6 +170,14 @@
             </div>
             <div class="opcion-flecha">›</div>
         </a>
+        <a class="btn-opcion" href="dashboard.html" id="btnDashboard" style="display:none;">
+            <div class="opcion-icono" style="background:#eff6ff;">📊</div>
+            <div class="opcion-texto">
+                <div class="opcion-titulo">Panel Directivo</div>
+                <div class="opcion-desc">Estadísticas, reportes y herramientas de gestión escolar.</div>
+            </div>
+            <div class="opcion-flecha">›</div>
+        </a>
         <a class="btn-opcion" href="buscador.html">
             <div class="opcion-icono icono-expediente">📁</div>
             <div class="opcion-texto">
@@ -222,8 +230,8 @@
         const rol    = localStorage.getItem('rolActivo') || '';
 
         if (!rol) window.location.href = 'index.html';
-        if (rol === 'ADMINISTRADOR' || rol === 'DIRECTIVO') window.location.href = 'dashboard.html';
-        // TRABAJO SOCIAL permanece en inicio.html
+        if (rol === 'ADMINISTRADOR') window.location.href = 'dashboard.html';
+        // TRABAJO SOCIAL y DIRECTIVO permanecen en inicio.html
 
         document.getElementById('headerNombre').textContent = nombre;
         document.getElementById('headerRol').textContent    = rol;
@@ -234,7 +242,8 @@
         const nombreSaludo = nombreCorto || nombre.split(' ').slice(-1)[0];
         document.getElementById('saludo').textContent = `${saludo}, ${nombreSaludo} 👋`;
 
-        if (rol === 'TRABAJO SOCIAL') document.getElementById('btnReporte').style.display = 'none';
+        if (rol === 'TRABAJO SOCIAL' || rol === 'DIRECTIVO') document.getElementById('btnReporte').style.display = 'none';
+        if (rol === 'DIRECTIVO') document.getElementById('btnDashboard').style.display = 'flex';
 
         // Consultar alumnos en riesgo disciplinario
         async function cargarAlertas() {

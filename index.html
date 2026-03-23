@@ -147,8 +147,10 @@
                     btn.innerText = '¡Acceso correcto! ✅';
                     btn.style.background = '#2d9b6f';
                     setTimeout(() => {
-                        if (data.rol === 'ADMINISTRADOR' || data.rol === 'DIRECTIVO')
+                        if (data.rol === 'ADMINISTRADOR')
                             window.location.href = 'dashboard.html';
+                        else if (data.rol === 'DIRECTIVO')
+                            window.location.href = 'inicio.html';
                         else if (data.rol === 'TRABAJO SOCIAL')
                             window.location.href = 'inicio.html';
                         else
