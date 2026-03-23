@@ -705,6 +705,15 @@
         const nombre    = document.querySelector('.perfil-nombre')?.innerText || '';
         const gradoGrup = document.querySelector('.perfil-sub')?.innerText || '';
         const fecha     = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+        // Cargar configuración institucional
+        let cfg = {};
+        try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg = await r.json(); } catch(e) {}
+        const cfgNombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const cfgClave     = cfg.clave_escuela     || '';
+        const cfgDireccion = cfg.direccion_escuela || '';
+        const cfgCiclo     = cfg.ciclo_activo      || '';
+        const cfgLogoIzq   = cfg.logo_izquierdo    || '';
+        const cfgLogoDer   = cfg.logo_derecho      || '';
 
         // Foto en base64
         let fotoB64 = '';
@@ -777,16 +786,19 @@
         </style></head><body>
 
         <!-- HEADER INSTITUCIONAL -->
-        <div class="header-inst">
-            <div style="width:65px; text-align:center; font-size:32px;">🎓</div>
-            <div class="header-center">
-                <div class="header-sep">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
-                <div class="header-title">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
-                <div class="header-sub">CLAVE: 24DST0092Z</div>
-                <div class="header-sub">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+            <div style="width:90px;text-align:center;">
+                ${cfgLogoIzq ? `<img src="${cfgLogoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
             </div>
-            <div style="width:65px; text-align:right; font-size:9px; color:#64748b; line-height:1.6;">
-                Generado<br><b>${fecha}</b>
+            <div style="flex:1;text-align:center;padding:0 16px;">
+                <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${cfgNombre}</div>
+                ${cfgClave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${cfgClave}</div>` : ''}
+                ${cfgDireccion ? `<div style="font-size:10px;color:#555;">${cfgDireccion}</div>` : ''}
+                ${cfgCiclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${cfgCiclo}</div>` : ''}
+            </div>
+            <div style="width:90px;text-align:center;">
+                ${cfgLogoDer ? `<img src="${cfgLogoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : `<div style="font-size:9px;color:#64748b;line-height:1.6;">Generado<br><b>${fecha}</b></div>`}
             </div>
         </div>
 
@@ -843,6 +855,9 @@
         // Construir HTML del reporte disciplinario
         const alumnoNombre = document.querySelector('.perfil-nombre')?.innerText || '';
         const alumnoSub    = document.querySelector('.perfil-sub')?.innerText || '';
+        // Cargar configuración institucional
+        let cfgR = {};
+        try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfgR = await r.json(); } catch(e) {}
         const reportesHTML = document.getElementById('listaReportes')?.innerHTML || '';
         const fecha = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
 
@@ -850,14 +865,14 @@
         <div style="font-family:'Outfit',sans-serif; padding:0; color:#1a2332;">
             <!-- Encabezado institucional -->
             <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:3px solid #1B4F8A; margin-bottom:16px;">
-                <img src="/logo_sege.png" style="height:52px; object-fit:contain;">
+                ${cfgR.logo_izquierdo ? `<img src="${cfgR.logo_izquierdo}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
                 <div style="text-align:center; flex:1; padding:0 12px;">
-                    <div style="font-size:11px; color:#555; font-weight:600;">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
-                    <div style="font-size:15px; font-weight:800; color:#1B4F8A; margin:3px 0;">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
-                    <div style="font-size:11px; color:#555;">CLAVE: 24DST0092Z</div>
-                    <div style="font-size:10px; color:#777;">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+                    <div style="font-size:9px; color:#555; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                    <div style="font-size:15px; font-weight:800; color:#1B4F8A; margin:4px 0;">${cfgR.nombre_escuela || 'ESCUELA SECUNDARIA'}</div>
+                    ${cfgR.clave_escuela ? `<div style="font-size:11px; color:#555;">CLAVE: ${cfgR.clave_escuela}</div>` : ''}
+                    ${cfgR.direccion_escuela ? `<div style="font-size:10px; color:#777;">${cfgR.direccion_escuela}</div>` : ''}
                 </div>
-                <img src="/logo_est84.png" style="height:52px; object-fit:contain;">
+                ${cfgR.logo_derecho ? `<img src="${cfgR.logo_derecho}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
             </div>
             <!-- Título -->
             <div style="text-align:center; margin-bottom:16px;">

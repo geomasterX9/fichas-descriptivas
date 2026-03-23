@@ -573,7 +573,7 @@
             } catch(e) { inputEl.style.borderColor = 'var(--rojo)'; }
         }
 
-        function exportarRecuperacionPDF() {
+        async function exportarRecuperacionPDF() {
             const trimestre = document.getElementById('filtroRecTrimestre').value;
             const grado     = document.getElementById('filtroRecGrado').value;
             const grupo     = document.getElementById('filtroRecGrupo').value;
@@ -592,34 +592,26 @@
                 trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
                 grado ? `${grado}° Grado` : '',
                 grupo ? `Grupo ${grupo}` : ''
-            ].filter(Boolean).join(' · ') || 'Todos los grupos';
+            ].filter(Boolean).join(' · ') || 'Todos';
 
             const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+            const cfg   = await getConfigInst();
 
-            // Obtener docentes únicos de los datos actuales
-            const docentesMap = {};
-            lista.forEach(a => {
-                a.materias_recuperacion.forEach(m => {
-                    if (!docentesMap[m.sigla]) docentesMap[m.sigla] = m.sigla;
-                });
-            });
-
-            // Generar secciones de firma por cada combinación grado/grupo/trimestre
-            const grupos = [...new Set(lista.map(a => `T${a.trimestre}-${a.grado}°-${a.grupo}`))];
-
-            let firmasHtml = grupos.map(g => {
+            // Secciones de firma
+            const grupos = [...new Set(lista.map(a => `T${a.trimestre}-${a.grado}-${a.grupo}`))];
+            const firmasHtml = grupos.map(g => {
                 const [t, gr, gp] = g.split('-');
-                return `<div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px;">
-                    <div style="font-size:10px; color:#64748b; margin-bottom:20px;">${t} · ${gr} Grado · Grupo ${gp}</div>
-                    <div style="display:flex; gap:40px; flex-wrap:wrap;">
-                        <div style="flex:1; min-width:200px;">
-                            <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
-                            <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del docente</div>
-                            <div style="font-size:10px; text-align:center; color:#374151; margin-top:2px;">Materia: ________________</div>
+                return `<div style="margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;">
+                    <div style="font-size:10px;color:#64748b;margin-bottom:20px;">T${t} · ${gr}° Grado · Grupo ${gp}</div>
+                    <div style="display:flex;gap:40px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <div style="border-bottom:1px solid #000;height:40px;margin-bottom:6px;"></div>
+                            <div style="font-size:10px;text-align:center;color:#374151;">Nombre y firma del docente</div>
+                            <div style="font-size:10px;text-align:center;color:#374151;margin-top:2px;">Materia: ________________</div>
                         </div>
-                        <div style="flex:1; min-width:200px;">
-                            <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
-                            <div style="font-size:10px; text-align:center; color:#374151;">Vo.Bo. Director(a)</div>
+                        <div style="flex:1;min-width:200px;">
+                            <div style="border-bottom:1px solid #000;height:40px;margin-bottom:6px;"></div>
+                            <div style="font-size:10px;text-align:center;color:#374151;">Vo.Bo. Director(a)</div>
                         </div>
                     </div>
                 </div>`;
@@ -629,48 +621,21 @@
             <style>
                 @page { size: letter; margin: 15mm 12mm; }
                 body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
-                /* HEADER INSTITUCIONAL */
-                .header-inst {
-                    display: flex; align-items: center; justify-content: space-between;
-                    border-bottom: 3px solid #1B4F8A; padding-bottom: 10px; margin-bottom: 14px;
-                }
-                .header-center { text-align: center; flex: 1; }
-                .header-sep    { font-size: 9px; color: #64748b; }
-                .header-title  { font-size: 13px; font-weight: 700; color: #1B4F8A; margin: 3px 0; }
-                .header-sub    { font-size: 10px; color: #374151; }
-                /* TABLA */
-                h3 { font-size: 12px; color: #1B4F8A; margin: 0 0 2px; }
-                p  { font-size: 10px; color: #64748b; margin: 0 0 12px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-                th { background: #1B4F8A; color: white; padding: 7px 8px; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
-                td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; font-size: 10px; }
-                tr:nth-child(even) td { background: #f8fafc; }
-                .rec  { font-weight: 700; color: #7c3aed; }
-                .ok   { font-weight: 700; color: #166534; }
-                .num  { color: #64748b; font-size: 10px; }
+                table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+                th { background:#1B4F8A; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+                td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; font-size:10px; }
+                tr:nth-child(even) td { background:#f8fafc; }
+                .rec { font-weight:700; color:#7c3aed; }
+                .ok  { font-weight:700; color:#166534; }
+                h3   { font-size:12px; color:#1B4F8A; margin:0 0 2px; }
+                p    { font-size:10px; color:#64748b; margin:0 0 12px; }
             </style></head><body>
-            <!-- HEADER INSTITUCIONAL -->
-            <div class="header-inst">
-                <div style="width:70px; height:60px; display:flex; align-items:center; justify-content:center;">
-                    <div style="font-size:28px;">🎓</div>
-                </div>
-                <div class="header-center">
-                    <div class="header-sep">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
-                    <div class="header-title">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
-                    <div class="header-sub">CLAVE: 24DST0092Z</div>
-                    <div class="header-sub">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
-                </div>
-                <div style="width:70px; text-align:right; font-size:9px; color:#64748b;">
-                    Ciclo Escolar<br><b style="font-size:11px;">2025-2026</b>
-                </div>
-            </div>
+            ${headerInstHTML(cfg)}
             <h3>Lista de Alumnos — Período de Recuperación</h3>
             <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha}</p>
-            <table>
-                <thead><tr>
-                    <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Trim.</th><th>Materia</th><th>Cal. Original</th><th>Cal. Recuperación</th>
-                </tr></thead>
-                <tbody>`;
+            <table><thead><tr>
+                <th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Trim.</th><th>Materia</th><th>Cal. Original</th><th>Cal. Recuperación</th>
+            </tr></thead><tbody>`;
 
             let num = 1;
             lista.forEach(a => {
@@ -678,74 +643,18 @@
                     const rec = (a.recuperacion || []).find(r => r.sigla === m.sigla);
                     const califRec = rec ? rec.calif_recuperacion : '';
                     html += `<tr>
-                        <td class="num">${num++}</td>
+                        <td style="color:#64748b;">${num++}</td>
                         <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
-                        <td>${a.grado}° &quot;${a.grupo}&quot;</td>
+                        <td>${a.grado}° "${a.grupo}"</td>
                         <td>T${a.trimestre}</td>
                         <td class="rec">${esc(m.sigla)}</td>
-                        <td style="color:#e63946; font-weight:700;">${m.calif}</td>
+                        <td style="color:#e63946;font-weight:700;">${m.calif}</td>
                         <td class="${califRec ? 'ok' : ''}">${califRec || '—'}</td>
                     </tr>`;
                 });
             });
 
-            html += `</tbody></table>${firmasHtml}
-    <!-- MODAL CONFIGURACIÓN INSTITUCIONAL -->
-    <div class="modal-overlay" id="modalConfigInst">
-        <div class="modal-contenido" style="max-width:600px;">
-            <div class="modal-header">
-                <div class="modal-titulo">⚙️ Configuración Institucional</div>
-                <button class="modal-cerrar" onclick="cerrarConfigInstitucional()">✕</button>
-            </div>
-            <div class="modal-body" style="padding:24px; display:flex; flex-direction:column; gap:16px;">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                    <!-- Logo izquierdo -->
-                    <div>
-                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Izquierdo</label>
-                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoIzq').click()">
-                            <img id="prevLogoIzq" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
-                            <div id="lblLogoIzq" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
-                        </div>
-                        <input type="file" id="inputLogoIzq" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoIzq','lblLogoIzq','logoIzqB64')">
-                    </div>
-                    <!-- Logo derecho -->
-                    <div>
-                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Derecho</label>
-                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoDer').click()">
-                            <img id="prevLogoDer" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
-                            <div id="lblLogoDer" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
-                        </div>
-                        <input type="file" id="inputLogoDer" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoDer','lblLogoDer','logoDerB64')">
-                    </div>
-                </div>
-                <div>
-                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Nombre de la Escuela</label>
-                    <input type="text" id="cfgNombre" maxlength="100" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div>
-                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Clave del Centro</label>
-                        <input type="text" id="cfgClave" maxlength="20" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
-                    </div>
-                    <div>
-                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Ciclo Escolar</label>
-                        <input type="text" id="cfgCiclo" maxlength="10" placeholder="2025-2026" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
-                    </div>
-                </div>
-                <div>
-                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Dirección</label>
-                    <input type="text" id="cfgDireccion" maxlength="150" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
-                </div>
-                <div id="cfgMensaje" style="font-size:13px;font-weight:700;text-align:center;display:none;"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cerrar-modal" onclick="cerrarConfigInstitucional()">Cancelar</button>
-                <button onclick="guardarConfigInstitucional()" style="background:var(--azul);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">💾 Guardar</button>
-            </div>
-        </div>
-    </div>
-
-</body></html>`;
+            html += `</tbody></table>${firmasHtml}</body></html>`;
 
             const win = window.open('', '_blank');
             win.document.write(html);
@@ -753,7 +662,7 @@
             setTimeout(() => win.print(), 500);
         }
 
-        function irRecExp(id) {
+                function irRecExp(id) {
             cerrarModalRecuperacion();
             setTimeout(() => { window.location.href = 'expediente.html?id_alumno=' + id + '&from=dashboard'; }, 80);
         }
@@ -897,6 +806,41 @@
                 msg.style.color = 'var(--rojo)';
                 msg.style.display = 'block';
             }
+        }
+
+
+        // ── Helper: obtener config institucional ──────────────────
+        async function getConfigInst() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+                if (res) return await res.json();
+            } catch(e) {}
+            return {};
+        }
+
+        function headerInstHTML(cfg) {
+            const nombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+            const clave     = cfg.clave_escuela     || '';
+            const direccion = cfg.direccion_escuela || '';
+            const ciclo     = cfg.ciclo_activo      || '';
+            const logoIzq   = cfg.logo_izquierdo    || '';
+            const logoDer   = cfg.logo_derecho      || '';
+            return `
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+                <div style="width:90px;text-align:center;">
+                    ${logoIzq ? `<img src="${logoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+                </div>
+                <div style="flex:1;text-align:center;padding:0 16px;">
+                    <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                    <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${nombre}</div>
+                    ${clave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                    ${direccion ? `<div style="font-size:10px;color:#555;">${direccion}</div>` : ''}
+                    ${ciclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${ciclo}</div>` : ''}
+                </div>
+                <div style="width:90px;text-align:center;">
+                    ${logoDer ? `<img src="${logoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+                </div>
+            </div>`;
         }
 
         async function cargarKpis() {
