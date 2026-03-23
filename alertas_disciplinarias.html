@@ -121,10 +121,38 @@
         </div>
     </div>
 
+    <!-- Búsqueda y selects -->
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+        <input type="text" id="busquedaNombre" placeholder="🔍 Buscar por nombre..." oninput="aplicarFiltros()"
+            style="flex:2; min-width:180px; padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px;
+                   font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto); outline:none; transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='var(--azul)'" onblur="this.style.borderColor='var(--borde)'">
+        <select id="filtroGrado" onchange="aplicarFiltros()"
+            style="flex:1; min-width:110px; padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px;
+                   font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); outline:none; appearance:none;">
+            <option value="">Todos los grados</option>
+            <option value="1">1° Grado</option>
+            <option value="2">2° Grado</option>
+            <option value="3">3° Grado</option>
+        </select>
+        <select id="filtroGrupo" onchange="aplicarFiltros()"
+            style="flex:1; min-width:110px; padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px;
+                   font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); outline:none; appearance:none;">
+            <option value="">Todos los grupos</option>
+            <option value="A">Grupo A</option>
+            <option value="B">Grupo B</option>
+            <option value="C">Grupo C</option>
+            <option value="D">Grupo D</option>
+            <option value="E">Grupo E</option>
+            <option value="F">Grupo F</option>
+        </select>
+    </div>
+
+    <!-- Chips de nivel -->
     <div class="filtros">
-        <button class="filtro-btn activo" onclick="filtrar('todos', this)">Todos</button>
-        <button class="filtro-btn" onclick="filtrar('grave', this)">🔴 Con falta grave</button>
-        <button class="filtro-btn" onclick="filtrar('multiples', this)">🟡 3+ reportes</button>
+        <button class="filtro-btn activo" onclick="seleccionarChip('todos', this)">Todos</button>
+        <button class="filtro-btn" onclick="seleccionarChip('grave', this)">🔴 Con falta grave</button>
+        <button class="filtro-btn" onclick="seleccionarChip('multiples', this)">🟡 3+ reportes</button>
     </div>
 
     <div class="conteo" id="conteo"></div>
@@ -179,9 +207,8 @@
                 ? 'No hay alumnos en situación de riesgo disciplinario'
                 : `${graves} con falta grave · ${lista.length - graves} con 3 o más reportes`;
 
-        document.getElementById('conteo').textContent = `Mostrando ${lista.length} alumno(s)`;
-
         if (lista.length === 0) {
+            document.getElementById('conteo').textContent = '';
             document.getElementById('lista').innerHTML = `
                 <div class="empty">
                     <div class="empty-icono">✅</div>
@@ -191,41 +218,43 @@
             return;
         }
 
-        document.getElementById('lista').innerHTML = lista.map(a => {
-            const esGrave   = a.reportes_graves > 0;
-            const tipoClass = esGrave ? 'grave' : 'moderado';
-            const iconoClass= esGrave ? 'grave' : 'moderado';
-            const icono     = esGrave ? '🔴' : '🟡';
-            return `
-            <a href="expediente.html?id_alumno=${a.id_alumno}&from=alertas" class="alumno-card ${tipoClass}">
-                <div class="card-icono ${iconoClass}">${icono}</div>
-                <div class="card-info">
-                    <div class="card-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
-                    <div class="card-grado">${a.grado}° Grupo "${a.grupo}"</div>
-                    <div class="card-badges">
-                        ${a.reportes_graves > 0  ? `<span class="chip chip-grave">⚠️ ${a.reportes_graves} falta(s) grave(s)</span>` : ''}
-                        ${a.total_reportes >= 3   ? `<span class="chip chip-reportes">📋 ${a.total_reportes} reportes totales</span>` : ''}
-                        ${a.total_reportes > 0 && a.total_reportes < 3 ? `<span class="chip chip-multi">📋 ${a.total_reportes} reportes</span>` : ''}
-                    </div>
-                </div>
-                <div class="card-flecha">›</div>
-            </a>`;
-        }).join('');
+        aplicarFiltros();
     }
 
-    function filtrar(tipo, btn) {
+    let chipActivo = 'todos';
+
+    function seleccionarChip(tipo, btn) {
         document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
         btn.classList.add('activo');
+        chipActivo = tipo;
+        aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+        const busqueda = (document.getElementById('busquedaNombre').value || '').toUpperCase().trim();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+
         let lista = [...todosAlumnos];
-        if (tipo === 'grave')    lista = lista.filter(a => a.reportes_graves > 0);
-        if (tipo === 'multiples') lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+
+        // Chip de nivel
+        if (chipActivo === 'grave')     lista = lista.filter(a => a.reportes_graves > 0);
+        if (chipActivo === 'multiples') lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+
+        // Selects
+        if (grado)  lista = lista.filter(a => String(a.grado) === grado);
+        if (grupo)  lista = lista.filter(a => a.grupo === grupo);
+
+        // Búsqueda por nombre
+        if (busqueda) lista = lista.filter(a => `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda));
+
         document.getElementById('conteo').textContent = `Mostrando ${lista.length} alumno(s)`;
         document.getElementById('lista').innerHTML = lista.length === 0
             ? `<div class="empty"><div class="empty-icono">✅</div><div class="empty-titulo">Sin alertas en esta categoría</div></div>`
             : lista.map(a => {
-                const esGrave = a.reportes_graves > 0;
+                const esGrave   = a.reportes_graves > 0;
                 const tipoClass = esGrave ? 'grave' : 'moderado';
-                const icono = esGrave ? '🔴' : '🟡';
+                const icono     = esGrave ? '🔴' : '🟡';
                 return `
                 <a href="expediente.html?id_alumno=${a.id_alumno}&from=alertas" class="alumno-card ${tipoClass}">
                     <div class="card-icono ${tipoClass}">${icono}</div>
@@ -278,21 +307,32 @@
     }
 
     async function exportarAlertasPDF() {
-        // Tomar la lista actualmente visible (filtro activo)
-        const btnActivo = document.querySelector('.filtro-btn.activo');
-        const tipoActivo = btnActivo ? btnActivo.textContent.trim() : 'Todos';
+        const busqueda = (document.getElementById('busquedaNombre').value || '').toUpperCase().trim();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
 
-        // Reconstruir lista según filtro activo
+        // Misma lógica que aplicarFiltros()
         let lista = [...todosAlumnos];
-        const filtroActivo = btnActivo ? btnActivo.getAttribute('onclick') : '';
-        if (filtroActivo && filtroActivo.includes("'grave'"))     lista = lista.filter(a => a.reportes_graves > 0);
-        if (filtroActivo && filtroActivo.includes("'multiples'")) lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+        if (chipActivo === 'grave')     lista = lista.filter(a => a.reportes_graves > 0);
+        if (chipActivo === 'multiples') lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+        if (grado)   lista = lista.filter(a => String(a.grado) === grado);
+        if (grupo)   lista = lista.filter(a => a.grupo === grupo);
+        if (busqueda) lista = lista.filter(a => `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda));
 
         lista.sort((a, b) => {
             if (a.grado !== b.grado) return a.grado - b.grado;
             if (a.grupo !== b.grupo) return String(a.grupo).localeCompare(String(b.grupo));
             return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
         });
+
+        // Etiqueta de filtros aplicados
+        const chipLabel = { todos: 'Todos', grave: 'Con falta grave', multiples: '3+ reportes' };
+        const filtrosDesc = [
+            chipLabel[chipActivo] || 'Todos',
+            grado  ? `${grado}° Grado` : '',
+            grupo  ? `Grupo ${grupo}` : '',
+            busqueda ? `Búsqueda: "${busqueda}"` : ''
+        ].filter(Boolean).join(' · ');
 
         const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
         const cfg   = await getConfigInst();
@@ -313,7 +353,7 @@
         </style></head><body>
         ${headerInstHTML(cfg)}
         <h3>🚨 Alertas Disciplinarias</h3>
-        <p>Filtro: ${tipoActivo} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+        <p>${filtrosDesc} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
         <table><thead><tr>
             <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Nivel</th><th>Faltas graves</th><th>Total reportes</th>
         </tr></thead><tbody>`;
