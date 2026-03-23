@@ -311,6 +311,12 @@
                 <button class="modal-cerrar" onclick="cerrarModalParcial()">✕</button>
             </div>
             <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+<select id="filtroParcialTrimestre" onchange="filtrarParcial()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los trimestres</option>
+                    <option value="1">Trimestre 1</option>
+                    <option value="2">Trimestre 2</option>
+                    <option value="3">Trimestre 3</option>
+                </select>
                 <select id="filtroParcialGrado" onchange="filtrarParcial()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
                     <option value="">Todos los grados</option>
                     <option value="1">1° Grado</option>
@@ -424,6 +430,7 @@
 
         function abrirModalParcial() {
             document.getElementById('modalParcial').style.display = 'flex';
+            document.getElementById('filtroParcialTrimestre').value = '';
             document.getElementById('filtroParcialGrado').value = '';
             document.getElementById('filtroParcialGrupo').value = '';
             filtrarParcial();
@@ -434,9 +441,11 @@
         }
 
         function filtrarParcial() {
+            const trimestre = document.getElementById('filtroParcialTrimestre').value;
             const grado = document.getElementById('filtroParcialGrado').value;
             const grupo = document.getElementById('filtroParcialGrupo').value;
             let lista = [...datosRiesgoParcial];
+            if (trimestre) lista = lista.filter(a => a.materias_riesgo && a.materias_riesgo.some(m => m.startsWith(`T${trimestre}`)));
             if (grado) lista = lista.filter(a => String(a.grado) === grado);
             if (grupo) lista = lista.filter(a => a.grupo === grupo);
             document.getElementById('contadorFiltroParcial').textContent = `Mostrando ${lista.length} alumno(s)`;
@@ -708,6 +717,7 @@
 
         function abrirModalMotivos() {
             document.getElementById('modalMotivos').style.display = 'flex';
+            document.getElementById('filtroMotivoTrimestre').value = '';
             document.getElementById('filtroMotivoGrado').value = '';
             document.getElementById('filtroMotivoGrupo').value = '';
             filtrarMotivos();
@@ -724,9 +734,11 @@
         }
 
         function filtrarMotivos() {
+            const trimestre = document.getElementById('filtroMotivoTrimestre').value;
             const grado = document.getElementById('filtroMotivoGrado').value;
             const grupo = document.getElementById('filtroMotivoGrupo').value;
             let lista = [...datosMotivosAdmin];
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
             if (grado) lista = lista.filter(a => String(a.grado) === grado);
             if (grupo) lista = lista.filter(a => a.grupo === grupo);
             document.getElementById('contadorFiltroMotivos').textContent = `Mostrando ${lista.length} alumno(s)`;
@@ -901,6 +913,12 @@
                 <button class="modal-cerrar" onclick="cerrarModalMotivos()">✕</button>
             </div>
             <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+<select id="filtroMotivoTrimestre" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los trimestres</option>
+                    <option value="1">Trimestre 1</option>
+                    <option value="2">Trimestre 2</option>
+                    <option value="3">Trimestre 3</option>
+                </select>
                 <select id="filtroMotivoGrado" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
                     <option value="">Todos los grados</option>
                     <option value="1">1° Grado</option>
