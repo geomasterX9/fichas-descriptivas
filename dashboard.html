@@ -598,25 +598,13 @@
             const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
             const cfg   = await getConfigInst();
 
-            // Secciones de firma
-            const grupos = [...new Set(lista.map(a => `T${a.trimestre}-${a.grado}-${a.grupo}`))];
-            const firmasHtml = grupos.map(g => {
-                const [t, gr, gp] = g.split('-');
-                return `<div style="margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;">
-                    <div style="font-size:10px;color:#64748b;margin-bottom:20px;">T${t} · ${gr}° Grado · Grupo ${gp}</div>
-                    <div style="display:flex;gap:40px;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:200px;">
-                            <div style="border-bottom:1px solid #000;height:40px;margin-bottom:6px;"></div>
-                            <div style="font-size:10px;text-align:center;color:#374151;">Nombre y firma del docente</div>
-                            <div style="font-size:10px;text-align:center;color:#374151;margin-top:2px;">Materia: ________________</div>
-                        </div>
-                        <div style="flex:1;min-width:200px;">
-                            <div style="border-bottom:1px solid #000;height:40px;margin-bottom:6px;"></div>
-                            <div style="font-size:10px;text-align:center;color:#374151;">Vo.Bo. Director(a)</div>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
+            // Sección de firma — solo Coordinador Académico
+            const firmasHtml = `<div style="margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;display:flex;justify-content:center;">
+                <div style="width:280px;text-align:center;">
+                    <div style="border-bottom:1px solid #000;height:40px;margin-bottom:6px;"></div>
+                    <div style="font-size:10px;color:#374151;">Coordinador(a) Académico(a)</div>
+                </div>
+            </div>`;
 
             let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
             <style>
