@@ -26,23 +26,25 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Solo se aceptan archivos PDF.' });
         }
 
-        const buffer = fs.readFileSync(docFile.filepath);
-        const pdfData = await pdfParse(buffer);
-        const textoPDF = pdfData.text.replace(/"/g, '').replace(/\n/g, ' ').toUpperCase();
-        const trimestreMatch = textoPDF.match(/MOMENTO:\s*(\d)/);
-        const trimestre = trimestreMatch ? parseInt(trimestreMatch[1]) : 1;
+        const normalizar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        buffer = fs.readFileSync(docFile.filepath);
+        pdfData = await pdfParse(buffer);
+        textoPDF = normalizar(pdfData.text.replace(/"/g, '').replace(/\n/g, ' ').toUpperCase());
+        trimestreMatch = textoPDF.match(/MOMENTO:\s*(\d)/);
+        trimestre = trimestreMatch ? parseInt(trimestreMatch[1]) : 1;
 
         if (![1, 2, 3].includes(trimestre)) return res.status(400).json({ error: 'Trimestre no reconocido en el PDF.' });
 
-        const { data: alumnos } = await supabase.from('alumnos').select('*').eq('status', 'ACTIVO');
+        { data: alumnos } = await supabase.from('alumnos').select('*').eq('status', 'ACTIVO');
         let contador = 0;
 
-        for (const alumno of alumnos) {
-            const nombreCompleto = `${alumno.apellidos} ${alumno.nombre}`.toUpperCase();
-            const index = textoPDF.indexOf(nombreCompleto);
+        for (alumno of alumnos) {
+            nombreCompleto = normalizar(`${alumno.apellidos} ${alumno.nombre}`.toUpperCase());
+            index = textoPDF.indexOf(nombreCompleto);
             if (index !== -1) {
-                const fragmento = textoPDF.substring(index + nombreCompleto.length, index + nombreCompleto.length + 350);
-                const calificacionesDetectadas = fragmento.match(/(10(\.0)?|[5-9](\.\d)?)/g);
+                fragmento = textoPDF.substring(index + nombreCompleto.length, index + nombreCompleto.length + 350);
+                calificacionesDetectadas = fragmento.match(/(10(\.0)?|[5-9](\.\d)?)/g);
                 if (calificacionesDetectadas) {
                     let materiasArr = [];
                     let promedioReal = null;
@@ -55,7 +57,7 @@ module.exports = async (req, res) => {
                     }
                     // Fallback: calcular si no se pudo extraer del PDF
                     if (!promedioReal && materiasArr.length > 0) {
-                        const suma = materiasArr.reduce((acc, m) => acc + parseFloat(m.calif), 0);
+                        suma = materiasArr.reduce((acc, m) => acc + parseFloat(m.calif), 0);
                         promedioReal = parseFloat((suma / materiasArr.length).toFixed(1));
                     }
                     if (materiasArr.length > 0) {
