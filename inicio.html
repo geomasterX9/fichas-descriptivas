@@ -215,7 +215,8 @@ body {
 <script>
   verificarSesion();
 
-  const nombre = localStorage.getItem('nombreActivo') || 'Usuario';
+  const nombre     = localStorage.getItem('nombreActivo') || 'Usuario';
+  const nombreCorto = localStorage.getItem('nombreCorto') || nombre;
   const rol    = localStorage.getItem('rolActivo') || '';
 
   if (!rol) window.location.href = 'index.html';
@@ -230,7 +231,7 @@ body {
   const hora   = new Date().getHours();
   const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
   // Usa el nombre completo tal como lo definió el admin, sin split
-  document.getElementById('saludo').textContent = `${saludo}, ${nombre} 👋`;
+  document.getElementById('saludo').textContent = `${saludo}, ${nombreCorto} 👋`;
 
   // DIRECTIVO: muestra botón al dashboard, oculta botón de reporte
   if (rol === 'DIRECTIVO') {

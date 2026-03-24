@@ -15,161 +15,170 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 :root {
---azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
---verde: #2d9b6f; --rojo: #e63946;
---fondo: #f0f4f8; --blanco: #fff;
---texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --verde: #2d9b6f; --rojo: #e63946;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-font-family: 'Outfit', sans-serif; background: var(--fondo);
-min-height: 100vh; display: flex; align-items: center;
-justify-content: center; padding: 20px;
+  font-family: 'Outfit', sans-serif; background: var(--fondo);
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 20px;
 }
 .login-card {
-background: var(--blanco); border-radius: 20px;
-border: 1px solid var(--borde);
-box-shadow: 0 8px 32px rgba(27,79,138,0.1);
-width: 100%; max-width: 380px; overflow: hidden;
+  background: var(--blanco); border-radius: 20px;
+  border: 1px solid var(--borde);
+  box-shadow: 0 8px 32px rgba(27,79,138,0.1);
+  width: 100%; max-width: 380px; overflow: hidden;
 }
 .card-top {
-background: var(--azul); padding: 32px 28px 28px;
-text-align: center;
+  background: var(--azul); padding: 32px 28px 28px;
+  text-align: center;
 }
 .logo-icono {
-width: 68px; height: 68px; background: rgba(255,255,255,0.15);
-border-radius: 16px; display: flex; align-items: center;
-justify-content: center; font-size: 32px;
-margin: 0 auto 16px; border: 2px solid rgba(255,255,255,0.2);
+  width: 68px; height: 68px; background: rgba(255,255,255,0.15);
+  border-radius: 16px; display: flex; align-items: center;
+  justify-content: center; font-size: 32px;
+  margin: 0 auto 16px; border: 2px solid rgba(255,255,255,0.2);
 }
 .card-top h1 { color: white; font-size: 22px; font-weight: 800; }
 .card-top p { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 4px; }
 .card-body { padding: 28px; }
 .grupo {
-margin-bottom: 18px;
+  margin-bottom: 18px;
 }
 .grupo label {
-display: block; font-size: 11px; font-weight: 700;
-text-transform: uppercase; letter-spacing: 0.8px;
-color: var(--muted); margin-bottom: 6px;
+  display: block; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted); margin-bottom: 6px;
 }
-.grupo input {
-width: 100%; padding: 12px 14px;
-border: 1.5px solid var(--borde); border-radius: 10px;
-font-size: 14px; font-family: 'Outfit', sans-serif;
-color: var(--texto); background: var(--blanco);
-outline: none; transition: border-color 0.15s;
+.grupo input, .grupo select {
+  width: 100%; padding: 12px 14px;
+  border: 1.5px solid var(--borde); border-radius: 10px;
+  font-size: 14px; font-family: 'Outfit', sans-serif;
+  color: var(--texto); background: var(--blanco);
+  outline: none; transition: border-color 0.15s;
+  appearance: none; cursor: pointer;
 }
-.grupo input:focus { border-color: var(--azul); }
+.grupo input:focus, .grupo select:focus { border-color: var(--azul); }
 .btn-ingresar {
-width: 100%; padding: 14px; border: none; border-radius: 10px;
-background: var(--azul); color: white;
-font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif;
-cursor: pointer; transition: all 0.15s; margin-top: 4px;
+  width: 100%; padding: 14px; border: none; border-radius: 10px;
+  background: var(--azul); color: white;
+  font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.15s; margin-top: 4px;
 }
 .btn-ingresar:hover { background: var(--azul-hover); transform: translateY(-1px); }
 .btn-ingresar:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 .mensaje-error {
-color: var(--rojo); font-size: 13px; font-weight: 600;
-text-align: center; margin-top: 14px; display: none;
+  color: var(--rojo); font-size: 13px; font-weight: 600;
+  text-align: center; margin-top: 14px; display: none;
 }
 .footer-login {
-text-align: center; margin-top: 20px;
-font-size: 11px; color: var(--muted); line-height: 1.8;
+  text-align: center; margin-top: 20px;
+  font-size: 11px; color: var(--muted); line-height: 1.8;
 }
 .footer-login a { color: var(--muted); text-decoration: underline; }
 </style>
 </head>
 <body>
+
 <div class="login-card">
-<div class="card-top">
-<div class="logo-icono">🎓</div>
-<h1>Gestión Escolar</h1>
-<p>Técnica 84 • Plataforma Segura</p>
-</div>
-<div class="card-body">
-<div class="grupo">
-<label>Usuario</label>
-<input type="text" id="inUsuario" placeholder="ej. alfonsolopez" autocomplete="username">
-</div>
-<div class="grupo">
-<label>Contraseña</label>
-<input type="password" id="inPassword" placeholder="••••••••" autocomplete="current-password">
-</div>
-<button class="btn-ingresar" onclick="iniciarSesion()" id="btnSubmit">
-Ingresar al Sistema →
-</button>
-<div id="msgError" class="mensaje-error"></div>
-<div class="footer-login">
-🔒 Acceso encriptado · Uso exclusivo para personal autorizado<br>
-<a href="aviso-privacidad.html" target="_blank">📄 Aviso de Privacidad</a>
-</div>
-</div>
+  <div class="card-top">
+    <div class="logo-icono">🎓</div>
+    <h1>Gestión Escolar</h1>
+    <p>Técnica 84 • Plataforma Segura</p>
+  </div>
+  <div class="card-body">
+    <div class="grupo">
+      <label>Usuario</label>
+      <input type="text" id="inUsuario" placeholder="ej. alfonsolopez" autocomplete="username">
+    </div>
+    <div class="grupo">
+      <label>Contraseña</label>
+      <input type="password" id="inPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-ingresar" onclick="iniciarSesion()" id="btnSubmit">
+      Ingresar al Sistema →
+    </button>
+    <div id="msgError" class="mensaje-error"></div>
+    <div class="footer-login">
+      🔒 Acceso encriptado · Uso exclusivo para personal autorizado<br>
+      <a href="aviso-privacidad.html" target="_blank">📄 Aviso de Privacidad</a>
+    </div>
+  </div>
 </div>
 
 <script src="auth-helper.js"></script>
 <script>
-document.addEventListener('keypress', e => { if (e.key === 'Enter') iniciarSesion(); });
+  document.addEventListener('keypress', e => { if (e.key === 'Enter') iniciarSesion(); });
 
-async function iniciarSesion() {
-  const user     = document.getElementById('inUsuario').value.trim();
-  const pass     = document.getElementById('inPassword').value;
-  const msgError = document.getElementById('msgError');
-  const btn      = document.getElementById('btnSubmit');
+  async function iniciarSesion() {
+    const user = document.getElementById('inUsuario').value.trim();
+    const pass = document.getElementById('inPassword').value;
+    const msgError = document.getElementById('msgError');
+    const btn      = document.getElementById('btnSubmit');
 
-  if (!user || !pass) {
-    msgError.innerText = 'Por favor, llena todos los campos.';
-    msgError.style.display = 'block'; return;
-  }
-  btn.innerText = 'Verificando...'; btn.disabled = true;
-  msgError.style.display = 'none';
+    if (!user || !pass) {
+      msgError.innerText = 'Por favor, llena todos los campos.';
+      msgError.style.display = 'block'; return;
+    }
 
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario: user, password: pass })
-    });
-    const data = await res.json();
+    btn.innerText = 'Verificando...'; btn.disabled = true;
+    msgError.style.display = 'none';
 
-    if (res.ok) {
-      localStorage.setItem('nombreActivo',  data.nombre_completo);
-      localStorage.setItem('rolActivo',     data.rol);
-      localStorage.setItem('authToken',     data.token);
-      localStorage.setItem('idUsuario',     data.id_usuario);
-      localStorage.setItem('materiaActiva', JSON.stringify(data.materia || []));
-      registrarLog('LOGIN', `Acceso como ${data.rol}`);
-      btn.innerText = '¡Acceso correcto! ✅';
-      btn.style.background = '#2d9b6f';
-      setTimeout(() => {
-        if (data.rol === 'ADMINISTRADOR')
-          window.location.href = 'dashboard.html';
-        else if (data.rol === 'TRABAJO SOCIAL')
-          window.location.href = 'buscador.html';
-        else
-          window.location.href = 'inicio.html';
-      }, 900);
-    } else {
-      msgError.innerText = data.error || 'Usuario o contraseña incorrectos.';
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: user, password: pass })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('nombreActivo', data.nombre_completo);
+        localStorage.setItem('nombreCorto',  data.nombre_corto || data.nombre_completo);
+        localStorage.setItem('rolActivo', data.rol);
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('idUsuario', data.id_usuario);
+        localStorage.setItem('materiaActiva', JSON.stringify(data.materia || []));
+        registrarLog('LOGIN', `Acceso como ${data.rol}`);
+
+        btn.innerText = '¡Acceso correcto! ✅';
+        btn.style.background = '#2d9b6f';
+
+        setTimeout(() => {
+          if (data.rol === 'ADMINISTRADOR')
+            window.location.href = 'dashboard.html';
+          else if (data.rol === 'TRABAJO SOCIAL')
+            window.location.href = 'buscador.html';
+          else
+            window.location.href = 'inicio.html';
+        }, 900);
+
+      } else {
+        msgError.innerText = data.error || 'Usuario, contraseña o rol incorrectos.';
+        msgError.style.display = 'block';
+        btn.innerText = 'Ingresar al Sistema →';
+        btn.disabled = false;
+      }
+    } catch (e) {
+      msgError.innerText = 'Error de conexión con el servidor.';
       msgError.style.display = 'block';
       btn.innerText = 'Ingresar al Sistema →';
       btn.disabled = false;
     }
-  } catch (e) {
-    msgError.innerText = 'Error de conexión con el servidor.';
-    msgError.style.display = 'block';
-    btn.innerText = 'Ingresar al Sistema →';
-    btn.disabled = false;
   }
-}
 </script>
+
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .catch(err => console.warn('SW no registrado:', err));
-  });
-}
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
 </script>
+
 </body>
 </html>
