@@ -189,6 +189,7 @@
         </div>
         <div class="navbar-menu">
             <span class="navbar-nombre" id="headerNombre">—</span>
+            <a href="inicio.html" id="btnInicio" style="display:none;">🏠 Inicio</a>
             <a href="buscador.html">🔍 Alumnos</a>
             <a href="cambiar_password.html" class="btn-nav">🔑 Contraseña</a>
             <a href="#" onclick="cerrarSesion()" class="salir">Salir 👋</a>
@@ -385,6 +386,10 @@
             if (!nombre) return window.location.href = 'index.html';
 
             document.getElementById('headerNombre').textContent = nombreCorto;
+
+            if (rol === 'DIRECTIVO') {
+                document.getElementById('btnInicio').style.display = 'inline-block';
+            }
 
             if (rol === 'ADMINISTRADOR') {
                 document.getElementById('panelHerramientas').style.display = 'block';
