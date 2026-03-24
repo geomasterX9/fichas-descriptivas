@@ -183,7 +183,7 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
-  <a class="btn-opcion" href="evaluaciones_parciales.html">
+  <a class="btn-opcion" href="evaluaciones_parciales.html" id="btnEvaluaciones">
     <div class="opcion-icono" style="background:#f0fdf6;">📝</div>
     <div class="opcion-texto">
       <div class="opcion-titulo">Evaluaciones Parciales</div>
@@ -195,7 +195,7 @@ body {
   <a class="btn-opcion" href="recuperacion.html">
     <div class="opcion-icono" style="background:#fdf4ff;">📚</div>
     <div class="opcion-texto">
-      <div class="opcion-titulo">Recuperación</div>
+      <div class="opcion-titulo">Alumnos a Recuperación</div>
       <div class="opcion-desc">Consulta y gestiona alumnos en proceso de recuperación académica.</div>
     </div>
     <div class="opcion-flecha">›</div>
@@ -247,6 +247,11 @@ body {
     document.getElementById('btnReporte').style.display    = 'none';
     document.getElementById('tituloDashboard').textContent =
       rol === 'ADMINISTRADOR' ? 'Panel Administrativo' : 'Panel Directivo';
+  }
+
+  // PREFECTO y TRABAJO SOCIAL: no ven Evaluaciones Parciales
+  if (rol === 'PREFECTO' || rol === 'TRABAJO SOCIAL') {
+    document.getElementById('btnEvaluaciones').style.display = 'none';
   }
 
   // Consultar alumnos en riesgo disciplinario

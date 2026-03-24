@@ -1007,19 +1007,20 @@
                 const datasets  = materias.map((mat, i) => ({
                     label: mat,
                     data: statsData.comparativoPorTrimestre ? statsData.comparativoPorTrimestre[mat] || [] : trimsDisp.map(() => null),
+                    backgroundColor: COLORES[i % COLORES.length] + 'cc',
                     borderColor: COLORES[i % COLORES.length],
-                    backgroundColor: COLORES[i % COLORES.length] + '22',
-                    fill: false, tension: 0.3, pointRadius: 5
+                    borderWidth: 1, borderRadius: 4
                 }));
                 datasets.unshift({
                     label: 'PROMEDIO GENERAL',
                     data: statsData.porTrimestre.valores.filter(v => v > 0),
-                    borderColor: '#000', backgroundColor: 'transparent',
-                    borderWidth: 3, borderDash: [8, 4],
-                    fill: false, tension: 0.3, pointRadius: 6
+                    backgroundColor: '#00000022',
+                    borderColor: '#000',
+                    borderWidth: 2, borderRadius: 4,
+                    borderDash: [4, 4]
                 });
                 myChart = new Chart(ctx, {
-                    type: 'line',
+                    type: 'bar',
                     data: { labels: trimsDisp, datasets },
                     options: {
                         maintainAspectRatio: false,

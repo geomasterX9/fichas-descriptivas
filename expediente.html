@@ -624,18 +624,19 @@
             const datasets = materias.map((m, i) => ({
                 label: m.sigla,
                 data: datosCalificacionesGlobal.map(c => c.materias.find(x => x.sigla === m.sigla)?.calif || null),
+                backgroundColor: COLORES[i % COLORES.length] + 'cc',
                 borderColor: COLORES[i % COLORES.length],
-                backgroundColor: COLORES[i % COLORES.length] + '22',
-                fill: false, tension: 0.3, pointRadius: 5
+                borderWidth: 1, borderRadius: 4
             }));
             datasets.unshift({
                 label: 'PROMEDIO',
                 data: datosCalificacionesGlobal.map(c => c.promedio_trimestral),
-                borderColor: '#1a2332', backgroundColor: 'transparent',
-                borderWidth: 3, borderDash: [6,3], fill: false, tension: 0.3, pointRadius: 6
+                backgroundColor: '#1a233222',
+                borderColor: '#1a2332',
+                borderWidth: 2, borderRadius: 4
             });
             chartInstance = new Chart(ctx, {
-                type: 'line', data: { labels, datasets },
+                type: 'bar', data: { labels, datasets },
                 options: {
                     responsive: true,
                     plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, family: 'Outfit' } } } },
