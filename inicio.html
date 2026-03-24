@@ -1,319 +1,262 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio — EST 84</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
-            --rojo-claro: #fff0f1; --rojo: #e63946;
-            --fondo: #f0f4f8; --blanco: #fff;
-            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--fondo);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* HEADER */
-        .header {
-            background: var(--azul);
-            padding: 0 24px;
-            height: 62px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
-        }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .header-logo { font-size: 24px; }
-        .header-title { font-size: 16px; font-weight: 800; color: white; }
-        .header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
-        .header-right { text-align: right; }
-        .header-nombre { font-size: 14px; font-weight: 700; color: white; }
-        .header-rol {
-            display: inline-block; background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 20px; padding: 3px 10px;
-            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9);
-            margin-top: 4px;
-        }
-
-        /* BIENVENIDA */
-        .bienvenida {
-            text-align: center;
-            padding: 40px 20px 24px;
-        }
-        .bienvenida h2 { font-size: 22px; font-weight: 800; color: var(--texto); margin-bottom: 6px; }
-        .bienvenida p  { font-size: 14px; color: var(--muted); }
-
-        /* OPCIONES */
-        .opciones {
-            display: flex; flex-direction: column; gap: 16px;
-            padding: 8px 20px 32px;
-            max-width: 480px; width: 100%;
-            margin: 0 auto; flex: 1;
-        }
-
-        .btn-opcion {
-            background: var(--blanco);
-            border: 1px solid var(--borde);
-            border-radius: 16px;
-            padding: 24px 22px;
-            cursor: pointer;
-            display: flex; align-items: center; gap: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: transform 0.15s, box-shadow 0.15s;
-            text-decoration: none; color: inherit;
-        }
-        .btn-opcion:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            border-color: #c7d4e8;
-        }
-        .btn-opcion:active { transform: translateY(0); }
-
-        .opcion-icono {
-            width: 60px; height: 60px; border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 30px; flex-shrink: 0;
-        }
-        .icono-reporte     { background: #fff0f1; }
-        .icono-expediente  { background: var(--azul-claro); }
-        .icono-alerta      { background: #fef9c3; }
-
-        .badge-alerta {
-            background: #e63946; color: white;
-            border-radius: 20px; padding: 3px 10px;
-            font-size: 12px; font-weight: 800;
-            margin-left: 8px; display: inline-block;
-            animation: pulse 1.8s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.65; }
-        }
-        .btn-opcion.alerta-activa {
-            border-color: #fde68a;
-            background: #fffbeb;
-        }
-        .btn-opcion.alerta-activa:hover {
-            border-color: #f59e0b;
-            box-shadow: 0 8px 24px rgba(245,158,11,0.15);
-        }
-
-        .opcion-texto { flex: 1; }
-        .opcion-titulo { font-size: 18px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
-        .opcion-desc   { font-size: 13px; color: var(--muted); line-height: 1.5; }
-
-        .opcion-flecha { font-size: 22px; color: #c0cfe0; flex-shrink: 0; }
-
-        /* PIE */
-        .pie {
-            text-align: center; padding: 0 20px 32px;
-        }
-        .btn-cerrar {
-            background: var(--blanco); border: 1px solid var(--borde);
-            color: var(--muted); padding: 10px 24px;
-            border-radius: 10px; font-size: 13px; font-weight: 700;
-            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s;
-        }
-        .btn-cerrar:hover { background: var(--rojo-claro); border-color: #fecdd3; color: var(--rojo); }
-
-        @media (max-width: 480px) {
-            .opciones { padding: 8px 14px 24px; }
-            .btn-opcion { padding: 18px 16px; gap: 14px; }
-            .opcion-icono { width: 50px; height: 50px; font-size: 26px; }
-            .opcion-titulo { font-size: 16px; }
-        }
-    </style>
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1B4F8A">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inicio — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --rojo-claro: #fff0f1; --rojo: #e63946;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--fondo);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* HEADER */
+.header {
+  background: var(--azul);
+  padding: 0 24px;
+  height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-logo { font-size: 24px; }
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-right { text-align: right; }
+.header-nombre { font-size: 14px; font-weight: 700; color: white; }
+.header-rol {
+  display: inline-block; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9);
+  margin-top: 4px;
+}
+/* BIENVENIDA */
+.bienvenida {
+  text-align: center;
+  padding: 40px 20px 24px;
+}
+.bienvenida h2 { font-size: 22px; font-weight: 800; color: var(--texto); margin-bottom: 6px; }
+.bienvenida p { font-size: 14px; color: var(--muted); }
+/* OPCIONES */
+.opciones {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 8px 20px 32px;
+  max-width: 480px; width: 100%;
+  margin: 0 auto; flex: 1;
+}
+.btn-opcion {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  padding: 24px 22px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-decoration: none; color: inherit;
+}
+.btn-opcion:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  border-color: #c7d4e8;
+}
+.btn-opcion:active { transform: translateY(0); }
+.opcion-icono {
+  width: 60px; height: 60px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; flex-shrink: 0;
+}
+.icono-reporte { background: #fff0f1; }
+.icono-expediente { background: var(--azul-claro); }
+.icono-alerta { background: #fef9c3; }
+.badge-alerta {
+  background: #e63946; color: white;
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 12px; font-weight: 800;
+  margin-left: 8px; display: inline-block;
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.btn-opcion.alerta-activa {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.btn-opcion.alerta-activa:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 8px 24px rgba(245,158,11,0.15);
+}
+.opcion-texto { flex: 1; }
+.opcion-titulo { font-size: 18px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
+.opcion-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.opcion-flecha { font-size: 22px; color: #c0cfe0; flex-shrink: 0; }
+/* PIE */
+.pie {
+  text-align: center; padding: 0 20px 32px;
+}
+.btn-cerrar {
+  background: var(--blanco); border: 1px solid var(--borde);
+  color: var(--muted); padding: 10px 24px;
+  border-radius: 10px; font-size: 13px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s;
+}
+.btn-cerrar:hover { background: var(--rojo-claro); border-color: #fecdd3; color: var(--rojo); }
+@media (max-width: 480px) {
+  .opciones { padding: 8px 14px 24px; }
+  .btn-opcion { padding: 18px 16px; gap: 14px; }
+  .opcion-icono { width: 50px; height: 50px; font-size: 26px; }
+  .opcion-titulo { font-size: 16px; }
+}
+</style>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 <body>
 
-    <div class="header">
-        <div class="header-left">
-            <div class="header-logo">🎓</div>
-            <div>
-                <div class="header-title">Gestión Escolar</div>
-                <div class="header-sub">Técnica 84</div>
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="header-nombre" id="headerNombre">—</div>
-            <div class="header-rol" id="headerRol">—</div>
-        </div>
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">🎓</div>
+    <div>
+      <div class="header-title">Gestión Escolar</div>
+      <div class="header-sub">Técnica 84</div>
     </div>
+  </div>
+  <div class="header-right">
+    <div class="header-nombre" id="headerNombre">—</div>
+    <div class="header-rol" id="headerRol">—</div>
+  </div>
+</div>
 
-    <div class="bienvenida">
-        <h2 id="saludo">Buenos días</h2>
-        <p>¿Qué deseas hacer hoy?</p>
+<div class="bienvenida">
+  <h2 id="saludo">Buenos días</h2>
+  <p>¿Qué deseas hacer hoy?</p>
+</div>
+
+<div class="opciones">
+
+  <a class="btn-opcion" href="buscador.html?modo=reporte" id="btnReporte">
+    <div class="opcion-icono icono-reporte">📋</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Registrar Reporte</div>
+      <div class="opcion-desc">Captura un reporte disciplinario o de conducta para un alumno.</div>
     </div>
+    <div class="opcion-flecha">›</div>
+  </a>
 
-    <div class="opciones">
-        <a class="btn-opcion" href="buscador.html?modo=reporte" id="btnReporte">
-            <div class="opcion-icono icono-reporte">📋</div>
-            <div class="opcion-texto">
-                <div class="opcion-titulo">Registrar Reporte</div>
-                <div class="opcion-desc">Captura un reporte disciplinario o de conducta para un alumno.</div>
-            </div>
-            <div class="opcion-flecha">›</div>
-        </a>
-        <a class="btn-opcion" href="dashboard.html" id="btnDashboard" style="display:none;">
-            <div class="opcion-icono" style="background:#eff6ff;">📊</div>
-            <div class="opcion-texto">
-                <div class="opcion-titulo">Panel Directivo</div>
-                <div class="opcion-desc">Estadísticas, reportes y herramientas de gestión escolar.</div>
-            </div>
-            <div class="opcion-flecha">›</div>
-        </a>
-        <a class="btn-opcion" href="buscador.html">
-            <div class="opcion-icono icono-expediente">📁</div>
-            <div class="opcion-texto">
-                <div class="opcion-titulo">Consultar Expediente</div>
-                <div class="opcion-desc">Busca a un alumno y revisa su expediente académico y disciplinario.</div>
-            </div>
-            <div class="opcion-flecha">›</div>
-        </a>
-        <a class="btn-opcion" href="evaluaciones_parciales.html">
-            <div class="opcion-icono" style="background:#f0fdf6;">📝</div>
-            <div class="opcion-texto">
-                <div class="opcion-titulo">Evaluaciones Parciales</div>
-                <div class="opcion-desc">Captura calificaciones a mitad de trimestre por grupo.</div>
-            </div>
-            <div class="opcion-flecha">›</div>
-        </a>
-        <a class="btn-opcion" href="recuperacion.html" id="btnRecuperacion" style="display:none;">
-            <div class="opcion-icono" style="background:#f5f3ff;">📋</div>
-            <div class="opcion-texto">
-                <div class="opcion-titulo">
-                    Alumnos a Recuperación
-                    <span class="badge-alerta" id="badgeRecuperacion" style="background:#7c3aed;">0</span>
-                </div>
-                <div class="opcion-desc" id="descRecuperacion">Alumnos con materias en período de recuperación.</div>
-            </div>
-            <div class="opcion-flecha">›</div>
-        </a>
-        <a class="btn-opcion" href="alertas_disciplinarias.html" id="btnAlertas" style="display:none;">
-            <div class="opcion-icono icono-alerta">🚨</div>
-            <div class="opcion-texto">
-                <div class="opcion-titulo">
-                    Alertas Disciplinarias
-                    <span class="badge-alerta" id="badgeAlertas">0</span>
-                </div>
-                <div class="opcion-desc" id="descAlertas">Alumnos que requieren atención inmediata.</div>
-            </div>
-            <div class="opcion-flecha">›</div>
-        </a>
+  <a class="btn-opcion" href="buscador.html">
+    <div class="opcion-icono icono-expediente">📁</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Consultar Expediente</div>
+      <div class="opcion-desc">Busca a un alumno y revisa su expediente académico y disciplinario.</div>
     </div>
+    <div class="opcion-flecha">›</div>
+  </a>
 
-    <div class="pie">
-        <a href="cambiar_password.html" style="color:var(--azul); font-size:13px; font-weight:600; text-decoration:none; margin-right:12px;">🔑 Cambiar contraseña</a>
-        <button class="btn-cerrar" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  <a class="btn-opcion" href="evaluaciones_parciales.html">
+    <div class="opcion-icono" style="background:#f0fdf6;">📝</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Evaluaciones Parciales</div>
+      <div class="opcion-desc">Captura calificaciones a mitad de trimestre por grupo.</div>
     </div>
+    <div class="opcion-flecha">›</div>
+  </a>
 
-    <script src="auth-helper.js"></script>
-    <script>
-        verificarSesion();
-        const nombre = localStorage.getItem('nombreActivo') || 'Usuario';
-        const rol    = localStorage.getItem('rolActivo') || '';
+  <a class="btn-opcion" href="alertas_disciplinarias.html" id="btnAlertas" style="display:none;">
+    <div class="opcion-icono icono-alerta">⚠️</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">
+        Alertas Disciplinarias
+        <span class="badge-alerta" id="badgeAlertas">0</span>
+      </div>
+      <div class="opcion-desc" id="descAlertas">Alumnos que requieren atención inmediata.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
 
-        if (!rol) window.location.href = 'index.html';
-        if (rol === 'ADMINISTRADOR') window.location.href = 'dashboard.html';
-        // TRABAJO SOCIAL y DIRECTIVO permanecen en inicio.html
+</div>
 
-        document.getElementById('headerNombre').textContent = nombre;
-        document.getElementById('headerRol').textContent    = rol;
+<div class="pie">
+  <a href="cambiar_password.html" style="color:var(--azul); font-size:13px; font-weight:600; text-decoration:none; margin-right:12px;">🔑 Cambiar contraseña</a>
+  <button class="btn-cerrar" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+</div>
 
-        const hora = new Date().getHours();
-        const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
-        const nombreCorto = localStorage.getItem('nombreCorto') || '';
-        const nombreSaludo = nombreCorto || nombre.split(' ').slice(-1)[0];
-        document.getElementById('saludo').textContent = `${saludo}, ${nombreSaludo} 👋`;
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
 
-        if (rol === 'TRABAJO SOCIAL' || rol === 'DIRECTIVO') document.getElementById('btnReporte').style.display = 'none';
-        if (rol === 'DIRECTIVO') document.getElementById('btnDashboard').style.display = 'flex';
+  const nombre = localStorage.getItem('nombreActivo') || 'Usuario';
+  const rol    = localStorage.getItem('rolActivo') || '';
 
-        // Consultar alumnos en riesgo disciplinario
-        async function cargarAlertas() {
-            try {
-                const _rawG  = localStorage.getItem('gruposActivos') || '[]';
-                const grupos = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
-                const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
-                if (!res) return;
-                let data = await res.json();
-                // Guardar todos en sessionStorage para la pantalla de alertas (ella filtra sola)
-                sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
-                // Filtrar por grupos del docente para el badge
-                if (grupos.length > 0) {
-                    data = data.filter(a => grupos.includes(`${a.grado}${a.grupo}`));
-                }
-                // Siempre mostrar el botón con el conteo correcto
-                const btn = document.getElementById('btnAlertas');
-                btn.style.display = 'flex';
-                document.getElementById('badgeAlertas').textContent = data.length;
-                if (data.length > 0) {
-                    btn.classList.add('alerta-activa');
-                    const graves = data.filter(a => a.reportes_graves > 0).length;
-                    document.getElementById('descAlertas').textContent =
-                        graves > 0
-                            ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
-                            : `${data.length} alumno(s) con 3 o más reportes`;
-                } else {
-                    document.getElementById('descAlertas').textContent = 'Sin alertas en tus grupos.';
-                }
-            } catch(e) { /* silencioso */ }
-        }
-        cargarAlertas();
-        cargarRecuperacionDocente();
+  if (!rol) window.location.href = 'index.html';
 
-        async function cargarRecuperacionDocente() {
-            try {
-                const _raw  = localStorage.getItem('materiaActiva') || '[]';
-                const _rawG = localStorage.getItem('gruposActivos') || '[]';
-                const materias = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
-                const grupos   = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
-                const params = materias.length > 0 ? `&materias=${materias.join(',')}` : '';
-                const res = await apiFetch(`/api/dashboard?tipo=recuperacion${params}`);
-                if (!res) return;
-                let data = await res.json();
-                // Filtrar por grupos asignados al docente
-                if (grupos.length > 0) {
-                    data = data.filter(a => grupos.includes(`${a.grado}${a.grupo}`));
-                }
-                if (data && data.length > 0) {
-                    const btn = document.getElementById('btnRecuperacion');
-                    btn.style.display = 'flex';
-                    // Filtrar por trimestre más reciente (mismo criterio que recuperacion.html)
-                    const maxTrim = Math.max(...data.map(a => a.trimestre));
-                    const dataDelTrim = data.filter(a => a.trimestre === maxTrim);
-                    const unicos = new Set(dataDelTrim.map(a => a.id_alumno));
-                    document.getElementById('badgeRecuperacion').textContent = unicos.size;
-                    sessionStorage.setItem('recuperacion_docente', JSON.stringify(data));
-                }
-            } catch(e) {}
-        }
+  // ✅ CORRECCIÓN: DIRECTIVO ya NO redirige al dashboard — se queda en inicio.html
+  if (rol === 'ADMINISTRADOR') window.location.href = 'dashboard.html';
+  else if (rol === 'TRABAJO SOCIAL') window.location.href = 'buscador.html';
 
-        function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .catch(err => console.warn('SW no registrado:', err));
-        });
+  document.getElementById('headerNombre').textContent = nombre;
+  document.getElementById('headerRol').textContent    = rol;
+
+  const hora   = new Date().getHours();
+  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  document.getElementById('saludo').textContent = `${saludo}, ${nombre.split(' ')[0]} 👋`;
+
+  // Ocultar "Registrar Reporte" solo a TRABAJO SOCIAL
+  if (rol === 'TRABAJO SOCIAL') document.getElementById('btnReporte').style.display = 'none';
+
+  // Consultar alumnos en riesgo disciplinario
+  async function cargarAlertas() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
+      if (!res) return;
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const btn = document.getElementById('btnAlertas');
+        btn.style.display = 'flex';
+        btn.classList.add('alerta-activa');
+        document.getElementById('badgeAlertas').textContent = data.length;
+        const graves = data.filter(a => a.reportes_graves > 0).length;
+        document.getElementById('descAlertas').textContent =
+          graves > 0
+            ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
+            : `${data.length} alumno(s) con 3 o más reportes`;
+        // Guardar en sessionStorage para usarlo en la pantalla de alertas
+        sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
       }
-    </script>
+    } catch(e) { /* silencioso */ }
+  }
+
+  cargarAlertas();
+
+  function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+
 </body>
 </html>
