@@ -136,12 +136,13 @@ body {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('nombreActivo', data.nombre_completo);
-        localStorage.setItem('nombreCorto',  data.nombre_corto || data.nombre_completo);
-        localStorage.setItem('rolActivo', data.rol);
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('idUsuario', data.id_usuario);
-        localStorage.setItem('materiaActiva', JSON.stringify(data.materia || []));
+        localStorage.setItem('nombreActivo',   data.nombre_completo);
+        localStorage.setItem('nombreCorto',    data.nombre_corto || data.nombre_completo);
+        localStorage.setItem('rolActivo',      data.rol);
+        localStorage.setItem('authToken',      data.token);
+        localStorage.setItem('idUsuario',      data.id_usuario);
+        localStorage.setItem('materiaActiva',  JSON.stringify(data.materia || []));
+        localStorage.setItem('gruposActivos',  JSON.stringify(data.grupos || []));
         registrarLog('LOGIN', `Acceso como ${data.rol}`);
 
         btn.innerText = '¡Acceso correcto! ✅';
