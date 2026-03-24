@@ -378,12 +378,13 @@
         let statsData = null;
 
         window.onload = async () => {
-            const nombre = localStorage.getItem('nombreActivo');
+            const nombre      = localStorage.getItem('nombreActivo');
+            const nombreCorto = localStorage.getItem('nombreCorto') || nombre;
             const rol    = localStorage.getItem('rolActivo');
             window.ROL_DASHBOARD = rol;
             if (!nombre) return window.location.href = 'index.html';
 
-            document.getElementById('headerNombre').textContent = nombre.split(' ')[0];
+            document.getElementById('headerNombre').textContent = nombreCorto;
 
             if (rol === 'ADMINISTRADOR') {
                 document.getElementById('panelHerramientas').style.display = 'block';
