@@ -80,6 +80,7 @@ body {
 .icono-reporte { background: #fff0f1; }
 .icono-expediente { background: var(--azul-claro); }
 .icono-alerta { background: #fef9c3; }
+.icono-dashboard { background: #eff6ff; }
 .badge-alerta {
   background: #e63946; color: white;
   border-radius: 20px; padding: 3px 10px;
@@ -153,6 +154,17 @@ body {
 
 <div class="opciones">
 
+  <!-- Solo visible para DIRECTIVO -->
+  <a class="btn-opcion" href="dashboard.html" id="btnDashboard" style="display:none;">
+    <div class="opcion-icono icono-dashboard">📊</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Panel Directivo</div>
+      <div class="opcion-desc">Accede al dashboard con estadísticas y resumen general del plantel.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Oculto para DIRECTIVO y TRABAJO SOCIAL -->
   <a class="btn-opcion" href="buscador.html?modo=reporte" id="btnReporte">
     <div class="opcion-icono icono-reporte">📋</div>
     <div class="opcion-texto">
@@ -208,7 +220,7 @@ body {
 
   if (!rol) window.location.href = 'index.html';
 
-  // ✅ CORRECCIÓN: DIRECTIVO ya NO redirige al dashboard — se queda en inicio.html
+  // Solo ADMINISTRADOR va al dashboard directo; TRABAJO SOCIAL va al buscador
   if (rol === 'ADMINISTRADOR') window.location.href = 'dashboard.html';
   else if (rol === 'TRABAJO SOCIAL') window.location.href = 'buscador.html';
 
@@ -217,10 +229,14 @@ body {
 
   const hora   = new Date().getHours();
   const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
-  document.getElementById('saludo').textContent = `${saludo}, ${nombre.split(' ')[0]} 👋`;
+  // Usa el nombre completo tal como lo definió el admin, sin split
+  document.getElementById('saludo').textContent = `${saludo}, ${nombre} 👋`;
 
-  // Ocultar "Registrar Reporte" solo a TRABAJO SOCIAL
-  if (rol === 'TRABAJO SOCIAL') document.getElementById('btnReporte').style.display = 'none';
+  // DIRECTIVO: muestra botón al dashboard, oculta botón de reporte
+  if (rol === 'DIRECTIVO') {
+    document.getElementById('btnDashboard').style.display = 'flex';
+    document.getElementById('btnReporte').style.display   = 'none';
+  }
 
   // Consultar alumnos en riesgo disciplinario
   async function cargarAlertas() {
@@ -238,7 +254,6 @@ body {
           graves > 0
             ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
             : `${data.length} alumno(s) con 3 o más reportes`;
-        // Guardar en sessionStorage para usarlo en la pantalla de alertas
         sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
       }
     } catch(e) { /* silencioso */ }
