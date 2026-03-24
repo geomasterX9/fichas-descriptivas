@@ -154,11 +154,11 @@ body {
 
 <div class="opciones">
 
-  <!-- Solo visible para DIRECTIVO -->
+  <!-- Solo visible para DIRECTIVO y ADMINISTRADOR -->
   <a class="btn-opcion" href="dashboard.html" id="btnDashboard" style="display:none;">
     <div class="opcion-icono icono-dashboard">📊</div>
     <div class="opcion-texto">
-      <div class="opcion-titulo">Panel Directivo</div>
+      <div class="opcion-titulo" id="tituloDashboard">Panel</div>
       <div class="opcion-desc">Accede al dashboard con estadísticas y resumen general del plantel.</div>
     </div>
     <div class="opcion-flecha">›</div>
@@ -192,6 +192,15 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
+  <a class="btn-opcion" href="recuperacion.html">
+    <div class="opcion-icono" style="background:#fdf4ff;">📚</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Recuperación</div>
+      <div class="opcion-desc">Consulta y gestiona alumnos en proceso de recuperación académica.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
   <a class="btn-opcion" href="alertas_disciplinarias.html" id="btnAlertas" style="display:none;">
     <div class="opcion-icono icono-alerta">⚠️</div>
     <div class="opcion-texto">
@@ -221,11 +230,10 @@ body {
 
   if (!rol) window.location.href = 'index.html';
 
-  // Solo ADMINISTRADOR va al dashboard directo; TRABAJO SOCIAL va al buscador
-  if (rol === 'ADMINISTRADOR') window.location.href = 'dashboard.html';
-  else if (rol === 'TRABAJO SOCIAL') window.location.href = 'buscador.html';
+  // TRABAJO SOCIAL va directo al buscador
+  if (rol === 'TRABAJO SOCIAL') window.location.href = 'buscador.html';
 
-  document.getElementById('headerNombre').textContent = nombre;
+  document.getElementById('headerNombre').textContent = nombreCorto;
   document.getElementById('headerRol').textContent    = rol;
 
   const hora   = new Date().getHours();
@@ -233,10 +241,12 @@ body {
   // Usa el nombre completo tal como lo definió el admin, sin split
   document.getElementById('saludo').textContent = `${saludo}, ${nombreCorto} 👋`;
 
-  // DIRECTIVO: muestra botón al dashboard, oculta botón de reporte
-  if (rol === 'DIRECTIVO') {
-    document.getElementById('btnDashboard').style.display = 'flex';
-    document.getElementById('btnReporte').style.display   = 'none';
+  // DIRECTIVO y ADMINISTRADOR: muestra botón al dashboard, oculta botón de reporte
+  if (rol === 'DIRECTIVO' || rol === 'ADMINISTRADOR') {
+    document.getElementById('btnDashboard').style.display  = 'flex';
+    document.getElementById('btnReporte').style.display    = 'none';
+    document.getElementById('tituloDashboard').textContent =
+      rol === 'ADMINISTRADOR' ? 'Panel Administrativo' : 'Panel Directivo';
   }
 
   // Consultar alumnos en riesgo disciplinario
