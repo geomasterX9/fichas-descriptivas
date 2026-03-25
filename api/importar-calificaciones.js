@@ -5,9 +5,11 @@ const pdfParse = require('pdf-parse');
 
 module.exports.config = { api: { bodyParser: false } };
 
-// Quita acentos y normaliza espacios — NO toca números ni puntos decimales
+// Normaliza un string: quita acentos, elimina cualquier carácter no ASCII,
+// colapsa espacios múltiples y convierte a mayúsculas
 const norm = s => s
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // quita acentos/tildes
+    .replace(/[^\x00-\x7F]/g, '')                       // elimina caracteres no ASCII (ej. Ñ griega)
     .replace(/\s+/g, ' ')                               // colapsa espacios múltiples
     .trim()
     .toUpperCase();
@@ -58,7 +60,7 @@ module.exports = async (req, res) => {
         const buffer  = fs.readFileSync(docFile.filepath);
         const pdfData = await pdfParse(buffer);
 
-        // Normalizar texto del PDF: quitar comillas, saltos de línea, acentos y espacios extra
+        // Normalizar texto del PDF
         const textoPDF = norm(pdfData.text.replace(/"/g, '').replace(/\n/g, ' '));
 
         const trimestreMatch = textoPDF.match(/MOMENTO:\s*(\d)/);
