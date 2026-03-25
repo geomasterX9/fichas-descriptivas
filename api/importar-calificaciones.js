@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
 
     try {
         const form = new IncomingForm({ keepExtensions: true, maxFileSize: 10 * 1024 * 1024 });
-        const { files } = await new Promise((resolve, reject) => {
+        const { fields, files } = await new Promise((resolve, reject) => {
             form.parse(req, (err, fields, files) => { if (err) reject(err); else resolve({ fields, files }); });
         });
         const docFile = Array.isArray(files.documento) ? files.documento[0] : files.documento;
@@ -57,15 +57,47 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Solo se aceptan archivos PDF.' });
         }
 
+        // Leer valores seleccionados por el usuario en el frontend
+        const gradoSeleccionado  = Array.isArray(fields.grado)    ? fields.grado[0]    : fields.grado;
+        const grupoSeleccionado  = (Array.isArray(fields.grupo)    ? fields.grupo[0]    : fields.grupo || '').toUpperCase().trim();
+        const trimestreEnviado   = parseInt(Array.isArray(fields.trimestre) ? fields.trimestre[0] : fields.trimestre);
+
         const buffer  = fs.readFileSync(docFile.filepath);
         const pdfData = await pdfParse(buffer);
 
         // Normalizar texto del PDF
         const textoPDF = norm(pdfData.text.replace(/"/g, '').replace(/\n/g, ' '));
 
+        // ── Validar trimestre ──
         const trimestreMatch = textoPDF.match(/MOMENTO:\s*(\d)/);
-        const trimestre = trimestreMatch ? parseInt(trimestreMatch[1]) : 1;
-        if (![1, 2, 3].includes(trimestre)) return res.status(400).json({ error: 'Trimestre no reconocido en el PDF.' });
+        const trimestre = trimestreMatch ? parseInt(trimestreMatch[1]) : null;
+        if (!trimestre || ![1, 2, 3].includes(trimestre)) {
+            return res.status(400).json({ error: 'Trimestre no reconocido en el PDF.' });
+        }
+        if (trimestre !== trimestreEnviado) {
+            return res.status(400).json({
+                error: `El PDF corresponde al Trimestre ${trimestre}, pero seleccionaste el Trimestre ${trimestreEnviado}. Por favor verifica el archivo.`
+            });
+        }
+
+        // ── Validar grado y grupo ──
+        // El PDF trae "GRUPO: 2-B" → extraemos grado=2 y grupo=B
+        const grupoMatch = textoPDF.match(/GRUPO:\s*(\d)\s*[-–]\s*([A-Z])/);
+        if (grupoMatch) {
+            const gradoPDF = grupoMatch[1];           // "2"
+            const grupoPDF = grupoMatch[2].trim();    // "B"
+
+            if (gradoPDF !== String(gradoSeleccionado)) {
+                return res.status(400).json({
+                    error: `El PDF es del ${gradoPDF}° grado, pero seleccionaste ${gradoSeleccionado}°. Por favor verifica el archivo.`
+                });
+            }
+            if (grupoPDF !== grupoSeleccionado) {
+                return res.status(400).json({
+                    error: `El PDF es del grupo "${grupoPDF}", pero seleccionaste el grupo "${grupoSeleccionado}". Por favor verifica el archivo.`
+                });
+            }
+        }
 
         const { data: alumnos } = await supabase.from('alumnos').select('*').eq('status', 'ACTIVO');
         let contador      = 0;
