@@ -230,10 +230,12 @@ body {
 
   if (!rol) window.location.href = 'index.html';
 
-  // TRABAJO SOCIAL va directo al buscador
-  if (rol === 'TRABAJO SOCIAL') window.location.href = 'buscador.html';
-
-  document.getElementById('headerNombre').textContent = nombreCorto;
+  // TRABAJO SOCIAL: solo ve Consultar Expediente y Alertas Disciplinarias
+  if (rol === 'TRABAJO SOCIAL') {
+    document.getElementById('btnReporte').style.display      = 'none';
+    document.getElementById('btnEvaluaciones').style.display = 'none';
+    document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
+  }
   document.getElementById('headerRol').textContent    = rol;
 
   const hora   = new Date().getHours();
@@ -249,8 +251,8 @@ body {
       rol === 'ADMINISTRADOR' ? 'Panel Administrativo' : 'Panel Directivo';
   }
 
-  // PREFECTO y TRABAJO SOCIAL: no ven Evaluaciones Parciales
-  if (rol === 'PREFECTO' || rol === 'TRABAJO SOCIAL') {
+  // PREFECTO: no ve Evaluaciones Parciales
+  if (rol === 'PREFECTO') {
     document.getElementById('btnEvaluaciones').style.display = 'none';
   }
 
