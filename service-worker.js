@@ -108,3 +108,33 @@ async function cacheFirst(request) {
     return new Response('Sin conexión', { status: 503 });
   }
 }
+
+// ── PUSH NOTIFICATIONS (Emergencia) ─────────────────────────
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : {};
+  const titulo = data.titulo || '🚨 EMERGENCIA — EST 84';
+  const cuerpo = data.cuerpo || 'Se ha activado una alerta de emergencia en el plantel.';
+
+  event.waitUntil(
+    self.registration.showNotification(titulo, {
+      body: cuerpo,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      vibrate: [500, 200, 500, 200, 500],
+      requireInteraction: true,
+      tag: 'emergencia-est84'
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes('inicio.html') && 'focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('/inicio.html');
+    })
+  );
+});

@@ -1,10 +1,10 @@
 const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional'];
+const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional', 'emergencia'];
 
 module.exports = async (req, res) => {
-    setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
+    setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const tipo = req.query.tipo || 'kpis';
@@ -329,6 +329,40 @@ module.exports = async (req, res) => {
                 reportes_graves: mapaAlumno[a.id_alumno]?.graves || 0,
             }));
             return res.json(lista);
+        }
+
+        // ── EMERGENCIA ──────────────────────────────────────────
+        if (tipo === 'emergencia') {
+            // GET — consultar si hay emergencia activa
+            if (req.method === 'GET') {
+                const { data } = await supabase
+                    .from('emergencias')
+                    .select('*')
+                    .eq('activa', true)
+                    .order('fecha', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                return res.json({ activa: !!data, emergencia: data || null });
+            }
+            // POST — activar emergencia (cualquier usuario autenticado)
+            if (req.method === 'POST') {
+                await supabase.from('emergencias').update({ activa: false }).eq('activa', true);
+                const { error } = await supabase.from('emergencias').insert({
+                    id_usuario:     usuario.id,
+                    nombre_usuario: usuario.nombre,
+                    rol:            usuario.rol,
+                    activa:         true
+                });
+                if (error) return res.status(500).json({ error: error.message });
+                return res.json({ exito: true });
+            }
+            // DELETE — desactivar (solo ADMINISTRADOR o DIRECTIVO)
+            if (req.method === 'DELETE') {
+                if (!['ADMINISTRADOR', 'DIRECTIVO'].includes(usuario.rol))
+                    return res.status(403).json({ error: 'Sin permiso para desactivar emergencia' });
+                await supabase.from('emergencias').update({ activa: false }).eq('activa', true);
+                return res.json({ exito: true });
+            }
         }
 
         // Operaciones de cierre de ciclo

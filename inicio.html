@@ -115,6 +115,54 @@ body {
   font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s;
 }
 .btn-cerrar:hover { background: var(--rojo-claro); border-color: #fecdd3; color: var(--rojo); }
+
+/* BOTÓN EMERGENCIA FLOTANTE */
+.btn-emergencia {
+  position: fixed; bottom: 28px; right: 24px;
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--rojo); color: white;
+  border: none; cursor: pointer;
+  font-size: 28px; font-weight: 900;
+  box-shadow: 0 4px 20px rgba(230,57,70,0.5);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-emergencia:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(230,57,70,0.65); }
+.btn-emergencia.presionado-1 { background: #c0303a; transform: scale(0.95); }
+.btn-emergencia.presionado-2 { background: #a0202a; transform: scale(0.95); }
+
+/* CONTADOR DE CLICS */
+.emergencia-counter {
+  position: fixed; bottom: 98px; right: 24px;
+  background: var(--texto); color: white;
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 12px; font-weight: 700;
+  z-index: 200; display: none;
+  font-family: 'Outfit', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* BANNER DE EMERGENCIA ACTIVA */
+.banner-emergencia {
+  position: fixed; top: 62px; left: 0; right: 0;
+  background: var(--rojo); color: white;
+  padding: 14px 20px;
+  display: none; align-items: center; justify-content: center; gap: 12px;
+  z-index: 300; font-weight: 700; font-size: 15px;
+  animation: parpadeo 1s infinite;
+}
+@keyframes parpadeo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+.banner-emergencia.visible { display: flex; }
+.btn-cancelar-emergencia {
+  background: white; color: var(--rojo);
+  border: none; border-radius: 8px; padding: 6px 14px;
+  font-size: 12px; font-weight: 800; cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+}
 @media (max-width: 480px) {
   .opciones { padding: 8px 14px 24px; }
   .btn-opcion { padding: 18px 16px; gap: 14px; }
@@ -220,6 +268,16 @@ body {
   <button class="btn-cerrar" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
 </div>
 
+<!-- BANNER EMERGENCIA ACTIVA -->
+<div class="banner-emergencia" id="bannerEmergencia">
+  🚨 EMERGENCIA ACTIVA — <span id="bannerQuien"></span>
+  <button class="btn-cancelar-emergencia" id="btnCancelarEmergencia" style="display:none;" onclick="cancelarEmergencia()">Desactivar</button>
+</div>
+
+<!-- BOTÓN FLOTANTE DE EMERGENCIA -->
+<div class="emergencia-counter" id="emergenciaCounter"></div>
+<button class="btn-emergencia" id="btnEmergencia" title="Botón de emergencia — presiona 3 veces">🚨</button>
+
 <script src="auth-helper.js"></script>
 <script>
   verificarSesion();
@@ -280,6 +338,113 @@ body {
   cargarAlertas();
 
   function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+
+<script>
+  // ── EMERGENCIA ──────────────────────────────────────────
+  let clicksEmergencia = 0;
+  let timerEmergencia  = null;
+  const rolActual = localStorage.getItem('rolActivo') || '';
+  const esAdmin   = ['ADMINISTRADOR', 'DIRECTIVO'].includes(rolActual);
+
+  const btnEmergencia        = document.getElementById('btnEmergencia');
+  const emergenciaCounter    = document.getElementById('emergenciaCounter');
+  const bannerEmergencia     = document.getElementById('bannerEmergencia');
+  const bannerQuien          = document.getElementById('bannerQuien');
+  const btnCancelarEmergencia = document.getElementById('btnCancelarEmergencia');
+
+  // Mostrar botón cancelar solo a admin/directivo
+  if (esAdmin) btnCancelarEmergencia.style.display = 'inline-block';
+
+  btnEmergencia.addEventListener('click', () => {
+    clicksEmergencia++;
+
+    // Feedback visual en el botón
+    btnEmergencia.classList.remove('presionado-1', 'presionado-2');
+    void btnEmergencia.offsetWidth; // reflow
+    btnEmergencia.classList.add(clicksEmergencia === 1 ? 'presionado-1' : 'presionado-2');
+
+    // Mostrar contador
+    const restantes = 3 - clicksEmergencia;
+    emergenciaCounter.style.display = 'block';
+    emergenciaCounter.textContent   = restantes > 0
+      ? `Presiona ${restantes} vez más para activar`
+      : '¡Activando emergencia!';
+
+    // Reiniciar timer de 3 segundos
+    clearTimeout(timerEmergencia);
+
+    if (clicksEmergencia >= 3) {
+      activarEmergencia();
+      clicksEmergencia = 0;
+      setTimeout(() => {
+        emergenciaCounter.style.display = 'none';
+        btnEmergencia.classList.remove('presionado-1', 'presionado-2');
+      }, 2000);
+    } else {
+      timerEmergencia = setTimeout(() => {
+        clicksEmergencia = 0;
+        emergenciaCounter.style.display = 'none';
+        btnEmergencia.classList.remove('presionado-1', 'presionado-2');
+      }, 3000);
+    }
+  });
+
+  async function activarEmergencia() {
+    try {
+      if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+      await apiFetch('/api/dashboard?tipo=emergencia', { method: 'POST' });
+      mostrarBannerEmergencia(localStorage.getItem('nombreCorto') || 'Un usuario');
+    } catch(e) { console.error('Error activando emergencia:', e); }
+  }
+
+  async function cancelarEmergencia() {
+    try {
+      await apiFetch('/api/dashboard?tipo=emergencia', { method: 'DELETE' });
+      bannerEmergencia.classList.remove('visible');
+    } catch(e) { console.error('Error cancelando emergencia:', e); }
+  }
+
+  function mostrarBannerEmergencia(quien) {
+    bannerQuien.textContent = quien;
+    bannerEmergencia.classList.add('visible');
+    // Vibración en el dispositivo que recibe
+    if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500, 200, 500]);
+    // Sonido de alerta
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [880, 660, 880, 660].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'square';
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.3 + 0.25);
+        osc.start(ctx.currentTime + i * 0.3);
+        osc.stop(ctx.currentTime + i * 0.3 + 0.25);
+      });
+    } catch(e) { /* silencioso si el navegador no permite audio */ }
+  }
+
+  // Polling cada 8 segundos para detectar emergencias activas
+  async function verificarEmergenciaActiva() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=emergencia');
+      if (!res) return;
+      const data = await res.json();
+      if (data.activa && data.emergencia) {
+        const yaVisible = bannerEmergencia.classList.contains('visible');
+        if (!yaVisible) mostrarBannerEmergencia(data.emergencia.nombre_usuario);
+      } else {
+        bannerEmergencia.classList.remove('visible');
+      }
+    } catch(e) { /* silencioso */ }
+  }
+
+  // Verificar al cargar y luego cada 8 segundos
+  verificarEmergenciaActiva();
+  setInterval(verificarEmergenciaActiva, 8000);
 </script>
 
 <script>
