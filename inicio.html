@@ -402,10 +402,6 @@ body {
     try {
       await apiFetch('/api/dashboard?tipo=emergencia', { method: 'DELETE' });
       bannerEmergencia.classList.remove('visible');
-  async function cancelarEmergencia() {
-    try {
-      await apiFetch('/api/dashboard?tipo=emergencia', { method: 'DELETE' });
-      bannerEmergencia.classList.remove('visible');
       detenerAudioEmergencia();
     } catch(e) { console.error('Error cancelando emergencia:', e); }
   }
@@ -419,19 +415,17 @@ body {
         audioCtxEmergencia = new (window.AudioContext || window.webkitAudioContext)();
       }
       if (audioCtxEmergencia.state === 'suspended') await audioCtxEmergencia.resume();
-
       const response    = await fetch('/emergencia.mp3');
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioCtxEmergencia.decodeAudioData(arrayBuffer);
-
-      const source   = audioCtxEmergencia.createBufferSource();
-      const gainNode = audioCtxEmergencia.createGain();
-      gainNode.gain.value = 3.5; // amplifica 3.5x sobre el MP3 ya normalizado al máximo
+      const source      = audioCtxEmergencia.createBufferSource();
+      const gainNode    = audioCtxEmergencia.createGain();
+      gainNode.gain.value = 3.5;
       source.buffer = audioBuffer;
       source.connect(gainNode);
       gainNode.connect(audioCtxEmergencia.destination);
       source.start(0);
-    } catch(e) { /* silencioso si el navegador bloquea audio */ }
+    } catch(e) { /* silencioso */ }
   }
 
   function iniciarAudioEmergencia() {
@@ -473,7 +467,6 @@ body {
     } catch(e) { /* silencioso */ }
   }
 
-  // Verificar al cargar y luego cada 8 segundos
   verificarEmergenciaActiva();
   setInterval(verificarEmergenciaActiva, 8000);
 </script>
