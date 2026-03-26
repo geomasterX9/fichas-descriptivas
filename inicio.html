@@ -402,20 +402,36 @@ body {
     try {
       await apiFetch('/api/dashboard?tipo=emergencia', { method: 'DELETE' });
       bannerEmergencia.classList.remove('visible');
+  async function cancelarEmergencia() {
+    try {
+      await apiFetch('/api/dashboard?tipo=emergencia', { method: 'DELETE' });
+      bannerEmergencia.classList.remove('visible');
       detenerAudioEmergencia();
     } catch(e) { console.error('Error cancelando emergencia:', e); }
   }
 
-  let audioEmergencia    = null;
+  let audioCtxEmergencia = null;
   let intervalAudio      = null;
 
-  function reproducirAlerta() {
+  async function reproducirAlerta() {
     try {
-      if (audioEmergencia) { audioEmergencia.pause(); audioEmergencia.currentTime = 0; }
-      audioEmergencia = new Audio('/emergencia.mp3');
-      audioEmergencia.volume = 1.0;
-      audioEmergencia.play().catch(() => {});
-    } catch(e) { /* silencioso */ }
+      if (!audioCtxEmergencia || audioCtxEmergencia.state === 'closed') {
+        audioCtxEmergencia = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtxEmergencia.state === 'suspended') await audioCtxEmergencia.resume();
+
+      const response    = await fetch('/emergencia.mp3');
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtxEmergencia.decodeAudioData(arrayBuffer);
+
+      const source   = audioCtxEmergencia.createBufferSource();
+      const gainNode = audioCtxEmergencia.createGain();
+      gainNode.gain.value = 3.5; // amplifica 3.5x sobre el MP3 ya normalizado al máximo
+      source.buffer = audioBuffer;
+      source.connect(gainNode);
+      gainNode.connect(audioCtxEmergencia.destination);
+      source.start(0);
+    } catch(e) { /* silencioso si el navegador bloquea audio */ }
   }
 
   function iniciarAudioEmergencia() {
@@ -426,7 +442,12 @@ body {
 
   function detenerAudioEmergencia() {
     if (intervalAudio) { clearInterval(intervalAudio); intervalAudio = null; }
-    if (audioEmergencia) { audioEmergencia.pause(); audioEmergencia.currentTime = 0; audioEmergencia = null; }
+    try {
+      if (audioCtxEmergencia && audioCtxEmergencia.state !== 'closed') {
+        audioCtxEmergencia.close();
+        audioCtxEmergencia = null;
+      }
+    } catch(e) {}
   }
 
   function mostrarBannerEmergencia(quien) {
