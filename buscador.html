@@ -352,6 +352,7 @@
         }
         if (rolUsuario === 'DIRECTIVO') document.getElementById('btnRegresoAdmin').style.display = 'block';
         if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL') document.getElementById('btnRegreso').style.display = 'block';
+        if (rolUsuario === 'ENFERMERIA') document.getElementById('btnRegreso').style.display = 'block';
         if (modoReporte) document.getElementById('bannerReporte').style.display = 'block';
 
         await cargarDatos();
@@ -418,9 +419,9 @@
                     </div>
                     <div class="acciones-tarjeta">
                         ${accionAdmin}
-                        ${(esBaja && (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL'))
+                        ${(esBaja && (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL' || rolUsuario === 'ENFERMERIA'))
                             ? `<span style="background:#fff0f1;color:#e63946;border:1px solid #fecdd3;border-radius:9px;padding:8px 16px;font-size:12px;font-weight:800;">BAJA</span>`
-                            : `<a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}&from=buscador" class="btn-abrir">
+                            : `<a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}${rolUsuario === 'ENFERMERIA' ? '&tab=ficha' : ''}&from=buscador" class="btn-abrir">
                                 ${modoReporte ? 'Reporte' : 'Expediente'}
                                </a>`
                         }

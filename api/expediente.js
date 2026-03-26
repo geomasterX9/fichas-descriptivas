@@ -1,7 +1,7 @@
 const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 module.exports = async (req, res) => {
-    setSecurityHeaders(res, 'GET, POST, OPTIONS', req.headers.origin);
+    setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const usuario = await requireAuth(req, res, 'expediente');
@@ -9,10 +9,14 @@ module.exports = async (req, res) => {
 
     const tipo  = req.query.tipo;
     const id    = req.query.id;
-    // Permite consultar ciclo histórico: ?ciclo=2024-2025 (opcional)
     const cicloQuery = req.query.ciclo || null;
 
     if (id && isNaN(parseInt(id))) return res.status(400).json({ error: 'ID inválido' });
+
+    // Rutas médicas — despachar a handlers dedicados
+    if (tipo === 'medico')               return handleMedico(req, res, usuario, id);
+    if (tipo === 'visitas_enfermeria')   return handleVisitas(req, res, usuario, id);
+    if (tipo === 'justificante')         return handleJustificante(req, res, usuario, id);
 
     const ciclo = cicloQuery || await getCicloActivo();
 
@@ -163,3 +167,112 @@ module.exports = async (req, res) => {
 
     res.status(400).json({ error: 'Parámetros inválidos' });
 };
+
+// ── ROLES CON ACCESO MÉDICO ──────────────────────────────────
+const ROLES_MEDICO = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'];
+
+// ── EXPEDIENTE MÉDICO ────────────────────────────────────────
+// GET  /api/expediente?tipo=medico&id=X
+// POST /api/expediente?tipo=medico  { id_alumno, ...campos }
+async function handleMedico(req, res, usuario, id) {
+    if (!ROLES_MEDICO.includes(usuario.rol))
+        return res.status(403).json({ error: 'Sin acceso al expediente médico.' });
+
+    if (req.method === 'GET') {
+        const { data } = await supabase.from('expedientes_medicos')
+            .select('*').eq('id_alumno', parseInt(id)).maybeSingle();
+        return res.json(data || {});
+    }
+    if (req.method === 'POST') {
+        const { id_alumno, ...campos } = req.body || {};
+        if (!id_alumno) return res.status(400).json({ error: 'Falta id_alumno' });
+        const { error } = await supabase.from('expedientes_medicos')
+            .upsert({ ...campos, id_alumno: parseInt(id_alumno),
+                      actualizado_por: usuario.nombre,
+                      fecha_actualizacion: new Date().toISOString() },
+                    { onConflict: 'id_alumno' });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+    return res.status(405).json({ error: 'Método no permitido' });
+}
+
+// ── VISITAS A ENFERMERÍA ─────────────────────────────────────
+// GET  /api/expediente?tipo=visitas_enfermeria&id=X
+// POST /api/expediente?tipo=visitas_enfermeria  { id_alumno, fecha, motivo, tratamiento }
+async function handleVisitas(req, res, usuario, id) {
+    if (!ROLES_MEDICO.includes(usuario.rol))
+        return res.status(403).json({ error: 'Sin acceso a visitas de enfermería.' });
+
+    if (req.method === 'GET') {
+        const { data } = await supabase.from('visitas_enfermeria')
+            .select('*').eq('id_alumno', parseInt(id))
+            .order('fecha', { ascending: false });
+        return res.json(data || []);
+    }
+    if (req.method === 'POST') {
+        const { id_alumno, fecha, motivo, tratamiento } = req.body || {};
+        if (!id_alumno || !motivo) return res.status(400).json({ error: 'Faltan parámetros.' });
+        const { error } = await supabase.from('visitas_enfermeria').insert({
+            id_alumno: parseInt(id_alumno),
+            fecha: fecha || new Date().toISOString().split('T')[0],
+            motivo, tratamiento: tratamiento || null,
+            registrado_por: usuario.nombre
+        });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+    return res.status(405).json({ error: 'Método no permitido' });
+}
+
+// ── JUSTIFICANTES MÉDICOS ────────────────────────────────────
+// GET    /api/expediente?tipo=justificante&id=X  (historial del alumno)
+// GET    /api/expediente?tipo=justificante        (activos hoy — para notif docentes)
+// POST   /api/expediente?tipo=justificante  { id_alumno, fecha_inicio, fecha_fin, motivo }
+// DELETE /api/expediente?tipo=justificante&id=X  (desactivar)
+async function handleJustificante(req, res, usuario, id) {
+    if (!ROLES_MEDICO.includes(usuario.rol) && usuario.rol !== 'DOCENTE' && usuario.rol !== 'PREFECTO')
+        return res.status(403).json({ error: 'Sin acceso a justificantes.' });
+
+    if (req.method === 'GET') {
+        if (id) {
+            // Historial de un alumno
+            const { data } = await supabase.from('justificantes_medicos')
+                .select('*').eq('id_alumno', parseInt(id))
+                .order('fecha_inicio', { ascending: false });
+            return res.json(data || []);
+        } else {
+            // Justificantes activos hoy — para notificación en inicio de docentes
+            const hoy = new Date().toISOString().split('T')[0];
+            const { data } = await supabase.from('justificantes_medicos')
+                .select('*, alumnos(apellidos, nombre, grado, grupo)')
+                .eq('activo', true)
+                .lte('fecha_inicio', hoy)
+                .gte('fecha_fin', hoy)
+                .order('fecha_fin', { ascending: true });
+            return res.json(data || []);
+        }
+    }
+    if (req.method === 'POST') {
+        if (!ROLES_MEDICO.includes(usuario.rol))
+            return res.status(403).json({ error: 'Solo enfermería puede emitir justificantes.' });
+        const { id_alumno, fecha_inicio, fecha_fin, motivo } = req.body || {};
+        if (!id_alumno || !fecha_inicio || !fecha_fin || !motivo)
+            return res.status(400).json({ error: 'Faltan parámetros.' });
+        const { error } = await supabase.from('justificantes_medicos').insert({
+            id_alumno: parseInt(id_alumno), fecha_inicio, fecha_fin,
+            motivo, activo: true, registrado_por: usuario.nombre
+        });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+    if (req.method === 'DELETE') {
+        if (!ROLES_MEDICO.includes(usuario.rol))
+            return res.status(403).json({ error: 'Sin permiso.' });
+        const { error } = await supabase.from('justificantes_medicos')
+            .update({ activo: false }).eq('id', parseInt(id));
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+    return res.status(405).json({ error: 'Método no permitido' });
+}

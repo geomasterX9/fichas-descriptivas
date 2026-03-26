@@ -253,14 +253,14 @@
         </div>
     </div>
 
-    <div class="seccion">
+    <div class="seccion" id="seccionSocio">
         <div class="seccion-header">I. Datos Socioeconómicos</div>
         <div class="seccion-body" id="contSocio">
             <p style="text-align:center; color:var(--muted); padding:20px;">Cargando...</p>
         </div>
     </div>
 
-    <div class="seccion">
+    <div class="seccion" id="seccionReportes">
         <div class="seccion-header naranja">II. Historial de Reportes</div>
         <div class="seccion-body">
             <button class="btn-reporte" onclick="window.location.href='captura_reporte.html?id_alumno='+idAlumno">
@@ -283,7 +283,7 @@
         </div>
     </div>
 
-    <div class="seccion">
+    <div class="seccion" id="seccionCalificaciones">
         <div class="seccion-header verde">III. Rendimiento Académico</div>
         <div class="seccion-body">
             <select id="selectorGrafica" class="selector-grafica" onchange="actualizarGrafica()">
@@ -299,6 +299,20 @@
     <div class="seccion" id="seccionMotivos" style="display:none;">
         <div class="seccion-header naranja">IV. Motivos de Reprobación</div>
         <div class="seccion-body" id="contMotivos"></div>
+    </div>
+
+    <!-- Sección Médica — visible para ENFERMERÍA, ADMINISTRADOR y DIRECTIVO -->
+    <div class="seccion" id="seccionMedica" style="display:none;">
+        <div class="seccion-header" style="border-left-color:#2d9b6f; color:#065f46;">V. Expediente Médico</div>
+        <div class="seccion-body">
+            <div style="text-align:center; padding:16px 0 8px;">
+                <a href="enfermeria.html" id="linkEnfermeria"
+                   style="display:inline-flex; align-items:center; gap:8px; background:#f0fdf4; color:#2d9b6f; border:1.5px solid #bbf7d0; border-radius:10px; padding:10px 22px; font-size:13px; font-weight:700; text-decoration:none; transition:all 0.15s;">
+                    🏥 Abrir Módulo de Enfermería
+                </a>
+            </div>
+            <div id="contMedico" style="margin-top:16px;"></div>
+        </div>
     </div>
 
 </div>
@@ -338,6 +352,9 @@
         } else if (rolActivo === 'TRABAJO SOCIAL') {
             btn.href      = 'inicio.html';
             btn.innerText = '← Inicio';
+        } else if (rolActivo === 'ENFERMERIA') {
+            btn.href      = 'buscador.html?modo=ficha';
+            btn.innerText = '← Ficha';
         }
         if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
             document.getElementById('btnBuscador').style.display = '';
@@ -346,8 +363,24 @@
             document.getElementById('btnReporteDisc').style.display = '';
         }
 
+        // ENFERMERÍA: oculta reportes y calificaciones, solo ve ficha socioeconómica
+        if (rolActivo === 'ENFERMERIA') {
+            document.getElementById('seccionReportes').style.display     = 'none';
+            document.getElementById('seccionCalificaciones').style.display = 'none';
+            document.getElementById('seccionMotivos').style.display      = 'none';
+            document.querySelector('.btn-reporte')?.remove();
+        }
+
         await cargarTodo();
         registrarLog('VER_EXPEDIENTE', `Alumno ID: ${idAlumno}`);
+
+        // Si viene con ?tab=ficha hacer scroll a la sección socioeconómica
+        const tab = new URLSearchParams(window.location.search).get('tab');
+        if (tab === 'ficha') {
+            setTimeout(() => {
+                document.getElementById('seccionSocio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 600);
+        }
     };
 
     async function cargarTodo() {
@@ -497,6 +530,43 @@
                 `<p style="text-align:center; color:var(--rojo); padding:20px; font-weight:600;">
                     Error al cargar el expediente. Revisa la consola o intenta de nuevo.
                  </p>`;
+        }
+
+        // Cargar sección médica para roles autorizados
+        if (['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'].includes(rolActivo)) {
+            document.getElementById('seccionMedica').style.display = 'block';
+            document.getElementById('linkEnfermeria').href =
+                `enfermeria.html?id=${idAlumno}`;
+            try {
+                const resMed = await apiFetch(`/api/expediente?tipo=medico&id=${idAlumno}`);
+                const med    = await resMed.json();
+                const contMed = document.getElementById('contMedico');
+                if (med && med.id_alumno) {
+                    const fila = (label, val) => val ? `
+                        <div class="fila-dato">
+                            <span class="fila-label">${label}</span>
+                            <span class="fila-valor">${esc(val)}</span>
+                        </div>` : '';
+                    contMed.innerHTML = `
+                        <div class="grid-socio">
+                            <div class="tarjeta-dato">
+                                <h4>🩸 Datos Médicos</h4>
+                                ${fila('Tipo de sangre', med.tipo_sangre)}
+                                ${fila('Alergias', med.alergias)}
+                                ${fila('Padecimientos', med.padecimientos)}
+                                ${fila('Medicamentos', med.medicamentos)}
+                            </div>
+                            <div class="tarjeta-dato">
+                                <h4>📞 Contacto de Emergencia</h4>
+                                ${fila('Nombre', med.contacto_emergencia_nombre)}
+                                ${fila('Parentesco', med.contacto_emergencia_parentesco)}
+                                ${fila('Teléfono', med.contacto_emergencia_telefono)}
+                            </div>
+                        </div>`;
+                } else {
+                    contMed.innerHTML = '<p style="color:var(--muted); font-size:13px; padding:8px 0;">Sin expediente médico registrado.</p>';
+                }
+            } catch(e) {}
         }
     }
 
