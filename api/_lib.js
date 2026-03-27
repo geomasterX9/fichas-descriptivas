@@ -13,10 +13,10 @@ const supabase = createClient(
 // ── Permisos por recurso ──────────────────────────────────
 const PERMISOS = {
     dashboard:                 ['ADMINISTRADOR', 'DIRECTIVO'],
-    alumnos:                   ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'],
+    alumnos:                   ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'],
     reportes:                  ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'],
-    expediente:                ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'],
-    personal:                  ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'],
+    expediente:                ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'],
+    personal:                  ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'],
     'foto-alumno':             ['ADMINISTRADOR', 'DIRECTIVO'],
     'importar-calificaciones': ['ADMINISTRADOR'],
 };
