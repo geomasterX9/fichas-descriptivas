@@ -273,7 +273,7 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
-  <a class="btn-opcion" href="buscador.html?modo=ficha" id="btnFicha" style="display:none;">
+  <a class="btn-opcion" href="enfermeria.html?seccion=ficha" id="btnFicha" style="display:none;">
     <div class="opcion-icono icono-expediente">📋</div>
     <div class="opcion-texto">
       <div class="opcion-titulo">Ficha Socioeconómica</div>
@@ -343,14 +343,13 @@ body {
 
   // ENFERMERÍA: muestra sus 3 tarjetas, oculta las demás
   if (rol === 'ENFERMERIA') {
-    document.getElementById('btnReporte').style.display      = 'none';
-    document.getElementById('btnEvaluaciones').style.display = 'none';
+    document.getElementById('btnReporte').style.display       = 'none';
+    document.getElementById('btnEvaluaciones').style.display  = 'none';
     document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
-    document.getElementById('btnEnfermeria').style.display   = 'flex';
-    document.getElementById('btnFicha').style.display        = 'flex';
+    document.querySelector('a[href="buscador.html"]').style.display     = 'none';
+    document.getElementById('btnEnfermeria').style.display    = 'flex';
+    document.getElementById('btnFicha').style.display         = 'flex';
     document.getElementById('btnJustificantes').style.display = 'flex';
-    // Ocultar Consultar Expediente normal (solo ve ficha)
-    document.querySelector('a[href="buscador.html"]').style.display = 'none';
   }
 
   // PREFECTO: no ve Evaluaciones Parciales
