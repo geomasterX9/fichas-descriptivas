@@ -378,7 +378,8 @@ body {
     } catch(e) { /* silencioso */ }
   }
 
-  cargarAlertas();
+  // Alertas disciplinarias — no aplica para ENFERMERIA
+  if (rol !== 'ENFERMERIA') cargarAlertas();
 
   // Notificación de justificantes activos para DOCENTE y PREFECTO
   if (rol === 'DOCENTE' || rol === 'PREFECTO') {
