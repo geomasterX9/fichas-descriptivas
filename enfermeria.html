@@ -194,6 +194,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <button class="tab activo" onclick="mostrarTab('medico')"       id="tabMedico">📋 Expediente</button>
     <button class="tab"        onclick="mostrarTab('visitas')"      id="tabVisitas">🏥 Visitas</button>
     <button class="tab"        onclick="mostrarTab('justificante')" id="tabJust">📄 Justificantes</button>
+    <button class="tab"        onclick="mostrarTab('ficha')"        id="tabFicha" style="display:none;">🏠 Ficha</button>
   </div>
 
   <!-- PANEL: EXPEDIENTE MÉDICO -->
@@ -295,6 +296,12 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     </div>
   </div>
 
+  <!-- PANEL: FICHA SOCIOECONÓMICA (solo lectura) -->
+  <div class="panel" id="panelFicha" style="display:none;">
+    <div class="panel-titulo">Ficha Socioeconómica</div>
+    <div id="contFichaSocio"><div class="estado-vacio">Selecciona un alumno para ver su ficha.</div></div>
+  </div>
+
 </div><!-- /contenido -->
 
 <script src="auth-helper.js"></script>
@@ -309,15 +316,17 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   // Si es docente/prefecto solo ve justificantes activos (modo ver)
   const params = new URLSearchParams(window.location.search);
   const modoVer = params.get('modo') === 'ver';
+  const seccionActiva = params.get('seccion') || 'medico';
+
   if (modoVer) {
     document.getElementById('seccionBuscador').style.display = 'none';
     document.getElementById('seccionEmitir').style.display   = 'none';
     cargarJustificantesGlobal();
   }
 
-  // Si viene con seccion=justificantes directo
-  if (params.get('seccion') === 'justificantes' && !modoVer) {
-    mostrarTabDirecto('justificante');
+  // Mostrar tab Ficha si viene por esa sección
+  if (seccionActiva === 'ficha') {
+    document.getElementById('tabFicha').style.display = 'inline-block';
   }
 
   let alumnoActual = null;
@@ -356,33 +365,27 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
     document.getElementById('chipAlumno').style.display = 'flex';
     document.getElementById('tabsPanel').style.display  = 'flex';
-    mostrarTab('medico');
-    cargarMedico();
+    const tabInicial = seccionActiva === 'ficha'         ? 'ficha'
+                     : seccionActiva === 'justificantes' ? 'justificante'
+                     : 'medico';
+    mostrarTab(tabInicial);
+    if (tabInicial === 'medico') cargarMedico();
   }
 
   function limpiarAlumno() {
     alumnoActual = null;
     document.getElementById('chipAlumno').style.display = 'none';
     document.getElementById('tabsPanel').style.display  = 'none';
-    document.getElementById('panelMedico').style.display   = 'block';
-    document.getElementById('panelVisitas').style.display  = 'none';
-    document.getElementById('panelJust').style.display     = 'none';
-  }
-
-  function mostrarTab(tab) {
-    ['medico','visitas','just'].forEach(t => {
-      document.getElementById(`panel${t.charAt(0).toUpperCase()+t.slice(1)}`).style.display = 'none';
-      document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.remove('activo');
+    ['panelMedico','panelVisitas','panelJust','panelFicha'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
     });
-    document.getElementById(`panel${tab.charAt(0).toUpperCase()+tab.slice(1)}`).style.display = 'block';
-    document.getElementById(`tab${tab.charAt(0).toUpperCase()+tab.slice(1)}`).classList.add('activo');
-    if (tab === 'visitas')      cargarVisitas();
-    if (tab === 'justificante') cargarJustificantes();
+    document.getElementById('panelMedico').style.display = 'block';
   }
 
   function mostrarTabDirecto(tab) {
+    if (!alumnoActual) return;
     document.getElementById('tabsPanel').style.display = 'flex';
-    document.getElementById('chipAlumno').style.display = 'none';
     mostrarTab(tab);
   }
 
@@ -547,6 +550,51 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       if (alumnoActual) cargarJustificantes();
       else cargarJustificantesGlobal();
     } catch(e) {}
+  }
+
+  // ── FICHA SOCIOECONÓMICA (solo lectura) ──
+  async function cargarFichaSocio() {
+    if (!alumnoActual) return;
+    const cont = document.getElementById('contFichaSocio');
+    cont.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:8px;">Cargando...</p>';
+    try {
+      const res  = await apiFetch(`/api/expediente?tipo=ficha&id=${alumnoActual.id_alumno}`);
+      const f    = await res.json();
+      if (!f || !f.id_alumno) {
+        cont.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:8px;">Sin ficha socioeconómica registrada.</p>';
+        return;
+      }
+      const fila = (label, val) => val ? `
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--borde); font-size:13px;">
+          <span style="color:var(--muted); font-weight:600;">${label}</span>
+          <span style="font-weight:700; text-align:right; max-width:60%;">${val}</span>
+        </div>` : '';
+      cont.innerHTML = `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;">👤 Tutor / Responsable</div>
+          ${fila('Nombre', f.tutor_nombre)}
+          ${fila('Parentesco', f.tutor_parentesco)}
+          ${fila('Ocupación', f.tutor_ocupacion)}
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;">👨 Padre</div>
+          ${fila('Nombre', f.padre_nombre)}
+          ${fila('Ocupación', f.padre_ocupacion)}
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;">👩 Madre</div>
+          ${fila('Nombre', f.madre_nombre)}
+          ${fila('Ocupación', f.madre_ocupacion)}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;">🏠 Vivienda</div>
+          ${fila('Tipo', f.vivienda_tipo)}
+          ${fila('Servicios', f.vivienda_servicios)}
+          ${fila('Ingreso familiar', f.ingreso_familiar)}
+        </div>`;
+    } catch(e) {
+      cont.innerHTML = '<p style="color:var(--rojo);font-size:13px;">Error al cargar la ficha.</p>';
+    }
   }
 </script>
 
