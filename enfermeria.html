@@ -198,7 +198,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   </div>
 
   <!-- PANEL: EXPEDIENTE MÉDICO -->
-  <div class="panel" id="panelMedico" style="display:none;">
+  <div class="panel" id="panelMedico">
     <div class="panel-titulo">Expediente Médico</div>
     <div class="campo-fila">
       <div class="campo">
@@ -380,6 +380,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
+    document.getElementById('panelMedico').style.display = 'block';
   }
 
   function mostrarTabDirecto(tab) {
