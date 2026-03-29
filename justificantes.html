@@ -191,7 +191,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       </div>
       <div class="campo">
         <label>Motivo Médico</label>
-        <textarea id="j-motivo" placeholder="ej. fractura de muñeca, enfermedad respiratoria..."></textarea>
+        <textarea id="j-motivo" placeholder="ej. fractura de muñeca, enfermedad respiratoria..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></textarea>
       </div>
       <button class="btn-guardar" onclick="emitirJustificante()" id="btnEmitirJust">Emitir Justificante</button>
       <div class="msg-ok"    id="okJust">✅ Justificante emitido</div>

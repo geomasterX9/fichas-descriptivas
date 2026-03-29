@@ -381,24 +381,21 @@ body {
   // Alertas disciplinarias — no aplica para ENFERMERIA
   if (rol !== 'ENFERMERIA') cargarAlertas();
 
-  // Notificación de justificantes activos para DOCENTE y PREFECTO
-  if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+  // Notificación de justificantes para DOCENTE, PREFECTO y TRABAJO SOCIAL
+  if (['DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'].includes(rol)) {
     async function cargarJustificantes() {
       try {
         const res = await apiFetch('/api/expediente?tipo=justificante');
         if (!res) return;
         const data = await res.json();
         if (data && data.length > 0) {
-          const badge = document.getElementById('badgeJustificantes');
-          const btnJ  = document.getElementById('btnJustificantes');
+          const btnJ = document.getElementById('btnJustificantes');
           btnJ.href = 'justificantes.html';
           btnJ.style.display = 'flex';
-          badge.style.display = 'inline-block';
-          badge.textContent = data.length;
           document.querySelector('#btnJustificantes .opcion-titulo').innerHTML =
-            `Justificantes Médicos <span class="badge-alerta" id="badgeJustificantes" style="display:inline-block;">${data.length}</span>`;
+            `Justificantes Médicos <span class="badge-alerta" style="display:inline-block;">${data.length}</span>`;
           document.querySelector('#btnJustificantes .opcion-desc').textContent =
-            `${data.length} alumno(s) con justificante médico activo hoy — revisar faltas`;
+            `${data.length} alumno(s) con justificante médico activo esta semana`;
         }
       } catch(e) { /* silencioso */ }
     }

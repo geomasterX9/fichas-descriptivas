@@ -244,7 +244,7 @@ async function handleVisitas(req, res, usuario, id) {
 // POST   /api/expediente?tipo=justificante  { id_alumno, fecha_inicio, fecha_fin, motivo }
 // DELETE /api/expediente?tipo=justificante&id=X  (desactivar)
 async function handleJustificante(req, res, usuario, id) {
-    if (!ROLES_MEDICO.includes(usuario.rol) && usuario.rol !== 'DOCENTE' && usuario.rol !== 'PREFECTO')
+    if (!ROLES_MEDICO.includes(usuario.rol) && !['DOCENTE','PREFECTO','TRABAJO SOCIAL'].includes(usuario.rol))
         return res.status(403).json({ error: 'Sin acceso a justificantes.' });
 
     if (req.method === 'GET') {
@@ -255,13 +255,13 @@ async function handleJustificante(req, res, usuario, id) {
                 .order('fecha_inicio', { ascending: false });
             return res.json(data || []);
         } else {
-            // Justificantes activos hoy — para notificación en inicio de docentes
+            // Justificantes emitidos en los últimos 7 días — para notificación a docentes
             const hoy = new Date().toISOString().split('T')[0];
+            const haceUnaSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const { data } = await supabase.from('justificantes_medicos')
                 .select('*, alumnos(apellidos, nombre, grado, grupo)')
                 .eq('activo', true)
-                .lte('fecha_inicio', hoy)
-                .gte('fecha_fin', hoy)
+                .gte('fecha_fin', haceUnaSemana)
                 .order('fecha_fin', { ascending: true });
             return res.json(data || []);
         }
