@@ -475,7 +475,7 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'Selecciona al menos una tabla.' });
 
             const TABLAS_PERMITIDAS = [
-                'reportes', 'evaluaciones_parciales', 'expedientes_medicos',
+                'reportes_disciplinarios', 'evaluaciones_parciales', 'expedientes_medicos',
                 'visitas_enfermeria', 'justificantes_medicos', 'asistencia',
                 'logs_actividad', 'calificaciones', 'datos_socioeconomicos', 'emergencias'
             ];
