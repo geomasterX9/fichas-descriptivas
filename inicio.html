@@ -391,13 +391,14 @@ body {
         if (data && data.length > 0) {
           const badge = document.getElementById('badgeJustificantes');
           const btnJ  = document.getElementById('btnJustificantes');
-          // Mostrar tarjeta de justificantes (solo lectura para docentes)
           btnJ.href = 'justificantes.html';
           btnJ.style.display = 'flex';
           badge.style.display = 'inline-block';
           badge.textContent = data.length;
+          document.querySelector('#btnJustificantes .opcion-titulo').innerHTML =
+            `Justificantes Médicos <span class="badge-alerta" id="badgeJustificantes" style="display:inline-block;">${data.length}</span>`;
           document.querySelector('#btnJustificantes .opcion-desc').textContent =
-            `${data.length} alumno(s) con justificante médico activo hoy`;
+            `${data.length} alumno(s) con justificante médico activo hoy — revisar faltas`;
         }
       } catch(e) { /* silencioso */ }
     }

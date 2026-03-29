@@ -148,6 +148,14 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 .msg-ok    { color: var(--verde); font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
 .msg-error { color: var(--rojo);  font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
 .estado-vacio { text-align: center; padding: 32px 0; color: var(--muted); font-size: 14px; }
+.historial-med-item {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid var(--borde);
+  margin-bottom: 10px; background: #fafbfc; cursor: pointer; transition: all 0.15s;
+}
+.historial-med-item:hover { border-color: var(--azul); background: var(--azul-claro); }
+.historial-med-nombre { font-weight: 800; font-size: 14px; color: var(--texto); }
+.historial-med-sub    { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.historial-med-datos  { font-size: 12px; color: var(--texto); margin-top: 6px; line-height: 1.6; }
 
 @media (max-width: 480px) {
   .campo-fila { grid-template-columns: 1fr; }
@@ -263,6 +271,12 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <div class="msg-error" id="errMedico"></div>
   </div>
 
+  <!-- HISTORIAL DE EXPEDIENTES MÉDICOS RECIENTES -->
+  <div class="panel" id="panelHistorial" style="display:block; margin-top:20px;">
+    <div class="panel-titulo">Expedientes Médicos Registrados</div>
+    <div id="listaHistorial"><div class="estado-vacio">Cargando...</div></div>
+  </div>
+
 </div><!-- /contenido -->
 
 <script src="auth-helper.js"></script>
@@ -364,6 +378,40 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     } catch(e) {}
   }
 
+  // Cargar historial de expedientes médicos registrados
+  async function cargarHistorial() {
+    try {
+      const res  = await apiFetch('/api/expediente?tipo=medico_historial');
+      if (!res) return;
+      const data = await res.json();
+      const cont = document.getElementById('listaHistorial');
+      if (!data || !data.length) {
+        cont.innerHTML = '<div class="estado-vacio">Sin expedientes médicos registrados aún</div>';
+        return;
+      }
+      cont.innerHTML = data.map(m => {
+        const campos = [];
+        if (m.tipo_sangre)   campos.push(`🩸 ${m.tipo_sangre}`);
+        if (m.alergias)      campos.push(`⚠️ ${m.alergias}`);
+        if (m.padecimientos) campos.push(`🏥 ${m.padecimientos}`);
+        return `
+        <div class="historial-med-item" onclick="seleccionarAlumnoById(${m.id_alumno})">
+          <div class="historial-med-nombre">${m.alumnos?.apellidos || ''} ${m.alumnos?.nombre || ''}</div>
+          <div class="historial-med-sub">${m.alumnos?.grado || ''}° Grupo "${m.alumnos?.grupo || ''}" · Actualizado por ${m.actualizado_por || '—'}</div>
+          ${campos.length ? `<div class="historial-med-datos">${campos.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+        </div>`;
+      }).join('');
+    } catch(e) {}
+  }
+
+  function seleccionarAlumnoById(id) {
+    const a = todosAlumnos.find(a => a.id_alumno === id);
+    if (a) seleccionarAlumno(id);
+  }
+
+  // Cargar historial al iniciar
+  cargarHistorial();
+
   async function guardarMedico() {
     if (!alumnoActual) return;
     const btn = document.getElementById('btnGuardarMedico');
@@ -385,7 +433,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       const data = await res.json();
       const ok  = document.getElementById('okMedico');
       const err = document.getElementById('errMedico');
-      if (data.exito) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); }
+      if (data.exito) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); cargarHistorial(); }
       else { err.textContent = data.error; err.style.display = 'block'; }
     } catch(e) { document.getElementById('errMedico').textContent = 'Error de conexión'; document.getElementById('errMedico').style.display = 'block'; }
     btn.disabled = false; btn.textContent = 'Guardar Expediente Médico';
