@@ -263,7 +263,7 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
-  <!-- Solo visible para ENFERMERÍA -->
+  <!-- Solo visible para ENFERMERIA -->
   <a class="btn-opcion" href="enfermeria.html" id="btnEnfermeria" style="display:none;">
     <div class="opcion-icono icono-medico">🏥</div>
     <div class="opcion-texto">
@@ -273,16 +273,16 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
-  <a class="btn-opcion" href="enfermeria.html?seccion=ficha" id="btnFicha" style="display:none;">
-    <div class="opcion-icono icono-expediente">📋</div>
+  <a class="btn-opcion" href="visitas.html" id="btnVisitas" style="display:none;">
+    <div class="opcion-icono icono-medico">🩺</div>
     <div class="opcion-texto">
-      <div class="opcion-titulo">Ficha Socioeconómica</div>
-      <div class="opcion-desc">Consulta la ficha socioeconómica de los alumnos.</div>
+      <div class="opcion-titulo">Visitas a Enfermería</div>
+      <div class="opcion-desc">Registra y consulta las visitas de alumnos a enfermería.</div>
     </div>
     <div class="opcion-flecha">›</div>
   </a>
 
-  <a class="btn-opcion" href="enfermeria.html?seccion=justificantes" id="btnJustificantes" style="display:none;">
+  <a class="btn-opcion" href="justificantes.html" id="btnJustificantes" style="display:none;">
     <div class="opcion-icono icono-justificante">📄</div>
     <div class="opcion-texto">
       <div class="opcion-titulo">Avisos a Docentes
@@ -348,7 +348,7 @@ body {
     document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
     document.querySelector('a[href="buscador.html"]').style.display     = 'none';
     document.getElementById('btnEnfermeria').style.display    = 'flex';
-    document.getElementById('btnFicha').style.display         = 'flex';
+    document.getElementById('btnVisitas').style.display       = 'flex';
     document.getElementById('btnJustificantes').style.display = 'flex';
   }
 
@@ -392,7 +392,7 @@ body {
           const badge = document.getElementById('badgeJustificantes');
           const btnJ  = document.getElementById('btnJustificantes');
           // Mostrar tarjeta de justificantes (solo lectura para docentes)
-          btnJ.href = 'enfermeria.html?seccion=justificantes&modo=ver';
+          btnJ.href = 'justificantes.html';
           btnJ.style.display = 'flex';
           badge.style.display = 'inline-block';
           badge.textContent = data.length;

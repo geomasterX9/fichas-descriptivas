@@ -190,13 +190,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   </div>
 
   <!-- TABS -->
-  <div class="tabs" id="tabsPanel" style="display:none;">
-    <button class="tab activo" onclick="mostrarTab('medico')"       id="tabMedico">📋 Expediente</button>
-    <button class="tab"        onclick="mostrarTab('visitas')"      id="tabVisitas">🏥 Visitas</button>
-    <button class="tab"        onclick="mostrarTab('justificante')" id="tabJust">📄 Justificantes</button>
-    <button class="tab"        onclick="mostrarTab('ficha')"        id="tabFicha" style="display:none;">🏠 Ficha</button>
-  </div>
-
   <!-- PANEL: EXPEDIENTE MÉDICO -->
   <div class="panel" id="panelMedico" style="display:none;">
     <div class="panel-titulo">Expediente Médico</div>
@@ -240,66 +233,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <button class="btn-guardar" onclick="guardarMedico()" id="btnGuardarMedico">Guardar Expediente Médico</button>
     <div class="msg-ok"    id="okMedico">✅ Guardado correctamente</div>
     <div class="msg-error" id="errMedico"></div>
-  </div>
-
-  <!-- PANEL: VISITAS -->
-  <div class="panel" id="panelVisitas" style="display:none;">
-    <div class="panel-titulo">Registrar Visita</div>
-    <div class="campo-fila">
-      <div class="campo">
-        <label>Fecha</label>
-        <input type="date" id="v-fecha">
-      </div>
-      <div class="campo">
-        <label>Motivo</label>
-        <input type="text" id="v-motivo" placeholder="ej. dolor de cabeza, fiebre...">
-      </div>
-    </div>
-    <div class="campo">
-      <label>Tratamiento / Indicaciones</label>
-      <textarea id="v-tratamiento" placeholder="ej. se dio paracetamol, se notificó al tutor..."></textarea>
-    </div>
-    <button class="btn-guardar verde" onclick="guardarVisita()" id="btnGuardarVisita">Registrar Visita</button>
-    <div class="msg-ok"    id="okVisita">✅ Visita registrada</div>
-    <div class="msg-error" id="errVisita"></div>
-    <div style="margin-top:24px;">
-      <div class="panel-titulo">Historial de Visitas</div>
-      <div id="historialVisitas"><div class="estado-vacio">Sin visitas registradas</div></div>
-    </div>
-  </div>
-
-  <!-- PANEL: JUSTIFICANTES -->
-  <div class="panel" id="panelJust" style="display:none;">
-    <div id="seccionEmitir">
-      <div class="panel-titulo">Emitir Justificante</div>
-      <div class="campo-fila">
-        <div class="campo">
-          <label>Fecha Inicio</label>
-          <input type="date" id="j-inicio">
-        </div>
-        <div class="campo">
-          <label>Fecha Fin</label>
-          <input type="date" id="j-fin">
-        </div>
-      </div>
-      <div class="campo">
-        <label>Motivo Médico</label>
-        <textarea id="j-motivo" placeholder="ej. fractura de muñeca, enfermedad respiratoria..."></textarea>
-      </div>
-      <button class="btn-guardar" onclick="emitirJustificante()" id="btnEmitirJust">Emitir Justificante</button>
-      <div class="msg-ok"    id="okJust">✅ Justificante emitido</div>
-      <div class="msg-error" id="errJust"></div>
-    </div>
-    <div style="margin-top:24px;">
-      <div class="panel-titulo">Justificantes Activos</div>
-      <div id="listaJustificantes"><div class="estado-vacio">Sin justificantes activos</div></div>
-    </div>
-  </div>
-
-  <!-- PANEL: FICHA SOCIOECONÓMICA (solo lectura) -->
-  <div class="panel" id="panelFicha" style="display:none;">
-    <div class="panel-titulo">Ficha Socioeconómica</div>
-    <div id="contFichaSocio"><div class="estado-vacio">Selecciona un alumno para ver su ficha.</div></div>
   </div>
 
 </div><!-- /contenido -->
@@ -363,47 +296,16 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     document.getElementById('listaResultados').innerHTML = '';
     document.getElementById('chipNombre').textContent = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
     document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
-    document.getElementById('chipAlumno').style.display = 'flex';
-    document.getElementById('tabsPanel').style.display  = 'flex';
-    const tabInicial = seccionActiva === 'ficha'         ? 'ficha'
-                     : seccionActiva === 'justificantes' ? 'justificante'
-                     : 'medico';
-    mostrarTab(tabInicial);
-    if (tabInicial === 'medico') cargarMedico();
+    document.getElementById('chipAlumno').style.display  = 'flex';
+    document.getElementById('panelMedico').style.display = 'block';
+    cargarMedico();
   }
 
   function limpiarAlumno() {
     alumnoActual = null;
-    document.getElementById('chipAlumno').style.display = 'none';
-    document.getElementById('tabsPanel').style.display  = 'none';
-    ['panelMedico','panelVisitas','panelJust','panelFicha'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-  }
-
-  function mostrarTabDirecto(tab) {
-    if (!alumnoActual) return;
-    document.getElementById('tabsPanel').style.display = 'flex';
-    mostrarTab(tab);
-  }
-
-  function mostrarTab(tab) {
-    ['medico','visitas','just','ficha'].forEach(t => {
-      const panel = document.getElementById(`panel${t.charAt(0).toUpperCase()+t.slice(1)}`);
-      const tabEl = document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`);
-      if (panel) panel.style.display = 'none';
-      if (tabEl) tabEl.classList.remove('activo');
-    });
-    const panelId = `panel${tab.charAt(0).toUpperCase()+tab.slice(1)}`;
-    const tabId   = `tab${tab.charAt(0).toUpperCase()+tab.slice(1)}`;
-    const panelEl = document.getElementById(panelId);
-    const tabEl   = document.getElementById(tabId);
-    if (panelEl) panelEl.style.display = 'block';
-    if (tabEl)   tabEl.classList.add('activo');
-    if (tab === 'visitas')      cargarVisitas();
-    if (tab === 'justificante') cargarJustificantes();
-    if (tab === 'ficha')        cargarFichaSocio();
+    document.getElementById('chipAlumno').style.display  = 'none';
+    document.getElementById('panelMedico').style.display = 'none';
+    document.getElementById('inputBuscar').value = '';
   }
 
   // ── EXPEDIENTE MÉDICO ──
