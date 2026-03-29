@@ -386,9 +386,10 @@ body {
     document.getElementById('btnReporteEnf').style.display    = 'flex';
   }
 
-  // PREFECTO: no ve Evaluaciones Parciales
+  // PREFECTO: no ve Evaluaciones Parciales ni Recuperación
   if (rol === 'PREFECTO') {
     document.getElementById('btnEvaluaciones').style.display = 'none';
+    document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
   }
 
   // Consultar alumnos en riesgo disciplinario
