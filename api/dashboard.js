@@ -461,6 +461,62 @@ module.exports = async (req, res) => {
             return res.json(data || []);
         }
 
+        // ── RESET DE DATOS ───────────────────────────────────────
+        if (tipo === 'reset') {
+            if (req.method !== 'POST')
+                return res.status(405).json({ error: 'Método no permitido.' });
+            if (usuario.rol !== 'ADMINISTRADOR')
+                return res.status(403).json({ error: 'Solo el administrador puede ejecutar un reset.' });
+
+            const { tablas, confirmacion } = req.body || {};
+            if (confirmacion !== 'CONFIRMAR')
+                return res.status(400).json({ error: 'Confirmación inválida.' });
+            if (!Array.isArray(tablas) || tablas.length === 0)
+                return res.status(400).json({ error: 'Selecciona al menos una tabla.' });
+
+            // Tablas permitidas — protege las tablas críticas
+            const TABLAS_PERMITIDAS = [
+                'reportes',
+                'evaluaciones_parciales',
+                'expedientes_medicos',
+                'visitas_enfermeria',
+                'justificantes_medicos',
+                'asistencia',
+                'logs_actividad',
+                'calificaciones',
+                'datos_socioeconomicos',
+                'emergencias',
+            ];
+
+            const tablasInvalidas = tablas.filter(t => !TABLAS_PERMITIDAS.includes(t));
+            if (tablasInvalidas.length > 0)
+                return res.status(400).json({ error: `Tablas no permitidas: ${tablasInvalidas.join(', ')}` });
+
+            const errores = [];
+            const exitosas = [];
+
+            for (const tabla of tablas) {
+                const { error } = await supabase.from(tabla).delete().neq('id', 0);
+                if (error) errores.push(`${tabla}: ${error.message}`);
+                else exitosas.push(tabla);
+            }
+
+            // Registrar en logs
+            await supabase.from('logs_actividad').insert([{
+                id_usuario:     usuario.id,
+                nombre_usuario: usuario.nombre,
+                rol:            usuario.rol,
+                accion:         'RESET_DATOS',
+                detalle:        `Tablas limpiadas: ${exitosas.join(', ')}`,
+                ip:             req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
+                fecha:          new Date().toISOString()
+            }]);
+
+            if (errores.length > 0)
+                return res.status(207).json({ exitosas, errores });
+            return res.json({ exito: true, exitosas });
+        }
+
         res.status(400).json({ error: 'Tipo no válido' });
     } catch (e) { res.status(500).json({ error: 'Error en dashboard' }); }
 };
