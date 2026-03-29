@@ -474,47 +474,41 @@ module.exports = async (req, res) => {
             if (!Array.isArray(tablas) || tablas.length === 0)
                 return res.status(400).json({ error: 'Selecciona al menos una tabla.' });
 
-            // Tablas permitidas — protege las tablas críticas
             const TABLAS_PERMITIDAS = [
-                'reportes',
-                'evaluaciones_parciales',
-                'expedientes_medicos',
-                'visitas_enfermeria',
-                'justificantes_medicos',
-                'asistencia',
-                'logs_actividad',
-                'calificaciones',
-                'datos_socioeconomicos',
-                'emergencias',
+                'reportes', 'evaluaciones_parciales', 'expedientes_medicos',
+                'visitas_enfermeria', 'justificantes_medicos', 'asistencia',
+                'logs_actividad', 'calificaciones', 'datos_socioeconomicos', 'emergencias'
             ];
 
             const tablasInvalidas = tablas.filter(t => !TABLAS_PERMITIDAS.includes(t));
             if (tablasInvalidas.length > 0)
                 return res.status(400).json({ error: `Tablas no permitidas: ${tablasInvalidas.join(', ')}` });
 
-            const errores = [];
+            const errores  = [];
             const exitosas = [];
 
             for (const tabla of tablas) {
-                const { error } = await supabase.from(tabla).delete().neq('id', 0);
+                const { error } = await supabase.rpc('truncate_tabla', { nombre_tabla: tabla });
                 if (error) errores.push(`${tabla}: ${error.message}`);
                 else exitosas.push(tabla);
             }
 
-            // Registrar en logs
-            await supabase.from('logs_actividad').insert([{
-                id_usuario:     usuario.id,
-                nombre_usuario: usuario.nombre,
-                rol:            usuario.rol,
-                accion:         'RESET_DATOS',
-                detalle:        `Tablas limpiadas: ${exitosas.join(', ')}`,
-                ip:             req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
-                fecha:          new Date().toISOString()
-            }]);
+            // Registrar en logs (si logs_actividad no fue truncada)
+            if (!exitosas.includes('logs_actividad')) {
+                await supabase.from('logs_actividad').insert([{
+                    id_usuario:     usuario.id,
+                    nombre_usuario: usuario.nombre,
+                    rol:            usuario.rol,
+                    accion:         'RESET_DATOS',
+                    detalle:        `Tablas limpiadas: ${exitosas.join(', ')}`,
+                    ip:             req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
+                    fecha:          new Date().toISOString()
+                }]);
+            }
 
-            if (errores.length > 0)
-                return res.status(207).json({ exitosas, errores });
-            return res.json({ exito: true, exitosas });
+            if (errores.length > 0 && exitosas.length === 0)
+                return res.status(500).json({ error: errores.join('; ') });
+            return res.json({ exito: true, exitosas, errores });
         }
 
         res.status(400).json({ error: 'Tipo no válido' });
