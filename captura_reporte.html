@@ -149,6 +149,10 @@
     window.onload = async () => {
         if (!idAlumno) return window.location.href = 'buscador.html';
         document.getElementById('linkVolver').href = `expediente.html?id_alumno=${idAlumno}&from=reporte`;
+        // PREFECTO y DOCENTE: regresar lleva a inicio, no al expediente
+        if (rolActivo === 'PREFECTO' || rolActivo === 'DOCENTE') {
+            document.getElementById('linkVolver').href = 'inicio.html';
+        }
         document.getElementById('fecha-falta').valueAsDate = new Date();
         document.getElementById('fecha-positiva').valueAsDate = new Date();
         try {
