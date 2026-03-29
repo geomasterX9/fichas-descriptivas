@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Asistencia — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --rojo: #e63946; --rojo-claro: #fff0f1;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
+
+/* HEADER */
+.header {
+  background: var(--azul); padding: 0 24px; height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25); position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.btn-back {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  color: white; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; text-decoration: none;
+}
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+
+/* CONTROLES */
+.controles {
+  max-width: 800px; margin: 24px auto 0; padding: 0 20px;
+  display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+}
+.ctrl-grupo { display: flex; flex-direction: column; gap: 6px; }
+.ctrl-grupo label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted);
+}
+.ctrl-grupo input[type=date] {
+  padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
+  font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--texto);
+  background: var(--blanco); outline: none;
+}
+.ctrl-grupo input:focus { border-color: var(--azul); }
+.btn-generar {
+  padding: 11px 24px; background: var(--azul); color: white;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer;
+}
+.btn-generar:hover { background: var(--azul-hover); }
+.btn-imprimir {
+  padding: 11px 24px; background: var(--verde); color: white;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; display: none;
+}
+.btn-imprimir:hover { background: #1e7a57; }
+
+/* REPORTE */
+#reporte {
+  max-width: 800px; margin: 24px auto 60px; padding: 0 20px; display: none;
+}
+
+/* ENCABEZADO INSTITUCIONAL */
+.enc-inst {
+  border-bottom: 3px solid var(--azul); margin-bottom: 20px; padding-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.enc-inst img { height: 52px; object-fit: contain; }
+.enc-inst-centro { text-align: center; flex: 1; }
+.enc-inst-centro .dep  { font-size: 11px; color: #555; font-weight: 600; }
+.enc-inst-centro .esc  { font-size: 15px; font-weight: 800; color: var(--azul); margin: 3px 0; }
+.enc-inst-centro .clave{ font-size: 11px; color: #555; }
+.enc-inst-centro .dir  { font-size: 10px; color: #777; margin-top: 2px; }
+
+/* TITULO DEL REPORTE */
+.rep-titulo {
+  background: var(--blanco); border-radius: 14px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 20px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.rep-titulo-izq h2   { font-size: 18px; font-weight: 800; color: var(--azul); }
+.rep-titulo-izq .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.rep-titulo-der       { text-align: right; font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+/* KPIs */
+.kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+}
+.kpi {
+  background: var(--blanco); border-radius: 12px; border: 1px solid var(--borde);
+  padding: 14px; text-align: center;
+}
+.kpi-num   { font-size: 28px; font-weight: 800; color: var(--azul); }
+.kpi-label { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 600; }
+.kpi-pct   { font-size: 11px; font-weight: 700; margin-top: 2px; }
+
+/* SECCIÓN POR GRUPO */
+.grupo-card {
+  background: var(--blanco); border-radius: 14px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 16px; break-inside: avoid;
+}
+.grupo-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; padding-bottom: 10px;
+  border-bottom: 2px solid var(--azul-claro);
+}
+.grupo-nombre { font-size: 16px; font-weight: 800; color: var(--azul); }
+.grupo-stats  { display: flex; gap: 8px; }
+.stat-chip {
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800;
+}
+.chip-p { background: var(--verde-claro); color: var(--verde); }
+.chip-a { background: var(--rojo-claro);  color: var(--rojo);  }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: #f8fafc; color: var(--muted);
+  padding: 7px 10px; text-align: left; font-size: 11px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+}
+td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+tr:last-child td { border-bottom: none; }
+.estado-p { color: var(--verde); font-weight: 800; }
+.estado-a { color: var(--rojo);  font-weight: 800; }
+
+.estado-vacio { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+/* FIRMA */
+.firmas {
+  margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr;
+  gap: 40px; padding: 0 20px;
+}
+.firma { text-align: center; }
+.firma-linea { border-top: 1.5px solid var(--texto); margin-bottom: 8px; }
+.firma-nombre { font-size: 12px; font-weight: 700; color: var(--texto); }
+.firma-cargo  { font-size: 11px; color: var(--muted); }
+
+/* PRINT */
+@media print {
+  body { background: white; }
+  .header, .controles { display: none !important; }
+  #reporte { display: block !important; padding: 0; margin: 0; max-width: 100%; }
+  .grupo-card, .rep-titulo, .kpi { border: 1px solid #ccc; border-radius: 0; box-shadow: none; }
+  .kpis { grid-template-columns: repeat(4,1fr); }
+  .kpi-num { font-size: 20px; }
+  table { font-size: 11px; }
+  th, td { padding: 5px 8px; }
+  .btn-imprimir { display: none !important; }
+}
+
+@media (max-width: 600px) {
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .controles { flex-direction: column; }
+  .rep-titulo { flex-direction: column; gap: 8px; }
+  .rep-titulo-der { text-align: left; }
+  .firmas { grid-template-columns: 1fr; gap: 24px; }
+  .enc-inst img { height: 36px; }
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a id="btnBack" href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">📋 Reporte de Asistencia</div>
+      <div class="header-sub">EST 84 · Informe de Asistencia Diaria</div>
+    </div>
+  </div>
+</div>
+
+<div class="controles">
+  <div class="ctrl-grupo">
+    <label>Fecha</label>
+    <input type="date" id="selFecha">
+  </div>
+  <button class="btn-generar" onclick="generarReporte()">📋 Generar Reporte</button>
+  <button class="btn-imprimir" id="btnImprimir" onclick="window.print()">🖨️ Imprimir / PDF</button>
+</div>
+
+<div id="reporte">
+
+  <!-- ENCABEZADO INSTITUCIONAL -->
+  <div class="enc-inst">
+    <img src="/logo_sege.png" alt="SEGE" onerror="this.style.display='none'">
+    <div class="enc-inst-centro">
+      <div class="dep">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+      <div class="esc">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
+      <div class="clave">CLAVE: 24DST0092Z</div>
+      <div class="dir">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+    </div>
+    <img src="/logo_est84.png" alt="EST 84" onerror="this.style.display='none'">
+  </div>
+
+  <!-- TÍTULO -->
+  <div class="rep-titulo">
+    <div class="rep-titulo-izq">
+      <h2>Reporte de Asistencia Diaria</h2>
+      <div class="sub" id="repSubtitulo">—</div>
+    </div>
+    <div class="rep-titulo-der" id="repMeta">—</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-num" id="kpiTotal">0</div>
+      <div class="kpi-label">Total Alumnos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" id="kpiPresentes">0</div>
+      <div class="kpi-label">Presentes</div>
+      <div class="kpi-pct" id="kpiPctP" style="color:var(--verde);">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" id="kpiAusentes">0</div>
+      <div class="kpi-label">Ausentes</div>
+      <div class="kpi-pct" id="kpiPctA" style="color:var(--rojo);">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" id="kpiGrupos">0</div>
+      <div class="kpi-label">Grupos Registrados</div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO POR GRUPO -->
+  <div id="contenidoGrupos">
+    <div class="estado-vacio">Selecciona una fecha y presiona "Generar Reporte"</div>
+  </div>
+
+  <!-- FIRMAS -->
+  <div class="firmas" id="secFirmas" style="display:none;">
+    <div class="firma">
+      <div class="firma-linea"></div>
+      <div class="firma-nombre" id="firmaTrabajadoraSocial">Trabajadora Social</div>
+      <div class="firma-cargo">Trabajo Social</div>
+    </div>
+    <div class="firma">
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">Dirección</div>
+      <div class="firma-cargo">EST 84</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rol = localStorage.getItem('rolActivo') || '';
+
+  // Ajustar botón back según de dónde viene
+  const params = new URLSearchParams(window.location.search);
+  const desde  = params.get('desde') || 'inicio';
+  document.getElementById('btnBack').href =
+    desde === 'pase' ? 'pase_lista.html' :
+    desde === 'ausentes' ? 'ausentes.html' : 'inicio.html';
+
+  // Poner fecha de hoy por defecto
+  const hoy = new Date();
+  const pad  = n => String(n).padStart(2, '0');
+  document.getElementById('selFecha').value =
+    `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`;
+
+  const DIAS   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MESES  = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                  'agosto','septiembre','octubre','noviembre','diciembre'];
+
+  function formatFecha(fechaStr) {
+    const [y, m, d] = fechaStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return `${DIAS[dt.getDay()]} ${d} de ${MESES[m-1]} de ${y}`;
+  }
+
+  async function generarReporte() {
+    const fecha = document.getElementById('selFecha').value;
+    if (!fecha) { alert('Selecciona una fecha.'); return; }
+
+    document.getElementById('repSubtitulo').textContent = formatFecha(fecha);
+    document.getElementById('repMeta').innerHTML =
+      `Fecha: ${fecha}<br>Generado: ${hoy.toLocaleDateString('es-MX')}<br>` +
+      `Elaboró: ${localStorage.getItem('nombreActivo') || '—'}`;
+
+    const cont = document.getElementById('contenidoGrupos');
+    cont.innerHTML = '<div class="estado-vacio">⏳ Cargando datos...</div>';
+
+    try {
+      const res  = await apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${fecha}`);
+      const data = await res.json();
+
+      if (!data || !data.length) {
+        cont.innerHTML = '<div class="estado-vacio">Sin registros de asistencia para esta fecha</div>';
+        document.getElementById('secFirmas').style.display = 'none';
+        document.getElementById('btnImprimir').style.display = 'none';
+        return;
+      }
+
+      // Filtrar por grupos si es DOCENTE/PREFECTO
+      let registros = data;
+      if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          registros = data.filter(r => {
+            const grado = String(r.alumnos?.grado || '');
+            const grupo = String(r.alumnos?.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
+      }
+
+      // Agrupar por grado+grupo
+      const porGrupo = {};
+      registros.forEach(r => {
+        const key = `${r.grado}-${r.grupo}`;
+        if (!porGrupo[key]) porGrupo[key] = { grado: r.grado, grupo: r.grupo, alumnos: [] };
+        porGrupo[key].alumnos.push(r);
+      });
+
+      // KPIs globales
+      const totalAlumnos   = registros.length;
+      const totalPresentes = registros.filter(r => r.presente).length;
+      const totalAusentes  = registros.filter(r => !r.presente).length;
+      const totalGrupos    = Object.keys(porGrupo).length;
+      document.getElementById('kpiTotal').textContent    = totalAlumnos;
+      document.getElementById('kpiPresentes').textContent= totalPresentes;
+      document.getElementById('kpiAusentes').textContent = totalAusentes;
+      document.getElementById('kpiGrupos').textContent   = totalGrupos;
+      document.getElementById('kpiPctP').textContent     = totalAlumnos ? `${Math.round(totalPresentes/totalAlumnos*100)}%` : '—';
+      document.getElementById('kpiPctA').textContent     = totalAlumnos ? `${Math.round(totalAusentes/totalAlumnos*100)}%` : '—';
+
+      // Generar tabla por grupo
+      cont.innerHTML = Object.values(porGrupo)
+        .sort((a, b) => a.grado - b.grado || a.grupo.localeCompare(b.grupo))
+        .map(g => {
+          const presentes = g.alumnos.filter(a => a.presente).length;
+          const ausentes  = g.alumnos.filter(a => !a.presente).length;
+          return `
+          <div class="grupo-card">
+            <div class="grupo-header">
+              <div class="grupo-nombre">${g.grado}° Grupo "${g.grupo}"</div>
+              <div class="grupo-stats">
+                <span class="stat-chip chip-p">✅ ${presentes} presentes</span>
+                <span class="stat-chip chip-a">❌ ${ausentes} ausentes</span>
+              </div>
+            </div>
+            <table>
+              <thead><tr>
+                <th>#</th><th>Alumno</th><th>Asistencia</th>
+              </tr></thead>
+              <tbody>
+                ${g.alumnos
+                  .sort((a,b) => (a.alumnos?.apellidos||'').localeCompare(b.alumnos?.apellidos||''))
+                  .map((a, i) => `
+                  <tr>
+                    <td>${i+1}</td>
+                    <td>${a.alumnos?.apellidos || ''} ${a.alumnos?.nombre || ''}</td>
+                    <td class="${a.presente ? 'estado-p' : 'estado-a'}">${a.presente ? '✅ Presente' : '❌ Ausente'}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        }).join('');
+
+      // Firma con nombre de quien elaboró
+      document.getElementById('firmaTrabajadoraSocial').textContent =
+        localStorage.getItem('nombreActivo') || 'Trabajo Social';
+      document.getElementById('secFirmas').style.display = 'grid';
+      document.getElementById('btnImprimir').style.display = 'inline-block';
+      document.getElementById('reporte').style.display = 'block';
+
+    } catch(e) {
+      cont.innerHTML = '<div class="estado-vacio">Error al cargar datos. Intenta de nuevo.</div>';
+    }
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>
