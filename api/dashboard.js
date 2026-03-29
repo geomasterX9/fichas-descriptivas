@@ -372,6 +372,83 @@ module.exports = async (req, res) => {
             return await handleCiclo(req, res, usuario, tipo);
         }
 
+
+        // ── ASISTENCIA ───────────────────────────────────────────
+        if (tipo === 'asistencia') {
+            const hoy = new Date().toISOString().split('T')[0];
+
+            if (req.method === 'GET') {
+                const grado = req.query.grado;
+                const grupo = req.query.grupo;
+
+                if (grado && grupo) {
+                    // Lista de alumnos del grupo con su estado de asistencia hoy
+                    const { data: alumnos } = await supabase
+                        .from('alumnos')
+                        .select('id_alumno, apellidos, nombre')
+                        .eq('grado', parseInt(grado))
+                        .eq('grupo', grupo.toUpperCase())
+                        .order('apellidos', { ascending: true });
+
+                    const { data: asistencia } = await supabase
+                        .from('asistencia')
+                        .select('id_alumno, presente')
+                        .eq('fecha', hoy)
+                        .eq('grado', parseInt(grado))
+                        .eq('grupo', grupo.toUpperCase());
+
+                    const mapaAsist = {};
+                    (asistencia || []).forEach(a => { mapaAsist[a.id_alumno] = a.presente; });
+
+                    return res.json((alumnos || []).map(a => ({
+                        ...a,
+                        presente: mapaAsist[a.id_alumno] !== undefined ? mapaAsist[a.id_alumno] : null
+                    })));
+                } else {
+                    // Ausentes de hoy para badge de docentes
+                    const { data } = await supabase
+                        .from('asistencia')
+                        .select('id_alumno, grado, grupo, alumnos(apellidos, nombre, grado, grupo)')
+                        .eq('fecha', hoy)
+                        .eq('presente', false)
+                        .order('grado', { ascending: true });
+                    return res.json(data || []);
+                }
+            }
+
+            if (req.method === 'POST') {
+                if (!['TRABAJO SOCIAL', 'ADMINISTRADOR'].includes(usuario.rol))
+                    return res.status(403).json({ error: 'Sin permiso para registrar asistencia.' });
+
+                const { grado, grupo, alumnos: listaAlumnos, finalizado } = req.body || {};
+
+                // Llamada de finalizado sin alumnos — solo marcar como notificado
+                if (finalizado && (!listaAlumnos || listaAlumnos.length === 0)) {
+                    return res.json({ exito: true });
+                }
+
+                if (!grado || !grupo || !Array.isArray(listaAlumnos) || listaAlumnos.length === 0)
+                    return res.status(400).json({ error: 'Faltan parámetros.' });
+
+                const registros = listaAlumnos.map(a => ({
+                    fecha:          hoy,
+                    grado:          parseInt(grado),
+                    grupo:          grupo.toUpperCase(),
+                    id_alumno:      a.id_alumno,
+                    presente:       a.presente !== false,
+                    registrado_por: usuario.nombre,
+                    finalizado:     !!finalizado
+                }));
+
+                const { error } = await supabase
+                    .from('asistencia')
+                    .upsert(registros, { onConflict: 'fecha,id_alumno' });
+
+                if (error) return res.status(400).json({ error: error.message });
+                return res.json({ exito: true });
+            }
+        }
+
         // ── ASISTENCIA POR FECHA (para reporte) ─────────────────
         if (tipo === 'asistencia_fecha') {
             const fecha = req.query.fecha;
