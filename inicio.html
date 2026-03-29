@@ -387,16 +387,33 @@ body {
       try {
         const res = await apiFetch('/api/expediente?tipo=justificante');
         if (!res) return;
-        const data = await res.json();
-        if (data && data.length > 0) {
-          const btnJ = document.getElementById('btnJustificantes');
-          btnJ.href = 'justificantes.html';
-          btnJ.style.display = 'flex';
-          document.querySelector('#btnJustificantes .opcion-titulo').innerHTML =
-            `Justificantes Médicos <span class="badge-alerta" style="display:inline-block;">${data.length}</span>`;
-          document.querySelector('#btnJustificantes .opcion-desc').textContent =
-            `${data.length} alumno(s) con justificante médico activo esta semana`;
+        let data = await res.json();
+        if (!data || !data.length) return;
+
+        // DOCENTE y PREFECTO: filtrar solo alumnos de sus grupos asignados
+        if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+          const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+          const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+          if (grupos.length > 0) {
+            data = data.filter(j => {
+              const g = j.alumnos?.grupo || '';
+              const gr = String(j.alumnos?.grado || '');
+              return grupos.some(gp => {
+                const [gradoGp, grupoGp] = gp.split('-');
+                return String(gradoGp) === gr && grupoGp?.toUpperCase() === g.toUpperCase();
+              });
+            });
+          }
         }
+
+        if (!data.length) return;
+        const btnJ = document.getElementById('btnJustificantes');
+        btnJ.href = 'justificantes.html';
+        btnJ.style.display = 'flex';
+        document.querySelector('#btnJustificantes .opcion-titulo').innerHTML =
+          `Justificantes Médicos <span class="badge-alerta" style="display:inline-block;">${data.length}</span>`;
+        document.querySelector('#btnJustificantes .opcion-desc').textContent =
+          `${data.length} alumno(s) con justificante médico activo esta semana`;
       } catch(e) { /* silencioso */ }
     }
     cargarJustificantes();

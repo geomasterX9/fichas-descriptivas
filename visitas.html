@@ -157,12 +157,12 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       </div>
       <div class="campo">
         <label>Motivo</label>
-        <input type="text" id="v-motivo" placeholder="ej. dolor de cabeza, fiebre...">
+        <input type="text" id="v-motivo" placeholder="ej. dolor de cabeza, fiebre..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
       </div>
     </div>
     <div class="campo">
       <label>Tratamiento / Indicaciones</label>
-      <textarea id="v-tratamiento" placeholder="ej. se dio paracetamol, se notificó al tutor..."></textarea>
+      <textarea id="v-tratamiento" placeholder="ej. se dio paracetamol, se notificó al tutor..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;"></textarea>
     </div>
     <button class="btn-guardar" onclick="guardarVisita()" id="btnGuardarVisita">Registrar Visita</button>
     <div class="msg-ok"    id="okVisita">✅ Visita registrada</div>
@@ -269,8 +269,8 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         body: JSON.stringify({
           id_alumno:   alumnoActual.id_alumno,
           fecha:       document.getElementById('v-fecha').value,
-          motivo,
-          tratamiento: document.getElementById('v-tratamiento').value.trim()
+          motivo: motivo.toUpperCase(),
+          tratamiento: document.getElementById('v-tratamiento').value.trim().toUpperCase()
         })
       });
       const data = await res.json();

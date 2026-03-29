@@ -240,31 +240,31 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       </div>
       <div class="campo">
         <label>Alergias</label>
-        <input type="text" id="m-alergias" placeholder="ej. penicilina, polvo...">
+        <input type="text" id="m-alergias" placeholder="ej. penicilina, polvo..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
       </div>
     </div>
     <div class="campo">
       <label>Padecimientos Crónicos</label>
-      <textarea id="m-padecimientos" placeholder="ej. diabetes, asma, epilepsia..."></textarea>
+      <textarea id="m-padecimientos" placeholder="ej. diabetes, asma, epilepsia..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;"></textarea>
     </div>
     <div class="campo">
       <label>Medicamentos</label>
-      <textarea id="m-medicamentos" placeholder="ej. metformina 500mg, ventolin..."></textarea>
+      <textarea id="m-medicamentos" placeholder="ej. metformina 500mg, ventolin..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;"></textarea>
     </div>
     <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:12px; margin-top:4px;">Contacto de Emergencia</div>
     <div class="campo-fila">
       <div class="campo">
         <label>Nombre</label>
-        <input type="text" id="m-ce-nombre" placeholder="Nombre completo">
+        <input type="text" id="m-ce-nombre" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
       </div>
       <div class="campo">
         <label>Parentesco</label>
-        <input type="text" id="m-ce-parentesco" placeholder="ej. madre, padre...">
+        <input type="text" id="m-ce-parentesco" placeholder="ej. madre, padre..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
       </div>
     </div>
     <div class="campo">
       <label>Teléfono de Emergencia</label>
-      <input type="tel" id="m-ce-telefono" placeholder="10 dígitos">
+      <input type="tel" id="m-ce-telefono" placeholder="10 dígitos" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
     </div>
     <button class="btn-guardar" onclick="guardarMedico()" id="btnGuardarMedico">Guardar Expediente Médico</button>
     <div class="msg-ok"    id="okMedico">✅ Guardado correctamente</div>

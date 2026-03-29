@@ -324,7 +324,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     try {
       const res = await apiFetch('/api/expediente?tipo=justificante', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_alumno: alumnoActual.id_alumno, fecha_inicio: inicio, fecha_fin: fin, motivo })
+        body: JSON.stringify({ id_alumno: alumnoActual.id_alumno, fecha_inicio: inicio, fecha_fin: fin, motivo: motivo.toUpperCase() })
       });
       const data = await res.json();
       if (data.exito) {
