@@ -297,14 +297,41 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   (async () => {
     try {
       const res = await apiFetch('/api/alumnos');
-      if (res) todosAlumnos = await res.json();
+      if (res) {
+        todosAlumnos = await res.json();
+        mostrarFiltrados(); // por si ya había filtros activos al cargar
+      }
     } catch(e) {}
   })();
 
   function actualizarFiltros() {
     document.getElementById('inputBuscar').value = '';
-    document.getElementById('listaResultados').innerHTML = '';
     mostrarFiltrados();
+  }
+
+  function buscarAlumno() { mostrarFiltrados(); }
+
+  function mostrarFiltrados() {
+    const q     = document.getElementById('inputBuscar').value.trim().toUpperCase();
+    const grado = document.getElementById('filtroGrado').value;
+    const grupo = document.getElementById('filtroGrupo').value;
+    const lista = document.getElementById('listaResultados');
+
+    // Necesita al menos un criterio activo
+    if (!q && !grado && !grupo) { lista.innerHTML = ''; return; }
+
+    const filtrados = todosAlumnos.filter(a => {
+      const matchNombre = !q || `${a.apellidos} ${a.nombre}`.toUpperCase().includes(q);
+      const matchGrado  = !grado || String(a.grado) === String(grado);
+      const matchGrupo  = !grupo || String(a.grupo).toUpperCase() === String(grupo).toUpperCase();
+      return matchNombre && matchGrado && matchGrupo;
+    }).slice(0, 30);
+
+    lista.innerHTML = filtrados.length ? filtrados.map(a => `
+      <div class="item-alumno" onclick="seleccionarAlumno(${a.id_alumno})">
+        <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
+        <div class="alumno-grupo">${a.grado}° Grupo "${a.grupo}"</div>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:8px;">Sin resultados</div>';
   }
 
   function buscarAlumno() { mostrarFiltrados(); }
