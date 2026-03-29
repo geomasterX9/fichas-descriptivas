@@ -397,19 +397,33 @@ body {
     try {
       const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
       if (!res) return;
-      const data = await res.json();
-      if (data && data.length > 0) {
-        const btn = document.getElementById('btnAlertas');
-        btn.style.display = 'flex';
-        btn.classList.add('alerta-activa');
-        document.getElementById('badgeAlertas').textContent = data.length;
-        const graves = data.filter(a => a.reportes_graves > 0).length;
-        document.getElementById('descAlertas').textContent =
-          graves > 0
-            ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
-            : `${data.length} alumno(s) con 3 o más reportes`;
-        sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
+      let data = await res.json();
+      if (!data || !data.length) return;
+
+      // DOCENTE y PREFECTO: filtrar solo alumnos de sus grupos asignados
+      if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          data = data.filter(a => {
+            const grado = String(a.grado || '');
+            const grupo = String(a.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
       }
+
+      if (!data.length) return;
+      const btn = document.getElementById('btnAlertas');
+      btn.style.display = 'flex';
+      btn.classList.add('alerta-activa');
+      document.getElementById('badgeAlertas').textContent = data.length;
+      const graves = data.filter(a => a.reportes_graves > 0).length;
+      document.getElementById('descAlertas').textContent =
+        graves > 0
+          ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
+          : `${data.length} alumno(s) con 3 o más reportes`;
+      sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
     } catch(e) { /* silencioso */ }
   }
 
