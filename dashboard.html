@@ -178,6 +178,19 @@
         .tool-esmeralda { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
         .tool-gris    { background: #f8fafc; color: #334155; border-color: var(--borde); }
         .tool-rojo    { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+        .tool-cierre  {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white; border-color: #dc2626;
+            font-weight: 800; font-size: 14px !important;
+            box-shadow: 0 4px 14px rgba(220,38,38,0.35);
+            grid-column: 1 / -1; /* ocupa todo el ancho */
+            justify-content: center; gap: 10px;
+        }
+        .tool-cierre:hover {
+            background: linear-gradient(135deg, #b91c1c, #991b1b);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220,38,38,0.45);
+        }
 
         /* ── GRÁFICA ── */
         .panel-grafica {
@@ -307,14 +320,14 @@
         <div class="panel-tools" id="panelHerramientas" style="display:none">
             <div class="panel-tools-titulo">🛠️ Herramientas de Administración</div>
             <div class="tools-grid">
-                <a href="tool_lista_fotos.html"   class="tool-btn tool-azul">📋 Lista para Fotografías</a>
-                <a href="tool_fotos.html"          class="tool-btn tool-esmeralda">📷 Carga Masiva de Fotos</a>
-                <a href="tool_calificaciones.html" class="tool-btn tool-naranja">📊 Importar Calificaciones</a>
-                <a href="tool_fichas.html"         class="tool-btn tool-morado">📋 Fichas Socioeconómicas</a>
+                <button onclick="abrirConfigInstitucional()" class="tool-btn" style="background:#f0f9ff;color:#0369a1;border-color:#bae6fd;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Configuración Institucional</button>
                 <a href="tool_usuarios.html"       class="tool-btn tool-verde">👥 Gestión de Usuarios</a>
                 <a href="tool_logs.html"           class="tool-btn tool-gris">📋 Logs de Actividad</a>
-                <a href="tool_ciclo.html"          class="tool-btn tool-rojo">🔄 Cierre de Ciclo Escolar</a>
-                <button onclick="abrirConfigInstitucional()" class="tool-btn" style="background:#f0f9ff;color:#0369a1;border-color:#bae6fd;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Configuración Institucional</button>
+                <a href="tool_calificaciones.html" class="tool-btn tool-naranja">📊 Importar Calificaciones</a>
+                <a href="tool_fichas.html"         class="tool-btn tool-morado">📋 Fichas Socioeconómicas</a>
+                <a href="tool_lista_fotos.html"    class="tool-btn tool-azul">📋 Listas para Fotografías</a>
+                <a href="tool_fotos.html"          class="tool-btn tool-esmeralda">📷 Carga Masiva de Fotos</a>
+                <a href="tool_ciclo.html"          class="tool-btn tool-cierre">🔄 Cierre de Ciclo Escolar</a>
             </div>
         </div>
 
