@@ -238,15 +238,30 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   async function cargarGlobal() {
     try {
       const res  = await apiFetch('/api/expediente?tipo=justificante');
-      const data = await res.json();
+      let data   = await res.json();
       const cont = document.getElementById('listaGlobal');
+
+      // DOCENTE y PREFECTO: filtrar solo sus grupos asignados
+      if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          data = data.filter(j => {
+            const grado = String(j.alumnos?.grado || '');
+            const grupo = String(j.alumnos?.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
+      }
+      // TRABAJO SOCIAL, ENFERMERIA, ADMIN, DIRECTIVO: ven todos
+
       cont.innerHTML = data.length ? data.map(j => `
         <div class="just-item-global">
           <div class="just-alumno">${j.alumnos?.apellidos} ${j.alumnos?.nombre} — ${j.alumnos?.grado}° "${j.alumnos?.grupo}"</div>
           <div class="just-fechas">Del ${j.fecha_inicio} al ${j.fecha_fin}</div>
           <div class="just-motivo">${j.motivo}</div>
           ${PUEDE_EDITAR ? `<div style="margin-top:8px;"><button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar justificante</button></div>` : ''}
-        </div>`).join('') : '<div class="estado-vacio">Sin justificantes activos hoy</div>';
+        </div>`).join('') : '<div class="estado-vacio">Sin justificantes activos esta semana</div>';
     } catch(e) {}
   }
 
