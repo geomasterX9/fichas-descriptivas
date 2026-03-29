@@ -1,7 +1,7 @@
 const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional', 'emergencia'];
+const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional', 'emergencia', 'asistencia'];
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
@@ -361,6 +361,80 @@ module.exports = async (req, res) => {
                 if (!['ADMINISTRADOR', 'DIRECTIVO'].includes(usuario.rol))
                     return res.status(403).json({ error: 'Sin permiso para desactivar emergencia' });
                 await supabase.from('emergencias').update({ activa: false }).eq('activa', true);
+                return res.json({ exito: true });
+            }
+        }
+
+        // ── ASISTENCIA ───────────────────────────────────────────
+        if (tipo === 'asistencia') {
+            const hoy = new Date().toISOString().split('T')[0];
+
+            // GET sin params → ausentes de hoy (para docentes/prefectos)
+            // GET ?grado=X&grupo=Y → lista del grupo con asistencia registrada hoy
+            if (req.method === 'GET') {
+                const grado = req.query.grado;
+                const grupo = req.query.grupo;
+
+                if (grado && grupo) {
+                    // Lista de alumnos del grupo con su estado de asistencia hoy
+                    const { data: alumnos } = await supabase
+                        .from('alumnos')
+                        .select('id_alumno, apellidos, nombre')
+                        .eq('grado', parseInt(grado))
+                        .eq('grupo', grupo.toUpperCase())
+                        .order('apellidos', { ascending: true });
+
+                    const { data: asistencia } = await supabase
+                        .from('asistencia')
+                        .select('id_alumno, presente')
+                        .eq('fecha', hoy)
+                        .eq('grado', parseInt(grado))
+                        .eq('grupo', grupo.toUpperCase());
+
+                    const mapaAsist = {};
+                    (asistencia || []).forEach(a => { mapaAsist[a.id_alumno] = a.presente; });
+
+                    return res.json((alumnos || []).map(a => ({
+                        ...a,
+                        presente: mapaAsist[a.id_alumno] !== undefined ? mapaAsist[a.id_alumno] : null
+                    })));
+                } else {
+                    // Ausentes de hoy — para badge de docentes
+                    const { data } = await supabase
+                        .from('asistencia')
+                        .select('*, alumnos(apellidos, nombre, grado, grupo)')
+                        .eq('fecha', hoy)
+                        .eq('presente', false)
+                        .order('alumnos(grado)', { ascending: true });
+                    return res.json(data || []);
+                }
+            }
+
+            // POST — guardar asistencia de un grupo
+            // body: { grado, grupo, alumnos: [{id_alumno, presente}], finalizado }
+            if (req.method === 'POST') {
+                if (!['TRABAJO SOCIAL', 'ADMINISTRADOR'].includes(usuario.rol))
+                    return res.status(403).json({ error: 'Sin permiso para registrar asistencia.' });
+
+                const { grado, grupo, alumnos: listaAlumnos, finalizado } = req.body || {};
+                if (!grado || !grupo || !Array.isArray(listaAlumnos))
+                    return res.status(400).json({ error: 'Faltan parámetros.' });
+
+                const registros = listaAlumnos.map(a => ({
+                    fecha:          hoy,
+                    grado:          parseInt(grado),
+                    grupo:          grupo.toUpperCase(),
+                    id_alumno:      a.id_alumno,
+                    presente:       a.presente,
+                    registrado_por: usuario.nombre,
+                    finalizado:     !!finalizado
+                }));
+
+                const { error } = await supabase
+                    .from('asistencia')
+                    .upsert(registros, { onConflict: 'fecha,id_alumno' });
+
+                if (error) return res.status(400).json({ error: error.message });
                 return res.json({ exito: true });
             }
         }
