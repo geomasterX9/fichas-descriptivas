@@ -16,7 +16,10 @@ module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const usuario = await requireAuth(req, res, 'dashboard');
+    // POST: cualquier usuario autenticado puede registrar logs
+    // GET:  solo ADMINISTRADOR puede consultar logs
+    const recurso = req.method === 'GET' ? 'dashboard' : null;
+    const usuario = await requireAuth(req, res, recurso);
     if (!usuario) return;
 
     // ── POST: registrar una acción ──
