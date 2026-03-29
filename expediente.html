@@ -341,7 +341,7 @@
             'buscador':   { href: 'buscador.html',               label: '← Directorio' },
             'alertas':    { href: 'alertas_disciplinarias.html', label: '← Alertas' },
             'fichas':     { href: 'tool_fichas.html',            label: '← Fichas' },
-            'reporte':    { href: `captura_reporte.html?id_alumno=${idAlumno}`, label: '← Reporte' },
+            'reporte':    { href: 'inicio.html',                 label: '← Inicio' },
         };
         if (from && DESTINOS[from]) {
             btn.href      = DESTINOS[from].href;
@@ -355,6 +355,9 @@
         } else if (rolActivo === 'ENFERMERIA') {
             btn.href      = 'buscador.html?modo=ficha';
             btn.innerText = '← Ficha';
+        } else if (rolActivo === 'DOCENTE' || rolActivo === 'PREFECTO') {
+            btn.href      = 'inicio.html';
+            btn.innerText = '← Inicio';
         }
         if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
             document.getElementById('btnBuscador').style.display = '';
