@@ -482,8 +482,11 @@
             }
 
             // Reportes
-            const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo');
-            const cicloActivo = resCiclo ? (await resCiclo.json()).valor || '' : '';
+            let cicloActivo = '';
+            try {
+                const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo');
+                if (resCiclo && resCiclo.ok) cicloActivo = (await resCiclo.json()).valor || '';
+            } catch(e) {}
             const resRep = await apiFetch(`/api/reportes?id=${idAlumno}${cicloActivo ? '&ciclo=' + cicloActivo : ''}`);
             const reportes = resRep ? await resRep.json() : [];
             document.getElementById('listaReportes').innerHTML = reportes.length
