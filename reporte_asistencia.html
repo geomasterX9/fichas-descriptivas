@@ -321,8 +321,8 @@ tr:last-child td { border-bottom: none; }
       // Agrupar por grado+grupo
       const porGrupo = {};
       registros.forEach(r => {
-        const key = `${r.grado}-${r.grupo}`;
-        if (!porGrupo[key]) porGrupo[key] = { grado: r.grado, grupo: r.grupo, alumnos: [] };
+        const key = `${r.alumnos?.grado}-${r.alumnos?.grupo}`;
+        if (!porGrupo[key]) porGrupo[key] = { grado: r.alumnos?.grado, grupo: r.alumnos?.grupo, alumnos: [] };
         porGrupo[key].alumnos.push(r);
       });
 
