@@ -319,6 +319,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     try {
       const res  = await apiFetch(`/api/dashboard?tipo=asistencia&grado=${grado}&grupo=${grupo}`);
       const data = await res.json();
+      if (!Array.isArray(data)) throw new Error(data?.error || 'Respuesta inesperada del servidor');
       alumnosActuales = data.map(a => ({ ...a, presente: a.presente !== false }));
 
       document.getElementById('subtituloLista').textContent =
@@ -424,8 +425,17 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ finalizado: true, grado: 0, grupo: 'X', alumnos: [] })
       });
-      btn.textContent = '✅ Notificación enviada a docentes';
-      setTimeout(() => { window.location.href = 'inicio.html'; }, 1500);
+      const data = res ? await res.json() : null;
+      if (data && data.exito) {
+        btn.textContent = '✅ Notificación enviada a docentes';
+        setTimeout(() => { window.location.href = 'inicio.html'; }, 1500);
+      } else {
+        btn.textContent = '🔔 Finalizar día y notificar a docentes';
+        btn.disabled = false;
+        const msgErr = document.getElementById('msgError');
+        msgErr.textContent = (data && data.error) ? data.error : 'Error al finalizar. Intenta de nuevo.';
+        msgErr.style.display = 'block';
+      }
     } catch(e) {
       btn.textContent = '🔔 Finalizar día y notificar a docentes';
       btn.disabled = false;

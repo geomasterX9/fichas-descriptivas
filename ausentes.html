@@ -110,6 +110,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     try {
       const res = await apiFetch('/api/dashboard?tipo=asistencia');
       let data  = await res.json();
+      if (!Array.isArray(data)) throw new Error(data?.error || 'Respuesta inesperada del servidor');
 
       // Filtrar por grupos asignados para DOCENTE/PREFECTO
       if (rol === 'DOCENTE' || rol === 'PREFECTO') {
