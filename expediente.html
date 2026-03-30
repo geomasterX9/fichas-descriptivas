@@ -484,7 +484,7 @@
             // Reportes
             let cicloActivo = '';
             try {
-                const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo');
+                const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo', { silencioso: true });
                 if (resCiclo && resCiclo.ok) cicloActivo = (await resCiclo.json()).valor || '';
             } catch(e) {}
             const resRep = await apiFetch(`/api/reportes?id=${idAlumno}${cicloActivo ? '&ciclo=' + cicloActivo : ''}`);

@@ -9,18 +9,21 @@ async function apiFetch(url, opciones = {}) {
         return null;
     }
 
+    const silencioso = opciones.silencioso === true;
+    const { silencioso: _, ...opcionesSinFlag } = opciones;
+
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
-        ...(opciones.headers || {})
+        ...(opcionesSinFlag.headers || {})
     };
 
-    if (opciones.body instanceof FormData) {
+    if (opcionesSinFlag.body instanceof FormData) {
         delete headers['Content-Type'];
     }
 
     try {
-        const respuesta = await fetch(url, { ...opciones, headers });
+        const respuesta = await fetch(url, { ...opcionesSinFlag, headers });
 
         if (respuesta.status === 401) {
             const data = await respuesta.json().catch(() => ({}));
@@ -29,8 +32,10 @@ async function apiFetch(url, opciones = {}) {
             return null;
         }
         if (respuesta.status === 403) {
-            const data = await respuesta.json().catch(() => ({}));
-            alert(data.error || 'No tienes permiso para realizar esta acción.');
+            if (!silencioso) {
+                const data = await respuesta.json().catch(() => ({}));
+                alert(data.error || 'No tienes permiso para realizar esta acción.');
+            }
             return null;
         }
 
