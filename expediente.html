@@ -332,9 +332,9 @@
                 <div class="asist-chip"><div class="asist-chip-num" id="asistSemanaActual">—</div><div class="asist-chip-label">Esta Semana</div></div>
             </div>
             <div class="asist-tabs">
-                <button class="asist-tab activo" onclick="cambiarTabAsist('trimestre', this)">Por Trimestre</button>
+                <button class="asist-tab activo" onclick="cambiarTabAsist('semana', this)">Por Semana</button>
                 <button class="asist-tab" onclick="cambiarTabAsist('mes', this)">Por Mes</button>
-                <button class="asist-tab" onclick="cambiarTabAsist('semana', this)">Por Semana</button>
+                <button class="asist-tab" onclick="cambiarTabAsist('trimestre', this)">Por Trimestre</button>
             </div>
             <div id="asistContenido">
                 <p style="text-align:center; color:var(--muted); padding:16px;">Cargando...</p>
@@ -368,7 +368,7 @@
     const rolActivo = localStorage.getItem('rolActivo');
     let chartInstance = null;
     let datosAsistencia = null;
-    let tabAsist = 'trimestre';
+    let tabAsist = 'semana';
     let datosCalificacionesGlobal = [];
     let fotoActualSrc = '';
 

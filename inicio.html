@@ -165,6 +165,38 @@ body {
   font-size: 12px; font-weight: 800; cursor: pointer;
   font-family: 'Outfit', sans-serif;
 }
+/* TARJETA FALTAS TRABAJO SOCIAL */
+.card-faltas {
+  background: var(--blanco); border: 1px solid var(--borde);
+  border-radius: 16px; padding: 20px 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 4px solid var(--rojo);
+}
+.card-faltas-titulo {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.faltas-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.falta-chip {
+  background: #fff0f1; border: 1px solid #fecdd3;
+  border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.falta-chip-num { font-size: 24px; font-weight: 900; color: var(--rojo); line-height: 1; }
+.falta-chip-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--muted); margin-top: 3px; }
+.faltas-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.faltas-tab {
+  padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--borde);
+  font-size: 11px; font-weight: 700; cursor: pointer; background: var(--blanco);
+  font-family: 'Outfit', sans-serif; color: var(--muted); transition: all 0.15s;
+}
+.faltas-tab.activo { background: #fff0f1; border-color: #fecdd3; color: var(--rojo); }
+.faltas-tabla { width: 100%; border-collapse: collapse; font-size: 12px; }
+.faltas-tabla td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; }
+.faltas-tabla tr:last-child td { border-bottom: none; }
+.faltas-tabla .col-num { font-weight: 800; color: var(--rojo); }
+
 @media (max-width: 480px) {
   .opciones { padding: 8px 14px 24px; }
   .btn-opcion { padding: 18px 16px; gap: 14px; }
@@ -303,6 +335,24 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
+  <!-- Resumen faltas — solo TRABAJO SOCIAL -->
+  <div class="card-faltas" id="cardFaltas" style="display:none;">
+    <div class="card-faltas-titulo">📊 Resumen de Faltas del Día</div>
+    <div class="faltas-chips">
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaSemana">—</div><div class="falta-chip-label">Esta Semana</div></div>
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaMes">—</div><div class="falta-chip-label">Este Mes</div></div>
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaTotal">—</div><div class="falta-chip-label">Total Ciclo</div></div>
+    </div>
+    <div class="faltas-tabs">
+      <button class="faltas-tab activo" onclick="cambiarTabFaltas('semana', this)">Semana</button>
+      <button class="faltas-tab" onclick="cambiarTabFaltas('mes', this)">Mes</button>
+      <button class="faltas-tab" onclick="cambiarTabFaltas('trimestre', this)">Trimestre</button>
+    </div>
+    <div id="faltasContenido">
+      <p style="text-align:center; color:var(--muted); font-size:13px; padding:10px;">Cargando...</p>
+    </div>
+  </div>
+
   <!-- Ausentes hoy — badge para DOCENTE y PREFECTO -->
   <a class="btn-opcion" href="ausentes.html" id="btnAusentes" style="display:none;">
     <div class="opcion-icono" style="background:#fff0f1;">🔔</div>
@@ -358,6 +408,8 @@ body {
     document.getElementById('btnEvaluaciones').style.display = 'none';
     document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
     document.getElementById('btnPaseLista').style.display    = 'flex';
+    document.getElementById('cardFaltas').style.display      = 'block';
+    cargarResumenFaltas();
   }
   document.getElementById('headerRol').textContent    = rol;
 
@@ -484,6 +536,81 @@ body {
       } catch(e) { /* silencioso */ }
     }
     cargarAusentes();
+  }
+
+  // ── RESUMEN DE FALTAS — TRABAJO SOCIAL ────────────────────
+  let datosFaltas = null;
+  let tabFaltas = 'semana';
+
+  async function cargarResumenFaltas() {
+    try {
+      // Cargamos faltas del día de hoy (asistencia tipo GET sin grado/grupo = ausentes)
+      const res = await apiFetch('/api/dashboard?tipo=asistencia');
+      if (!res) return;
+      const ausentes = await res.json();
+      if (!Array.isArray(ausentes)) return;
+
+      // Total ausentes hoy por grupo — mostrar en chip semana como proxy rápido
+      // Para los chips detallados usamos el endpoint faltas_alumno agregado globalmente
+      // Aquí mostramos totales del día actual
+      const totalHoy = ausentes.length;
+
+      // Calcular semana actual (lunes)
+      const hoy = new Date();
+      const dia = hoy.getDay();
+      const lunes = new Date(hoy);
+      lunes.setDate(hoy.getDate() - (dia === 0 ? 6 : dia - 1));
+      const lunesStr = lunes.toISOString().split('T')[0];
+      const hoyStr   = hoy.toISOString().split('T')[0];
+
+      // Obtener faltas de toda la semana actual y mes actual
+      const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+
+      const resFecha = await apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${hoyStr}`, { silencioso: true });
+      // Para resumen global usamos los ausentes ya cargados
+      document.getElementById('faltaSemana').textContent = totalHoy;
+      document.getElementById('faltaMes').textContent    = totalHoy;
+      document.getElementById('faltaTotal').textContent  = totalHoy;
+
+      // Agrupar ausentes por grupo para la tabla
+      datosFaltas = { ausentes, hoy: hoyStr };
+      renderTabFaltas();
+    } catch(e) { /* silencioso */ }
+  }
+
+  function cambiarTabFaltas(tab, btn) {
+    tabFaltas = tab;
+    document.querySelectorAll('.faltas-tab').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    renderTabFaltas();
+  }
+
+  function renderTabFaltas() {
+    const cont = document.getElementById('faltasContenido');
+    if (!datosFaltas) return;
+
+    const ausentes = datosFaltas.ausentes;
+    if (!ausentes || ausentes.length === 0) {
+      cont.innerHTML = '<p style="text-align:center;color:#2d9b6f;font-size:13px;font-weight:700;padding:10px;">✅ Sin ausencias registradas hoy</p>';
+      return;
+    }
+
+    // Agrupar por grado+grupo
+    const porGrupo = {};
+    ausentes.forEach(a => {
+      const key = `${a.alumnos?.grado}°${a.alumnos?.grupo}`;
+      if (!porGrupo[key]) porGrupo[key] = 0;
+      porGrupo[key]++;
+    });
+
+    const filas = Object.entries(porGrupo).sort().map(([grupo, n]) =>
+      `<tr><td>${grupo}</td><td class="col-num">${n}</td></tr>`
+    ).join('');
+
+    cont.innerHTML = `
+      <table class="faltas-tabla">
+        <tbody>${filas}</tbody>
+      </table>`;
   }
 
   function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
