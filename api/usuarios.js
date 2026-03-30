@@ -7,7 +7,29 @@ module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, PATCH, DELETE, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // Solo ADMINISTRADOR puede gestionar usuarios
+    // Cambio de contraseña propio — cualquier rol autenticado puede hacerlo
+    if (req.method === 'PATCH' && req.body?.accion === 'cambiar_password') {
+        const usuario = await requireAuth(req, res, null);
+        if (!usuario) return;
+        const { password_actual, password_nueva } = req.body || {};
+        if (!password_actual || !password_nueva)
+            return res.status(400).json({ error: 'Faltan campos requeridos.' });
+        if (password_nueva.length < 5)
+            return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 5 caracteres.' });
+        const { data: uActual } = await supabase.from('usuarios').select('password').eq('id_usuario', usuario.id).single();
+        if (!uActual) return res.status(404).json({ error: 'Usuario no encontrado.' });
+        const valido = await bcrypt.compare(password_actual, uActual.password);
+        if (!valido) return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
+        const nuevoHash = await bcrypt.hash(password_nueva, 12);
+        const { error } = await supabase.from('usuarios').update({
+            password: nuevoHash,
+            token_valido_desde: new Date().toISOString()
+        }).eq('id_usuario', usuario.id);
+        if (error) return res.status(500).json({ error: 'Error al actualizar contraseña.' });
+        return res.json({ exito: true });
+    }
+
+    // Resto de operaciones — solo ADMINISTRADOR
     const usuario = await requireAuth(req, res, 'dashboard');
     if (!usuario) return;
     if (usuario.rol !== 'ADMINISTRADOR') {
@@ -59,27 +81,6 @@ module.exports = async (req, res) => {
 
         if (error) return res.status(500).json({ error: 'Error al crear usuario.' });
         return res.json({ exito: true, usuario: data });
-    }
-
-    // ── PATCH: cambio de contraseña propio (cualquier rol) ──
-    if (req.method === 'PATCH' && req.body?.accion === 'cambiar_password') {
-        const { password_actual, password_nueva } = req.body || {};
-        if (!password_actual || !password_nueva)
-            return res.status(400).json({ error: 'Faltan campos requeridos.' });
-        if (password_nueva.length < 5)
-            return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 5 caracteres.' });
-        // Verificar contraseña actual
-        const { data: uActual } = await supabase.from('usuarios').select('password').eq('id_usuario', usuario.id).single();
-        if (!uActual) return res.status(404).json({ error: 'Usuario no encontrado.' });
-        const valido = await bcrypt.compare(password_actual, uActual.password);
-        if (!valido) return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
-        const nuevoHash = await bcrypt.hash(password_nueva, 12);
-        const { error } = await supabase.from('usuarios').update({
-            password: nuevoHash,
-            token_valido_desde: new Date().toISOString()
-        }).eq('id_usuario', usuario.id);
-        if (error) return res.status(500).json({ error: 'Error al actualizar contraseña.' });
-        return res.json({ exito: true });
     }
 
     // ── PATCH: editar usuario (nombre, rol o contraseña) — solo ADMINISTRADOR ──
