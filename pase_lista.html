@@ -259,6 +259,10 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 <script src="auth-helper.js"></script>
 <script>
   verificarSesion();
+  const rol = localStorage.getItem('rolActivo') || '';
+  if (rol !== 'TRABAJO SOCIAL' && rol !== 'ADMINISTRADOR') {
+    window.location.href = 'inicio.html';
+  }
   const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
   document.getElementById('headerNombre').textContent = nombre;
 
