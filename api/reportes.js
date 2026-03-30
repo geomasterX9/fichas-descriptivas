@@ -14,9 +14,15 @@ module.exports = async (req, res) => {
             const id = req.query.id;
             if (!id || isNaN(parseInt(id))) return res.status(400).json({ error: 'ID inválido' });
 
+            // Permite consultar ciclo específico o el activo
+            const cicloQuery = req.query.ciclo || null;
+            const ciclo = cicloQuery || await getCicloActivo();
+
             const { data: reportes } = await supabase
                 .from('reportes_disciplinarios').select('*')
-                .eq('id_alumno', parseInt(id)).order('fecha', { ascending: false });
+                .eq('id_alumno', parseInt(id))
+                .eq('ciclo_escolar', ciclo)
+                .order('fecha', { ascending: false });
             if (!reportes || reportes.length === 0) return res.json([]);
 
             // Resolver nombres: buscar en usuarios (nuevo) y personal (compatibilidad legado)
@@ -53,13 +59,15 @@ module.exports = async (req, res) => {
             if (parseInt(id_usuario) !== parseInt(usuario.id))
                 return res.status(403).json({ error: 'No puedes registrar reportes en nombre de otro usuario.' });
 
+            const cicloActivo = await getCicloActivo();
             const payload = {
-                id_alumno:  parseInt(id_alumno),
-                id_usuario: parseInt(id_usuario),
+                id_alumno:     parseInt(id_alumno),
+                id_usuario:    parseInt(id_usuario),
                 gravedad,
-                motivo: sanitize(motivo.trim()),
-                acuerdo: acuerdo ? sanitize(acuerdo.trim()) : null,
-                fecha: fecha || new Date().toISOString().split('T')[0]
+                motivo:        sanitize(motivo.trim()),
+                acuerdo:       acuerdo ? sanitize(acuerdo.trim()) : null,
+                fecha:         fecha || new Date().toISOString().split('T')[0],
+                ciclo_escolar: cicloActivo
             };
             const { error } = await supabase.from('reportes_disciplinarios').insert([payload]);
             if (error) return res.status(400).json({ error: error.message });

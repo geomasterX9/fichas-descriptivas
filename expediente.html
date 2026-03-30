@@ -482,8 +482,10 @@
             }
 
             // Reportes
-            const resRep = await apiFetch(`/api/reportes?id=${idAlumno}`);
-            const reportes = await resRep.json();
+            const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo');
+            const cicloActivo = resCiclo ? (await resCiclo.json()).valor || '' : '';
+            const resRep = await apiFetch(`/api/reportes?id=${idAlumno}${cicloActivo ? '&ciclo=' + cicloActivo : ''}`);
+            const reportes = resRep ? await resRep.json() : [];
             document.getElementById('listaReportes').innerHTML = reportes.length
                 ? reportes.map(r => `<tr>
                     <td style="white-space:nowrap; font-size:12px;">${esc(r.fecha)}</td>
