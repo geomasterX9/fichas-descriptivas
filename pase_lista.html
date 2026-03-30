@@ -403,6 +403,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         setTimeout(() => msgOk.style.display = 'none', 3000);
         gruposCompletados.add(`${grado}${grupo}`);
         actualizarCompletados();
+        actualizarBadgeAusentes();
       } else {
         msgErr.textContent = data.error; msgErr.style.display = 'block';
       }
@@ -440,6 +441,24 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       btn.textContent = '🔔 Finalizar día y notificar a docentes';
       btn.disabled = false;
     }
+  }
+
+  async function actualizarBadgeAusentes() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=asistencia');
+      if (!res) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const ausentes = data.filter(a => a.presente === false).length;
+      // Actualizar badge en header si existe
+      const badge = document.getElementById('badgeAusentes');
+      if (badge) badge.textContent = ausentes > 0 ? ausentes : '';
+      // Actualizar resumen del día
+      const resumen = document.getElementById('resumenDia');
+      if (resumen && gruposCompletados.size > 0) {
+        resumen.textContent = `${gruposCompletados.size} grupo(s) · ${ausentes} ausente(s)`;
+      }
+    } catch(e) {}
   }
 
   cargarGruposCompletados();

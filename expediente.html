@@ -209,6 +209,27 @@
             .btn-nav { padding: 6px 10px; font-size: 12px; }
         }
 
+        /* ASISTENCIA */
+        .asistencia-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .asist-chip {
+            background: #f8fafc; border: 1px solid var(--borde);
+            border-radius: 12px; padding: 14px 16px; text-align: center;
+        }
+        .asist-chip-num { font-size: 28px; font-weight: 900; color: var(--rojo); line-height: 1; }
+        .asist-chip-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-top: 4px; }
+        .asist-tabla { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+        .asist-tabla th { background: #f8fafc; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); border-bottom: 2px solid var(--borde); }
+        .asist-tabla td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+        .asist-tabla tr:last-child td { border-bottom: none; }
+        .asist-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+        .asist-tab {
+            padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--borde);
+            font-size: 12px; font-weight: 700; cursor: pointer; background: var(--blanco);
+            font-family: 'Outfit', sans-serif; color: var(--muted); transition: all 0.15s;
+        }
+        .asist-tab.activo { background: var(--rojo-claro); border-color: #fecdd3; color: var(--rojo); }
+        @media (max-width: 600px) { .asistencia-grid { grid-template-columns: repeat(3, 1fr); } }
+
         /* PRINT */
         @media print {
             .navbar, .btn-reporte, .btn-foto, .selector-grafica { display: none !important; }
@@ -301,6 +322,26 @@
         <div class="seccion-body" id="contMotivos"></div>
     </div>
 
+    <!-- Sección Asistencia — visible para todos excepto ENFERMERIA -->
+    <div class="seccion" id="seccionAsistencia" style="display:none;">
+        <div class="seccion-header" style="border-left-color:#e63946; color:#991b1b;">VI. Registro de Asistencia</div>
+        <div class="seccion-body">
+            <div class="asistencia-grid" id="asistResumen">
+                <div class="asist-chip"><div class="asist-chip-num" id="asistTotal">—</div><div class="asist-chip-label">Total Faltas</div></div>
+                <div class="asist-chip"><div class="asist-chip-num" id="asistMesActual">—</div><div class="asist-chip-label">Este Mes</div></div>
+                <div class="asist-chip"><div class="asist-chip-num" id="asistSemanaActual">—</div><div class="asist-chip-label">Esta Semana</div></div>
+            </div>
+            <div class="asist-tabs">
+                <button class="asist-tab activo" onclick="cambiarTabAsist('trimestre', this)">Por Trimestre</button>
+                <button class="asist-tab" onclick="cambiarTabAsist('mes', this)">Por Mes</button>
+                <button class="asist-tab" onclick="cambiarTabAsist('semana', this)">Por Semana</button>
+            </div>
+            <div id="asistContenido">
+                <p style="text-align:center; color:var(--muted); padding:16px;">Cargando...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección Médica — visible para ENFERMERÍA, ADMINISTRADOR y DIRECTIVO -->
     <div class="seccion" id="seccionMedica" style="display:none;">
         <div class="seccion-header" style="border-left-color:#2d9b6f; color:#065f46;">V. Expediente Médico</div>
@@ -326,6 +367,8 @@
     const idAlumno  = new URLSearchParams(window.location.search).get('id_alumno');
     const rolActivo = localStorage.getItem('rolActivo');
     let chartInstance = null;
+    let datosAsistencia = null;
+    let tabAsist = 'trimestre';
     let datosCalificacionesGlobal = [];
     let fotoActualSrc = '';
 
@@ -538,6 +581,12 @@
                 `<p style="text-align:center; color:var(--rojo); padding:20px; font-weight:600;">
                     Error al cargar el expediente. Revisa la consola o intenta de nuevo.
                  </p>`;
+        }
+
+        // Cargar sección asistencia — todos excepto ENFERMERIA
+        if (rolActivo !== 'ENFERMERIA') {
+            document.getElementById('seccionAsistencia').style.display = '';
+            cargarAsistencia();
         }
 
         // Cargar sección médica para roles autorizados
@@ -1015,6 +1064,69 @@
     document.addEventListener('contextmenu', e => {
         if (e.target && e.target.id === 'imgFotoAlumno') e.preventDefault();
     });
+
+    async function cargarAsistencia() {
+        try {
+            const res = await apiFetch(`/api/dashboard?tipo=faltas_alumno&id=${idAlumno}`, { silencioso: true });
+            if (!res) return;
+            datosAsistencia = await res.json();
+
+            // Chips resumen
+            document.getElementById('asistTotal').textContent = datosAsistencia.total || 0;
+
+            // Mes actual
+            const hoy = new Date();
+            const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            const mesLabel = `${MESES[hoy.getMonth()]} ${hoy.getFullYear()}`;
+            const mesActual = (datosAsistencia.porMes || []).find(m => m.mes === mesLabel);
+            document.getElementById('asistMesActual').textContent = mesActual ? mesActual.faltas : 0;
+
+            // Semana actual — lunes de esta semana
+            const dia = hoy.getDay();
+            const lunes = new Date(hoy);
+            lunes.setDate(hoy.getDate() - (dia === 0 ? 6 : dia - 1));
+            const lunesLabel = lunes.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+            const semActual = (datosAsistencia.porSemana || []).find(s => s.semana === lunesLabel);
+            document.getElementById('asistSemanaActual').textContent = semActual ? semActual.faltas : 0;
+
+            renderTabAsist();
+        } catch(e) { console.warn('No se pudo cargar asistencia:', e); }
+    }
+
+    function cambiarTabAsist(tab, btn) {
+        tabAsist = tab;
+        document.querySelectorAll('.asist-tab').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+        renderTabAsist();
+    }
+
+    function renderTabAsist() {
+        const cont = document.getElementById('asistContenido');
+        if (!datosAsistencia) return;
+
+        let filas = [];
+        if (tabAsist === 'trimestre') {
+            filas = (datosAsistencia.porTrimestre || []).map(r =>
+                `<tr><td><b>${r.trimestre}</b></td><td style="color:var(--rojo);font-weight:800;">${r.faltas}</td></tr>`);
+        } else if (tabAsist === 'mes') {
+            filas = (datosAsistencia.porMes || []).slice().reverse().map(r =>
+                `<tr><td>${r.mes}</td><td style="color:var(--rojo);font-weight:800;">${r.faltas}</td></tr>`);
+        } else {
+            filas = (datosAsistencia.porSemana || []).slice().reverse().map(r =>
+                `<tr><td>Sem. ${r.semana}</td><td style="color:var(--rojo);font-weight:800;">${r.faltas}</td></tr>`);
+        }
+
+        if (filas.length === 0) {
+            cont.innerHTML = '<p style="text-align:center;color:var(--verde);padding:16px;font-weight:700;">✅ Sin faltas registradas</p>';
+            return;
+        }
+
+        cont.innerHTML = `
+            <table class="asist-tabla">
+                <thead><tr><th>Período</th><th>Faltas</th></tr></thead>
+                <tbody>${filas.join('')}</tbody>
+            </table>`;
+    }
 
     function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
 </script>

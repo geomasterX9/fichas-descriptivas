@@ -1,7 +1,7 @@
 const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional', 'emergencia', 'asistencia', 'asistencia_fecha'];
+const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional', 'emergencia', 'asistencia', 'asistencia_fecha', 'faltas_alumno'];
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
@@ -447,6 +447,94 @@ module.exports = async (req, res) => {
                 if (error) return res.status(400).json({ error: error.message });
                 return res.json({ exito: true });
             }
+        }
+
+        // ── FALTAS ACUMULADAS POR ALUMNO ────────────────────────
+        if (tipo === 'faltas_alumno') {
+            const id = parseInt(req.query.id);
+            if (!id || isNaN(id)) return res.status(400).json({ error: 'Falta id de alumno.' });
+
+            // Trimestres escolares — ajustar si cambia el calendario
+            const TRIMESTRES = [
+                { num: 1, inicio: '-09-01', fin: '-11-30' },
+                { num: 2, inicio: '-12-01', fin: '-02-28' },
+                { num: 3, inicio: '-03-01', fin: '-06-30' },
+            ];
+
+            const { data: faltas } = await supabase
+                .from('asistencia')
+                .select('fecha')
+                .eq('id_alumno', id)
+                .eq('presente', false)
+                .order('fecha', { ascending: true });
+
+            if (!faltas || faltas.length === 0)
+                return res.json({ total: 0, porSemana: [], porMes: [], porTrimestre: [] });
+
+            const hoy = new Date();
+            const anioActual = hoy.getFullYear();
+
+            // ── Por semana (últimas 8 semanas) ──
+            const semanas = {};
+            faltas.forEach(f => {
+                const d = new Date(f.fecha + 'T12:00:00');
+                // Lunes de esa semana
+                const dia = d.getDay();
+                const lunes = new Date(d);
+                lunes.setDate(d.getDate() - (dia === 0 ? 6 : dia - 1));
+                const key = lunes.toISOString().split('T')[0];
+                semanas[key] = (semanas[key] || 0) + 1;
+            });
+            // Últimas 8 semanas
+            const porSemana = Object.entries(semanas)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .slice(-8)
+                .map(([fecha, faltas]) => {
+                    const d = new Date(fecha + 'T12:00:00');
+                    const label = d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+                    return { semana: label, faltas };
+                });
+
+            // ── Por mes ──
+            const meses = {};
+            const NOMBRES_MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            faltas.forEach(f => {
+                const d = new Date(f.fecha + 'T12:00:00');
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                meses[key] = (meses[key] || 0) + 1;
+            });
+            const porMes = Object.entries(meses)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([key, faltas]) => {
+                    const [anio, mes] = key.split('-');
+                    return { mes: `${NOMBRES_MES[parseInt(mes)-1]} ${anio}`, faltas };
+                });
+
+            // ── Por trimestre ──
+            const conteoTrim = { 1: 0, 2: 0, 3: 0 };
+            faltas.forEach(f => {
+                const d = new Date(f.fecha + 'T12:00:00');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mmdd = `-${mm}-${dd}`;
+                // T2 cruza año: dic del año anterior + ene-feb del siguiente
+                const anio = d.getFullYear();
+                for (const t of TRIMESTRES) {
+                    if (t.num === 2) {
+                        if (mmdd >= '-12-01' || mmdd <= '-02-28') { conteoTrim[2]++; break; }
+                    } else {
+                        if (mmdd >= t.inicio && mmdd <= t.fin) { conteoTrim[t.num]++; break; }
+                    }
+                }
+            });
+            const porTrimestre = [1,2,3].map(n => ({ trimestre: `T${n}`, faltas: conteoTrim[n] }));
+
+            return res.json({
+                total: faltas.length,
+                porSemana,
+                porMes,
+                porTrimestre
+            });
         }
 
         // ── ASISTENCIA POR FECHA (para reporte) ─────────────────
