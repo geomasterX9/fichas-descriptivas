@@ -129,7 +129,7 @@ module.exports = async (req, res) => {
         // Alumnos en riesgo académico por evaluaciones parciales
         if (tipo === 'riesgo_academico_parcial') {
             const ciclo = await getCicloActivo(db);
-            const { data: evaluaciones } = await supabase
+            const { data: evaluaciones } = await db
                 .from('evaluaciones_parciales')
                 .select('*')
                 .eq('ciclo_escolar', ciclo);
@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
             if (enRiesgo.length === 0) return res.json([]);
 
             const ids = [...new Set(enRiesgo.map(e => e.id_alumno))];
-            const { data: alumnos } = await supabase
+            const { data: alumnos } = await db
                 .from('alumnos')
                 .select('id_alumno, nombre, apellidos, grado, grupo')
                 .in('id_alumno', ids)
@@ -170,7 +170,7 @@ module.exports = async (req, res) => {
             const rolParam = req.query.rol || null;
             const materiasParam = req.query.materias ? req.query.materias.split(',') : null;
 
-            const { data: cals } = await supabase
+            const { data: cals } = await db
                 .from('calificaciones')
                 .select('id_alumno, trimestre, materias, recuperacion, ciclo_escolar')
                 .eq('ciclo_escolar', ciclo);
@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
             if (enRecuperacion.length === 0) return res.json([]);
 
             const ids = [...new Set(enRecuperacion.map(e => e.id_alumno))];
-            const { data: alumnos } = await supabase
+            const { data: alumnos } = await db
                 .from('alumnos')
                 .select('id_alumno, nombre, apellidos, grado, grupo')
                 .in('id_alumno', ids)
@@ -219,7 +219,7 @@ module.exports = async (req, res) => {
         // Alumnos con motivos de reprobación registrados
         if (tipo === 'motivos_reprobacion') {
             const ciclo = await getCicloActivo(db);
-            const { data: cals } = await supabase
+            const { data: cals } = await db
                 .from('calificaciones')
                 .select('id_alumno, trimestre, materias, motivos_reprobacion')
                 .eq('ciclo_escolar', ciclo)
@@ -231,7 +231,7 @@ module.exports = async (req, res) => {
             if (calsConMotivos.length === 0) return res.json([]);
 
             const ids = [...new Set(calsConMotivos.map(c => c.id_alumno))];
-            const { data: alumnos } = await supabase
+            const { data: alumnos } = await db
                 .from('alumnos')
                 .select('id_alumno, nombre, apellidos, grado, grupo')
                 .in('id_alumno', ids)
@@ -268,7 +268,7 @@ module.exports = async (req, res) => {
         // ── Configuración institucional ──────────────────────────────
         if (tipo === 'config_institucional') {
             if (req.method === 'GET') {
-                const { data } = await supabase
+                const { data } = await db
                     .from('configuracion')
                     .select('clave, valor')
                     .in('clave', ['nombre_escuela','clave_escuela','direccion_escuela','logo_izquierdo','logo_derecho','ciclo_activo']);
@@ -294,7 +294,7 @@ module.exports = async (req, res) => {
         // Alumnos en riesgo disciplinario (falta grave o 3+ reportes)
         if (tipo === 'riesgo_disciplinario') {
             const ciclo = await getCicloActivo(db);
-            const { data: reportes } = await supabase
+            const { data: reportes } = await db
                 .from('reportes_disciplinarios')
                 .select('id_alumno, gravedad')
                 .eq('ciclo_escolar', ciclo)
@@ -316,7 +316,7 @@ module.exports = async (req, res) => {
 
             if (idsEnRiesgo.length === 0) return res.json([]);
 
-            const { data: alumnos } = await supabase
+            const { data: alumnos } = await db
                 .from('alumnos')
                 .select('id_alumno, nombre, apellidos, grado, grupo')
                 .in('id_alumno', idsEnRiesgo)
@@ -336,7 +336,7 @@ module.exports = async (req, res) => {
         if (tipo === 'emergencia') {
             // GET — consultar si hay emergencia activa
             if (req.method === 'GET') {
-                const { data } = await supabase
+                const { data } = await db
                     .from('emergencias')
                     .select('*')
                     .eq('activa', true)
@@ -384,14 +384,14 @@ module.exports = async (req, res) => {
 
                 if (grado && grupo) {
                     // Lista de alumnos del grupo con su estado de asistencia hoy
-                    const { data: alumnos } = await supabase
+                    const { data: alumnos } = await db
                         .from('alumnos')
                         .select('id_alumno, apellidos, nombre')
                         .eq('grado', parseInt(grado))
                         .eq('grupo', grupo.toUpperCase())
                         .order('apellidos', { ascending: true });
 
-                    const { data: asistencia } = await supabase
+                    const { data: asistencia } = await db
                         .from('asistencia')
                         .select('id_alumno, presente')
                         .eq('fecha', hoy)
@@ -407,7 +407,7 @@ module.exports = async (req, res) => {
                     })));
                 } else {
                     // Ausentes de hoy para badge de docentes
-                    const { data } = await supabase
+                    const { data } = await db
                         .from('asistencia')
                         .select('id_alumno, grado, grupo, alumnos(apellidos, nombre, grado, grupo)')
                         .eq('fecha', hoy)
@@ -441,7 +441,7 @@ module.exports = async (req, res) => {
                     finalizado:     !!finalizado
                 }));
 
-                const { error } = await supabase
+                const { error } = await db
                     .from('asistencia')
                     .upsert(registros, { onConflict: 'fecha,id_alumno' });
 
@@ -462,7 +462,7 @@ module.exports = async (req, res) => {
                 { num: 3, inicio: '-03-01', fin: '-06-30' },
             ];
 
-            const { data: faltas } = await supabase
+            const { data: faltas } = await db
                 .from('asistencia')
                 .select('fecha')
                 .eq('id_alumno', id)
@@ -542,7 +542,7 @@ module.exports = async (req, res) => {
         if (tipo === 'asistencia_fecha') {
             const fecha = req.query.fecha;
             if (!fecha) return res.status(400).json({ error: 'Falta parámetro fecha.' });
-            const { data } = await supabase
+            const { data } = await db
                 .from('asistencia')
                 .select('*, alumnos(apellidos, nombre, grado, grupo)')
                 .eq('fecha', fecha)
@@ -607,6 +607,7 @@ module.exports = async (req, res) => {
 
 // ── OPERACIONES DE CIERRE DE CICLO ──────────────────────────
 async function handleCiclo(req, res, usuario, operacion) {
+    const db = usuario._db || supabase;
     if (usuario.rol !== 'ADMINISTRADOR') {
         return res.status(403).json({ error: 'Solo el administrador puede ejecutar el cierre de ciclo.' });
     }
@@ -689,7 +690,7 @@ async function handleCiclo(req, res, usuario, operacion) {
     if (suboperacion === 'eliminar_egresados') {
         const { ciclo } = req.body;
         if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: egresados, error: errE } = await supabase
+        const { data: egresados, error: errE } = await db
             .from('alumnos').select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
         if (errE) return res.status(500).json({ error: errE.message });
         if (!egresados || egresados.length === 0) return res.json({ eliminados: 0 });
@@ -712,7 +713,7 @@ async function handleCiclo(req, res, usuario, operacion) {
         if (!de || !a || !ciclo) return res.status(400).json({ error: 'Faltan parámetros' });
         if (![1, 2].includes(Number(de)) || ![2, 3].includes(Number(a)))
             return res.status(400).json({ error: 'Grados inválidos' });
-        const { data: actualizados, error: errP } = await supabase
+        const { data: actualizados, error: errP } = await db
             .from('alumnos').update({ grado: Number(a) })
             .eq('grado', Number(de)).eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
         if (errP) return res.status(500).json({ error: errP.message });
@@ -722,7 +723,7 @@ async function handleCiclo(req, res, usuario, operacion) {
     if (suboperacion === 'resetear_fichas') {
         const { ciclo } = req.body;
         if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: actualizados, error: errR } = await supabase
+        const { data: actualizados, error: errR } = await db
             .from('alumnos').update({ ficha_completada: false })
             .eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
         if (errR) return res.status(500).json({ error: errR.message });
