@@ -67,9 +67,9 @@
     <a href="index.html" class="btn-back">← Regresar al inicio</a>
 
     <div class="encabezado">
-        <div class="inst">Secretaría de Educación Pública · DGET</div>
+        <div class="inst" id="avisoInst">Secretaría de Educación Pública · DGET</div>
         <h1>Aviso de Privacidad</h1>
-        <p>Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
+        <p id="avisoEscuela">Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
         <span class="fecha" id="fechaAviso">—</span>
     </div>
 
@@ -201,7 +201,7 @@
     </div>
 
     <div class="footer-aviso">
-        <p>Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
+        <p id="footerEscuela">Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
         <p style="margin-top:4px;">Para más información consulte directamente en la Dirección de la institución.</p>
     </div>
 
@@ -209,6 +209,30 @@
 <script>
     document.getElementById('fechaAviso').textContent =
         new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+
+    // Si es modo demo, reemplazar datos reales por genéricos
+    const esDemo = new URLSearchParams(window.location.search).get('demo') === '1';
+    if (esDemo) {
+        document.title = 'Aviso de Privacidad — Sistema de Gestión Escolar';
+        document.getElementById('avisoInst').textContent   = 'Sistema de Gestión Escolar';
+        document.getElementById('avisoEscuela').textContent = 'Escuela Secundaria Demo · Sistema de Demostración';
+        document.getElementById('footerEscuela').textContent = 'Sistema de Gestión Escolar · Plataforma de Demostración';
+
+        // Reemplazar todas las menciones a EST 84 y San Luis Potosí en el contenido
+        document.querySelectorAll('.card p, .card li').forEach(el => {
+            el.innerHTML = el.innerHTML
+                .replace(/Escuela Secundaria Técnica No\. 84/g, 'la institución educativa')
+                .replace(/San Luis Potosí, S\.L\.P\./g, '[Ciudad, Estado]')
+                .replace(/DGET/g, 'autoridad educativa correspondiente')
+                .replace(/Dirección General de Educación Tecnológica/g, 'dirección general correspondiente');
+        });
+
+        // Banner demo
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:#f59e0b;color:white;text-align:center;padding:10px;font-weight:700;font-size:13px;position:sticky;top:0;z-index:100;';
+        banner.textContent = '⚠️ MODO DEMO — Este aviso es de carácter ilustrativo con datos ficticios';
+        document.body.prepend(banner);
+    }
 </script>
     <script>
       if ('serviceWorker' in navigator) {
