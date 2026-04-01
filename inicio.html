@@ -416,14 +416,14 @@ body {
   <div class="card-faltas" id="cardFaltas" style="display:none;">
     <div class="card-faltas-titulo">📊 Resumen de Faltas del Día</div>
     <div class="faltas-chips">
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaTotal">—</div><div class="falta-chip-label">Hoy</div></div>
       <div class="falta-chip"><div class="falta-chip-num" id="faltaSemana">—</div><div class="falta-chip-label">Esta Semana</div></div>
       <div class="falta-chip"><div class="falta-chip-num" id="faltaMes">—</div><div class="falta-chip-label">Este Mes</div></div>
-      <div class="falta-chip"><div class="falta-chip-num" id="faltaTotal">—</div><div class="falta-chip-label">Hoy</div></div>
     </div>
     <div class="faltas-tabs">
-      <button class="faltas-tab activo" onclick="cambiarTabFaltas('semana', this)">Semana</button>
+      <button class="faltas-tab activo" onclick="cambiarTabFaltas('hoy', this)">Hoy</button>
+      <button class="faltas-tab" onclick="cambiarTabFaltas('semana', this)">Semana</button>
       <button class="faltas-tab" onclick="cambiarTabFaltas('mes', this)">Mes</button>
-      <button class="faltas-tab" onclick="cambiarTabFaltas('hoy', this)">Hoy</button>
     </div>
     <div id="faltasContenido">
       <p style="text-align:center; color:var(--muted); font-size:13px; padding:10px;">Cargando...</p>
@@ -643,17 +643,14 @@ body {
       for (let d = new Date(lunes); d <= hoy; d.setDate(d.getDate() + 1))
         diasSemana.push(d.toISOString().split('T')[0]);
 
-      // ── Días del mes actual (1 → hoy) ──
+      // ── Días del mes antes de esta semana ──
       const mesInicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
       const diasMes   = [];
       for (let d = new Date(mesInicio); d <= hoy; d.setDate(d.getDate() + 1))
         diasMes.push(d.toISOString().split('T')[0]);
-
-      // ── Llamadas en paralelo: semana + mes ──
-      // Los días de semana ya están dentro del mes, así que pedimos todo el mes
-      // y separamos los de la semana en el cliente
       const diasMesSinSemana = diasMes.filter(f => !diasSemana.includes(f));
 
+      // ── Llamadas en paralelo: días de semana + días restantes del mes ──
       const [resSemana, resMesExtra] = await Promise.all([
         Promise.all(diasSemana.map(f =>
           apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
@@ -668,30 +665,28 @@ body {
       // ── Contar faltas ──
       let faltasSemana = 0;
       let faltasMes    = 0;
-
-      const faltasPorId = {}; // acumulado semanal para el acordeón
+      const faltasPorId = {};
 
       resSemana.forEach(dia => {
         if (!Array.isArray(dia)) return;
-        const ausentes = dia.filter(r => !r.presente);
-        faltasSemana += ausentes.length;
-        faltasMes    += ausentes.length;
-        ausentes.forEach(r => {
+        const aus = dia.filter(r => !r.presente);
+        faltasSemana += aus.length;
+        faltasMes    += aus.length;
+        aus.forEach(r => {
           faltasPorId[r.id_alumno] = (faltasPorId[r.id_alumno] || 0) + 1;
         });
       });
-
       resMesExtra.forEach(dia => {
         if (!Array.isArray(dia)) return;
         faltasMes += dia.filter(r => !r.presente).length;
       });
 
       // ── Ausentes de HOY para el acordeón ──
-      const diaHoyData = resSemana[resSemana.length - 1] || [];
+      const diaHoyData  = resSemana[resSemana.length - 1] || [];
       const ausentesHoy = Array.isArray(diaHoyData) ? diaHoyData.filter(r => !r.presente) : [];
-      const faltasHoy = ausentesHoy.length;
+      const faltasHoy   = ausentesHoy.length;
 
-      // ── Construir acordeón con ausentes de hoy agrupados por grupo ──
+      // ── Construir acordeón agrupado por grupo ──
       const porAlumno = {};
       ausentesHoy.forEach(a => {
         const id    = a.id_alumno || a.alumnos?.id_alumno || null;
@@ -703,10 +698,10 @@ body {
         porAlumno[key].alumnos.push({ id, nombre: nom, faltasHoy: 1 });
       });
 
-      // ── Actualizar chips ──
+      // ── Actualizar chips: Hoy / Esta Semana / Este Mes ──
+      document.getElementById('faltaTotal').textContent  = faltasHoy;
       document.getElementById('faltaSemana').textContent = faltasSemana;
       document.getElementById('faltaMes').textContent    = faltasMes;
-      document.getElementById('faltaTotal').textContent  = faltasHoy;
 
       datosFaltasGlobal = { porGrupo: porAlumno, faltasPorId };
       renderAcordeonFaltas();
