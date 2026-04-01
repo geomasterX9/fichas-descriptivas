@@ -627,8 +627,8 @@ body {
   }
 
   // ── RESUMEN DE FALTAS — TRABAJO SOCIAL ────────────────────
-  let datosFaltasGlobal = null; // { ausentes, porAlumno }
-  let tabFaltas = 'semana';
+  let datosFaltasGlobal = null;
+  let tabFaltas = 'hoy';
 
   async function cargarResumenFaltas() {
     try {
@@ -650,7 +650,7 @@ body {
         diasMes.push(d.toISOString().split('T')[0]);
       const diasMesSinSemana = diasMes.filter(f => !diasSemana.includes(f));
 
-      // ── Llamadas en paralelo: días de semana + días restantes del mes ──
+      // ── Llamadas en paralelo ──
       const [resSemana, resMesExtra] = await Promise.all([
         Promise.all(diasSemana.map(f =>
           apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
@@ -662,48 +662,44 @@ body {
         ))
       ]);
 
-      // ── Contar faltas ──
-      let faltasSemana = 0;
-      let faltasMes    = 0;
-      const faltasPorId = {};
+      // ── Construir mapa de faltas por alumno para cada período ──
+      // faltasPorId[id] = { nombre, grado, grupo, hoy, semana, mes }
+      const mapaAlumnos = {};
 
-      resSemana.forEach(dia => {
+      const registrar = (r, periodo) => {
+        if (!r || r.presente) return;
+        const id    = r.id_alumno;
+        const nom   = r.alumnos ? `${r.alumnos.apellidos || ''} ${r.alumnos.nombre || ''}`.trim() : '—';
+        const grado = String(r.alumnos?.grado || '');
+        const grupo = String(r.alumnos?.grupo || '').toUpperCase();
+        if (!mapaAlumnos[id]) mapaAlumnos[id] = { id, nombre: nom, grado, grupo, hoy: 0, semana: 0, mes: 0 };
+        mapaAlumnos[id][periodo]++;
+        if (periodo === 'semana') mapaAlumnos[id].mes++;
+        if (periodo === 'hoy')    { mapaAlumnos[id].semana++; mapaAlumnos[id].mes++; }
+      };
+
+      // El último día de resSemana es hoy
+      resSemana.forEach((dia, i) => {
         if (!Array.isArray(dia)) return;
-        const aus = dia.filter(r => !r.presente);
-        faltasSemana += aus.length;
-        faltasMes    += aus.length;
-        aus.forEach(r => {
-          faltasPorId[r.id_alumno] = (faltasPorId[r.id_alumno] || 0) + 1;
-        });
+        const esHoy = (i === resSemana.length - 1);
+        dia.forEach(r => registrar(r, esHoy ? 'hoy' : 'semana'));
       });
       resMesExtra.forEach(dia => {
         if (!Array.isArray(dia)) return;
-        faltasMes += dia.filter(r => !r.presente).length;
+        dia.forEach(r => registrar(r, 'mes'));
       });
 
-      // ── Ausentes de HOY para el acordeón ──
-      const diaHoyData  = resSemana[resSemana.length - 1] || [];
-      const ausentesHoy = Array.isArray(diaHoyData) ? diaHoyData.filter(r => !r.presente) : [];
-      const faltasHoy   = ausentesHoy.length;
+      // ── Contar totales para los chips ──
+      const faltasHoy    = Object.values(mapaAlumnos).filter(a => a.hoy    > 0).length;
+      const faltasSemana = Object.values(mapaAlumnos).filter(a => a.semana > 0).length;
+      const faltasMes    = Object.values(mapaAlumnos).filter(a => a.mes    > 0).length;
 
-      // ── Construir acordeón agrupado por grupo ──
-      const porAlumno = {};
-      ausentesHoy.forEach(a => {
-        const id    = a.id_alumno || a.alumnos?.id_alumno || null;
-        const nom   = a.alumnos ? `${a.alumnos.apellidos || ''} ${a.alumnos.nombre || ''}`.trim() : '—';
-        const grado = String(a.alumnos?.grado || '');
-        const grupo = String(a.alumnos?.grupo || '').toUpperCase();
-        const key   = `${grado}-${grupo}`;
-        if (!porAlumno[key]) porAlumno[key] = { grado, grupo, alumnos: [] };
-        porAlumno[key].alumnos.push({ id, nombre: nom, faltasHoy: 1 });
-      });
-
-      // ── Actualizar chips: Hoy / Esta Semana / Este Mes ──
+      // ── Actualizar chips: Hoy / Semana / Mes ──
       document.getElementById('faltaTotal').textContent  = faltasHoy;
       document.getElementById('faltaSemana').textContent = faltasSemana;
       document.getElementById('faltaMes').textContent    = faltasMes;
 
-      datosFaltasGlobal = { porGrupo: porAlumno, faltasPorId };
+      datosFaltasGlobal = { mapaAlumnos };
       renderAcordeonFaltas();
     } catch(e) { console.warn('Error cargando faltas:', e); }
   }
@@ -728,39 +724,38 @@ body {
     const cont = document.getElementById('faltasContenido');
     if (!datosFaltasGlobal) return;
 
-    const { porGrupo, faltasPorId } = datosFaltasGlobal;
-    const grupos = Object.entries(porGrupo).sort((a, b) => {
-      if (a[1].grado !== b[1].grado) return a[1].grado - b[1].grado;
-      return a[1].grupo.localeCompare(b[1].grupo);
-    });
+    const { mapaAlumnos } = datosFaltasGlobal;
 
-    if (grupos.length === 0) {
-      cont.innerHTML = '<p style="text-align:center;color:#2d9b6f;font-size:13px;font-weight:700;padding:10px;">✅ Sin ausencias registradas hoy</p>';
+    // Filtrar alumnos según la tab activa
+    const alumnos = Object.values(mapaAlumnos).filter(a => a[tabFaltas] > 0);
+
+    if (alumnos.length === 0) {
+      const msg = tabFaltas === 'hoy' ? 'hoy' : tabFaltas === 'semana' ? 'esta semana' : 'este mes';
+      cont.innerHTML = `<p style="text-align:center;color:#2d9b6f;font-size:13px;font-weight:700;padding:10px;">✅ Sin ausencias registradas ${msg}</p>`;
       return;
     }
 
-    // Agrupar por grado
+    // Agrupar por grado y grupo
     const porGrado = {};
-    grupos.forEach(([key, info]) => {
-      if (!porGrado[info.grado]) porGrado[info.grado] = [];
-      porGrado[info.grado].push([key, info]);
+    alumnos.forEach(a => {
+      if (!porGrado[a.grado]) porGrado[a.grado] = {};
+      const key = `${a.grado}-${a.grupo}`;
+      if (!porGrado[a.grado][key]) porGrado[a.grado][key] = { grupo: a.grupo, alumnos: [] };
+      porGrado[a.grado][key].alumnos.push(a);
     });
 
-    const html = Object.entries(porGrado).sort().map(([grado, lista]) => `
+    const html = Object.entries(porGrado).sort().map(([grado, grupos]) => `
       <div class="faltas-grado">
         <div class="faltas-grado-header">🏫 ${grado}° Grado</div>
-        ${lista.map(([key, info]) => {
+        ${Object.entries(grupos).sort().map(([key, info]) => {
           const safeKey = key.replace(/[^a-zA-Z0-9]/g, '_');
-          const total = info.alumnos.length;
+          const total   = info.alumnos.length;
           const alumnosHTML = info.alumnos
             .sort((a, b) => a.nombre.localeCompare(b.nombre))
-            .map(a => {
-              const semFaltas = faltasPorId[a.id] || 1;
-              return `<div class="faltas-alumno-row">
-                <span class="faltas-alumno-nombre">❌ ${a.nombre}</span>
-                <span class="faltas-alumno-count">${semFaltas} falta(s)</span>
-              </div>`;
-            }).join('');
+            .map(a => `<div class="faltas-alumno-row">
+              <span class="faltas-alumno-nombre">❌ ${a.nombre}</span>
+              <span class="faltas-alumno-count">${a[tabFaltas]} falta(s)</span>
+            </div>`).join('');
           return `
             <button class="faltas-grupo-btn" id="btn-${safeKey}" onclick="toggleGrupo('${safeKey}')">
               <div class="faltas-grupo-izq">
