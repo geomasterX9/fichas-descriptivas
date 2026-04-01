@@ -113,24 +113,6 @@ body {
 <script>
   document.addEventListener('keypress', e => { if (e.key === 'Enter') iniciarSesion(); });
 
-  // Mostrar aviso de privacidad solo cuando hay un usuario escrito
-  const USUARIOS_DEMO = ['demo','admin','director','docente1','docente2','docente3','prefecto1','trabajosocial','enfermeria'];
-  document.getElementById('inUsuario').addEventListener('input', function() {
-    const val       = this.value.trim().toLowerCase();
-    const esDemo    = USUARIOS_DEMO.includes(val);
-    const linkAviso = document.getElementById('linkAviso');
-    if (val.length === 0) {
-      document.getElementById('subtituloLogin').textContent = 'Sistema Escolar • Plataforma Segura';
-      linkAviso.style.display = 'none';
-    } else {
-      document.getElementById('subtituloLogin').textContent = esDemo
-        ? 'MODO DEMO • Datos ficticios'
-        : 'Sistema Escolar • Plataforma Segura';
-      linkAviso.href = esDemo ? 'aviso-privacidad.html?demo=1' : 'aviso-privacidad.html';
-      linkAviso.style.display = 'inline';
-    }
-  });
-
   async function iniciarSesion() {
     const user = document.getElementById('inUsuario').value.trim();
     const pass = document.getElementById('inPassword').value;
@@ -166,6 +148,14 @@ body {
 
         btn.innerText = '¡Acceso correcto! ✅';
         btn.style.background = '#2d9b6f';
+
+        // Mostrar aviso de privacidad con datos correctos según tipo de usuario
+        const linkAviso = document.getElementById('linkAviso');
+        linkAviso.href = data.esDemo ? 'aviso-privacidad.html?demo=1' : 'aviso-privacidad.html';
+        linkAviso.style.display = 'inline';
+        if (data.esDemo) {
+          document.getElementById('subtituloLogin').textContent = 'MODO DEMO • Datos ficticios';
+        }
 
         setTimeout(() => {
             window.location.href = 'inicio.html';
