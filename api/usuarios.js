@@ -1,4 +1,4 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 const bcrypt = require('bcryptjs');
 
 const ROLES_VALIDOS = ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'];
@@ -11,7 +11,6 @@ module.exports = async (req, res) => {
     if (req.method === 'PATCH' && req.body?.accion === 'cambiar_password') {
         const usuario = await requireAuth(req, res, null);
         if (!usuario) return;
-        const db = usuario._db || supabase;
         const { password_actual, password_nueva } = req.body || {};
         if (!password_actual || !password_nueva)
             return res.status(400).json({ error: 'Faltan campos requeridos.' });
@@ -33,14 +32,13 @@ module.exports = async (req, res) => {
     // Resto de operaciones — solo ADMINISTRADOR
     const usuario = await requireAuth(req, res, 'dashboard');
     if (!usuario) return;
-    const db = usuario._db || supabase;
     if (usuario.rol !== 'ADMINISTRADOR') {
         return res.status(403).json({ error: 'Solo el administrador puede gestionar usuarios.' });
     }
 
     // ── GET: listar todos los usuarios ──
     if (req.method === 'GET') {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('usuarios')
             .select('id_usuario, nombre_completo, usuario, rol, materia, nombre_corto, grupos, token_valido_desde')
             .order('nombre_completo', { ascending: true });
@@ -62,7 +60,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'El usuario debe tener entre 3 y 50 caracteres.' });
 
         // Verificar que el usuario no exista
-        const { data: existe } = await supabase
+        const { data: existe } = await db
             .from('usuarios')
             .select('id_usuario')
             .eq('usuario', sanitize(user.trim().toUpperCase()))
