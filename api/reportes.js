@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 const GRAVEDADES_VALIDAS = ['Positiva', 'Leve', 'Moderada', 'Grave'];
 
@@ -8,6 +8,7 @@ module.exports = async (req, res) => {
 
     const usuario = await requireAuth(req, res, 'reportes');
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     if (req.method === 'GET') {
         try {
@@ -16,7 +17,7 @@ module.exports = async (req, res) => {
 
             // Permite consultar ciclo específico o el activo
             const cicloQuery = req.query.ciclo || null;
-            const ciclo = cicloQuery || await getCicloActivo();
+            const ciclo = cicloQuery || await getCicloActivo(db);
 
             const { data: reportes } = await supabase
                 .from('reportes_disciplinarios').select('*')
@@ -26,8 +27,8 @@ module.exports = async (req, res) => {
             if (!reportes || reportes.length === 0) return res.json([]);
 
             // Resolver nombres: buscar en usuarios (nuevo) y personal (compatibilidad legado)
-            const { data: usuariosDB } = await supabase.from('usuarios').select('id_usuario, nombre_completo');
-            const { data: personal }   = await supabase.from('personal').select('id_personal, nombre_completo');
+            const { data: usuariosDB } = await db.from('usuarios').select('id_usuario, nombre_completo');
+            const { data: personal }   = await db.from('personal').select('id_personal, nombre_completo');
             const mapaUsuarios = {};
             const mapaPersonal = {};
             (usuariosDB || []).forEach(u => { mapaUsuarios[u.id_usuario]  = u.nombre_completo; });
@@ -59,7 +60,7 @@ module.exports = async (req, res) => {
             if (parseInt(id_usuario) !== parseInt(usuario.id))
                 return res.status(403).json({ error: 'No puedes registrar reportes en nombre de otro usuario.' });
 
-            const cicloActivo = await getCicloActivo();
+            const cicloActivo = await getCicloActivo(db);
             const payload = {
                 id_alumno:     parseInt(id_alumno),
                 id_usuario:    parseInt(id_usuario),
@@ -69,7 +70,7 @@ module.exports = async (req, res) => {
                 fecha:         fecha || new Date().toISOString().split('T')[0],
                 ciclo_escolar: cicloActivo
             };
-            const { error } = await supabase.from('reportes_disciplinarios').insert([payload]);
+            const { error } = await db.from('reportes_disciplinarios').insert([payload]);
             if (error) return res.status(400).json({ error: error.message });
             res.json({ exito: true });
         } catch (e) { res.status(500).json({ error: 'Error al guardar reporte' }); }

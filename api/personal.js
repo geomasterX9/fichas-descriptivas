@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);
@@ -6,10 +6,11 @@ module.exports = async (req, res) => {
 
     const usuario = await requireAuth(req, res, 'personal');
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     try {
         const rolUsuario = req.query.rol ? req.query.rol.toUpperCase().trim() : null;
-        const { data, error } = await supabase.from('personal').select('id_personal, nombre_completo, funcion').order('nombre_completo');
+        const { data, error } = await db.from('personal').select('id_personal, nombre_completo, funcion').order('nombre_completo');
         if (error) throw error;
         const todos = data || [];
         if (!rolUsuario) return res.json(todos);

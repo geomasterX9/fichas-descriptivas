@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Convierte caracteres griegos/especiales a su equivalente ASCII
 // Previene que copias desde sistemas SEP introduzcan caracteres invisiblemente distintos
@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
 
     const usuario = await requireAuth(req, res, 'alumnos');
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     const id = req.query.id;
 
@@ -45,12 +46,12 @@ module.exports = async (req, res) => {
     if (id) {
         if (isNaN(parseInt(id))) return res.status(400).json({ error: 'ID de alumno inválido' });
         if (req.method === 'GET') {
-            const { data } = await supabase.from('alumnos').select('*').eq('id_alumno', parseInt(id)).single();
+            const { data } = await db.from('alumnos').select('*').eq('id_alumno', parseInt(id)).single();
             return res.json(data || {});
         }
         if (req.method === 'PATCH') {
             if (usuario.rol !== 'ADMINISTRADOR') return res.status(403).json({ error: 'Sin permiso para modificar datos del alumno.' });
-            const { error } = await supabase.from('alumnos').update(sanitizarCampos(req.body)).eq('id_alumno', parseInt(id));
+            const { error } = await db.from('alumnos').update(sanitizarCampos(req.body)).eq('id_alumno', parseInt(id));
             if (error) return res.status(400).json({ error: error.message });
             return res.json({ exito: true });
         }
@@ -59,8 +60,8 @@ module.exports = async (req, res) => {
 
     // ── Sin ?id= → lista del ciclo activo, con filtros opcionales ──
     if (req.method === 'GET') {
-        const ciclo = await getCicloActivo();
-        let query = supabase.from('alumnos').select('*').eq('ciclo_escolar', ciclo);
+        const ciclo = await getCicloActivo(db);
+        let query = db.from('alumnos').select('*').eq('ciclo_escolar', ciclo);
         if (req.query.grado) query = query.eq('grado', parseInt(req.query.grado));
         if (req.query.grupo) query = query.eq('grupo', req.query.grupo.toUpperCase());
         if (req.query.status) query = query.eq('status', req.query.status);
@@ -71,8 +72,8 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
         if (usuario.rol !== 'ADMINISTRADOR') return res.status(403).json({ error: 'Solo el administrador puede crear alumnos.' });
         try {
-            const ciclo = await getCicloActivo();
-            const { error, data } = await supabase.from('alumnos')
+            const ciclo = await getCicloActivo(db);
+            const { error, data } = await db.from('alumnos')
                 .insert([{ ...sanitizarCampos(req.body), ciclo_escolar: ciclo }]).select().single();
             if (error) return res.status(400).json({ error: error.message });
             return res.json({ exito: true, alumno: data });
@@ -83,7 +84,7 @@ module.exports = async (req, res) => {
         try {
             const { id_alumno, ...cambios } = req.body;
             if (!id_alumno) return res.status(400).json({ error: 'Falta id_alumno' });
-            const { error } = await supabase.from('alumnos').update(sanitizarCampos(cambios)).eq('id_alumno', id_alumno);
+            const { error } = await db.from('alumnos').update(sanitizarCampos(cambios)).eq('id_alumno', id_alumno);
             if (error) return res.status(400).json({ error: error.message });
             return res.json({ exito: true });
         } catch (e) { return res.status(500).json({ error: 'Error al actualizar alumno' }); }

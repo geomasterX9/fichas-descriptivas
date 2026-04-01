@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
@@ -6,6 +6,7 @@ module.exports = async (req, res) => {
 
     const usuario = await requireAuth(req, res, 'expediente');
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     const tipo  = req.query.tipo;
     const id    = req.query.id;
@@ -31,17 +32,17 @@ module.exports = async (req, res) => {
         return res.json(data || []);
     }
 
-    const ciclo = cicloQuery || await getCicloActivo();
+    const ciclo = cicloQuery || await getCicloActivo(db);
 
     if (req.method === 'GET' && tipo === 'calificaciones') {
-        const { data } = await supabase.from('calificaciones').select('*')
+        const { data } = await db.from('calificaciones').select('*')
             .eq('id_alumno', parseInt(id))
             .eq('ciclo_escolar', ciclo)
             .order('trimestre', { ascending: true });
         return res.json(data || []);
     }
     if (req.method === 'GET' && tipo === 'ficha') {
-        const { data } = await supabase.from('datos_socioeconomicos').select('*')
+        const { data } = await db.from('datos_socioeconomicos').select('*')
             .eq('id_alumno', parseInt(id))
             .eq('ciclo_escolar', ciclo)
             .single();
@@ -59,8 +60,8 @@ module.exports = async (req, res) => {
     }
     // Evaluaciones parciales — GET
     if (req.method === 'GET' && tipo === 'evaluaciones_parciales') {
-        const ciclo = await getCicloActivo();
-        const { data } = await supabase.from('evaluaciones_parciales').select('*')
+        const ciclo = await getCicloActivo(db);
+        const { data } = await db.from('evaluaciones_parciales').select('*')
             .eq('id_alumno', parseInt(id))
             .eq('ciclo_escolar', ciclo)
             .order('trimestre', { ascending: true });
@@ -72,8 +73,8 @@ module.exports = async (req, res) => {
         const { id_alumno, trimestre, materias } = req.body || {};
         if (!id_alumno || !trimestre || !materias)
             return res.status(400).json({ error: 'Faltan parámetros.' });
-        const ciclo = await getCicloActivo();
-        const { error } = await supabase.from('evaluaciones_parciales')
+        const ciclo = await getCicloActivo(db);
+        const { error } = await db.from('evaluaciones_parciales')
             .upsert({
                 id_alumno:    parseInt(id_alumno),
                 trimestre:    parseInt(trimestre),
@@ -92,7 +93,7 @@ module.exports = async (req, res) => {
         if (!id_alumno || !trimestre) return res.status(400).json({ error: 'Faltan parámetros.' });
         if (typeof motivos_reprobacion !== 'string' || motivos_reprobacion.length > 1000)
             return res.status(400).json({ error: 'El texto no puede exceder 1000 caracteres.' });
-        const { error } = await supabase.from('calificaciones')
+        const { error } = await db.from('calificaciones')
             .update({ motivos_reprobacion: motivos_reprobacion.trim() || null })
             .eq('id_alumno', parseInt(id_alumno))
             .eq('trimestre', parseInt(trimestre));
@@ -104,8 +105,8 @@ module.exports = async (req, res) => {
         if (!['ADMINISTRADOR', 'TRABAJO SOCIAL'].includes(usuario.rol)) {
             return res.status(403).json({ error: 'Sin permiso para modificar la ficha socioeconómica.' });
         }
-        const cicloActivo = await getCicloActivo();
-        const { error } = await supabase.from('datos_socioeconomicos')
+        const cicloActivo = await getCicloActivo(db);
+        const { error } = await db.from('datos_socioeconomicos')
             .upsert({ ...req.body, ciclo_escolar: cicloActivo }, { onConflict: 'id_alumno' });
         if (error) return res.status(400).json({ error: error.message });
         return res.json({ exito: true });
@@ -114,7 +115,7 @@ module.exports = async (req, res) => {
 
     // GET recuperacion de un alumno
     if (req.method === 'GET' && tipo === 'recuperacion') {
-        const { data } = await supabase.from('calificaciones')
+        const { data } = await db.from('calificaciones')
             .select('trimestre, materias, recuperacion')
             .eq('id_alumno', parseInt(id))
             .eq('ciclo_escolar', ciclo)
@@ -168,7 +169,7 @@ module.exports = async (req, res) => {
             m.sigla === sigla ? { ...m, calif: String(califNum) } : m
         );
 
-        const { error } = await supabase.from('calificaciones')
+        const { error } = await db.from('calificaciones')
             .update({ recuperacion: recuperacionArr, materias: materiasActualizadas })
             .eq('id_alumno', parseInt(id_alumno))
             .eq('trimestre', parseInt(trimestre))
@@ -188,18 +189,19 @@ const ROLES_MEDICO = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'];
 // GET  /api/expediente?tipo=medico&id=X
 // POST /api/expediente?tipo=medico  { id_alumno, ...campos }
 async function handleMedico(req, res, usuario, id) {
+    const db = usuario._db || supabase;
     if (!ROLES_MEDICO.includes(usuario.rol))
         return res.status(403).json({ error: 'Sin acceso al expediente médico.' });
 
     if (req.method === 'GET') {
-        const { data } = await supabase.from('expedientes_medicos')
+        const { data } = await db.from('expedientes_medicos')
             .select('*').eq('id_alumno', parseInt(id)).maybeSingle();
         return res.json(data || {});
     }
     if (req.method === 'POST') {
         const { id_alumno, ...campos } = req.body || {};
         if (!id_alumno) return res.status(400).json({ error: 'Falta id_alumno' });
-        const { error } = await supabase.from('expedientes_medicos')
+        const { error } = await db.from('expedientes_medicos')
             .upsert({ ...campos, id_alumno: parseInt(id_alumno),
                       actualizado_por: usuario.nombre,
                       fecha_actualizacion: new Date().toISOString() },
@@ -214,11 +216,12 @@ async function handleMedico(req, res, usuario, id) {
 // GET  /api/expediente?tipo=visitas_enfermeria&id=X
 // POST /api/expediente?tipo=visitas_enfermeria  { id_alumno, fecha, motivo, tratamiento }
 async function handleVisitas(req, res, usuario, id) {
+    const db = usuario._db || supabase;
     if (!ROLES_MEDICO.includes(usuario.rol))
         return res.status(403).json({ error: 'Sin acceso a visitas de enfermería.' });
 
     if (req.method === 'GET') {
-        const { data } = await supabase.from('visitas_enfermeria')
+        const { data } = await db.from('visitas_enfermeria')
             .select('*').eq('id_alumno', parseInt(id))
             .order('fecha', { ascending: false });
         return res.json(data || []);
@@ -226,7 +229,7 @@ async function handleVisitas(req, res, usuario, id) {
     if (req.method === 'POST') {
         const { id_alumno, fecha, motivo, tratamiento } = req.body || {};
         if (!id_alumno || !motivo) return res.status(400).json({ error: 'Faltan parámetros.' });
-        const { error } = await supabase.from('visitas_enfermeria').insert({
+        const { error } = await db.from('visitas_enfermeria').insert({
             id_alumno: parseInt(id_alumno),
             fecha: fecha || new Date().toISOString().split('T')[0],
             motivo, tratamiento: tratamiento || null,
@@ -244,13 +247,14 @@ async function handleVisitas(req, res, usuario, id) {
 // POST   /api/expediente?tipo=justificante  { id_alumno, fecha_inicio, fecha_fin, motivo }
 // DELETE /api/expediente?tipo=justificante&id=X  (desactivar)
 async function handleJustificante(req, res, usuario, id) {
+    const db = usuario._db || supabase;
     if (!ROLES_MEDICO.includes(usuario.rol) && !['DOCENTE','PREFECTO','TRABAJO SOCIAL'].includes(usuario.rol))
         return res.status(403).json({ error: 'Sin acceso a justificantes.' });
 
     if (req.method === 'GET') {
         if (id) {
             // Historial de un alumno
-            const { data } = await supabase.from('justificantes_medicos')
+            const { data } = await db.from('justificantes_medicos')
                 .select('*').eq('id_alumno', parseInt(id))
                 .order('fecha_inicio', { ascending: false });
             return res.json(data || []);
@@ -258,7 +262,7 @@ async function handleJustificante(req, res, usuario, id) {
             // Justificantes emitidos en los últimos 7 días — para notificación a docentes
             const hoy = new Date().toISOString().split('T')[0];
             const haceUnaSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            const { data } = await supabase.from('justificantes_medicos')
+            const { data } = await db.from('justificantes_medicos')
                 .select('*, alumnos(apellidos, nombre, grado, grupo)')
                 .eq('activo', true)
                 .gte('fecha_fin', haceUnaSemana)
@@ -272,7 +276,7 @@ async function handleJustificante(req, res, usuario, id) {
         const { id_alumno, fecha_inicio, fecha_fin, motivo } = req.body || {};
         if (!id_alumno || !fecha_inicio || !fecha_fin || !motivo)
             return res.status(400).json({ error: 'Faltan parámetros.' });
-        const { error } = await supabase.from('justificantes_medicos').insert({
+        const { error } = await db.from('justificantes_medicos').insert({
             id_alumno: parseInt(id_alumno), fecha_inicio, fecha_fin,
             motivo, activo: true, registrado_por: usuario.nombre
         });
@@ -282,7 +286,7 @@ async function handleJustificante(req, res, usuario, id) {
     if (req.method === 'DELETE') {
         if (!ROLES_MEDICO.includes(usuario.rol))
             return res.status(403).json({ error: 'Sin permiso.' });
-        const { error } = await supabase.from('justificantes_medicos')
+        const { error } = await db.from('justificantes_medicos')
             .update({ activo: false }).eq('id', parseInt(id));
         if (error) return res.status(400).json({ error: error.message });
         return res.json({ exito: true });

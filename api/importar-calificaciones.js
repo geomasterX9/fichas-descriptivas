@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 const { IncomingForm } = require('formidable');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
@@ -44,6 +44,7 @@ module.exports = async (req, res) => {
 
     const usuario = await requireAuth(req, res, 'importar-calificaciones');
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     try {
         const form = new IncomingForm({ keepExtensions: true, maxFileSize: 10 * 1024 * 1024 });
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        const { data: alumnos } = await supabase.from('alumnos').select('*').eq('status', 'ACTIVO');
+        const { data: alumnos } = await db.from('alumnos').select('*').eq('status', 'ACTIVO');
         let contador      = 0;
         let noEncontrados = [];
 
@@ -135,8 +136,8 @@ module.exports = async (req, res) => {
             }
 
             if (materiasArr.length > 0) {
-                await supabase.from('calificaciones').delete().match({ id_alumno: alumno.id_alumno, trimestre });
-                await supabase.from('calificaciones').insert({
+                await db.from('calificaciones').delete().match({ id_alumno: alumno.id_alumno, trimestre });
+                await db.from('calificaciones').insert({
                     id_alumno: alumno.id_alumno, trimestre,
                     promedio_trimestral: promedioReal, materias: materiasArr
                 });
@@ -149,7 +150,7 @@ module.exports = async (req, res) => {
             ? `${contador} sincronizados. No encontrados: ${noEncontrados.join(', ')}`
             : `${contador} alumnos sincronizados correctamente`;
 
-        await supabase.from('logs_actividad').insert([{
+        await db.from('logs_actividad').insert([{
             id_usuario:     usuario.id,
             nombre_usuario: usuario.nombre,
             rol:            usuario.rol,

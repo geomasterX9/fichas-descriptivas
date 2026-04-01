@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders } = require('./_lib');
 const { IncomingForm } = require('formidable');
 const fs = require('fs');
 const path = require('path');
@@ -14,6 +14,7 @@ module.exports = async (req, res) => {
 
     const usuario = await requireAuth(req, res, 'fotos');
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     // Detectar acción por query param: ?accion=masiva (carga masiva) o default (foto individual)
     const accion = req.query.accion;
@@ -68,7 +69,7 @@ module.exports = async (req, res) => {
                     const nombreArchivo = `${idAlumno}.${ext}`;
                     const buffer = fs.readFileSync(foto.filepath);
 
-                    const { error: uploadError } = await supabase.storage
+                    const { error: uploadError } = await db.storage
                         .from('fotos_alumnos')
                         .upload(nombreArchivo, buffer, { contentType: foto.mimetype, upsert: true });
 
@@ -77,7 +78,7 @@ module.exports = async (req, res) => {
                         continue;
                     }
 
-                    const { data: urlData } = supabase.storage.from('fotos_alumnos').getPublicUrl(nombreArchivo);
+                    const { data: urlData } = db.storage.from('fotos_alumnos').getPublicUrl(nombreArchivo);
 
                     const { error: updateError } = await supabase
                         .from('alumnos')
@@ -125,12 +126,12 @@ module.exports = async (req, res) => {
         const nombreArchivo = `${parseInt(id_alumno)}.${ext}`;
         const buffer = fs.readFileSync(fotoFile.filepath);
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await db.storage
             .from('fotos_alumnos')
             .upload(nombreArchivo, buffer, { contentType: fotoFile.mimetype, upsert: true });
         if (uploadError) return res.status(500).json({ error: uploadError.message });
 
-        const { data: urlData } = supabase.storage.from('fotos_alumnos').getPublicUrl(nombreArchivo);
+        const { data: urlData } = db.storage.from('fotos_alumnos').getPublicUrl(nombreArchivo);
 
         const { error: updateError } = await supabase
             .from('alumnos')

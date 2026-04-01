@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 const bcrypt = require('bcryptjs');
 
 const ROLES_VALIDOS = ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'];
@@ -11,17 +11,18 @@ module.exports = async (req, res) => {
     if (req.method === 'PATCH' && req.body?.accion === 'cambiar_password') {
         const usuario = await requireAuth(req, res, null);
         if (!usuario) return;
+        const db = usuario._db || supabase;
         const { password_actual, password_nueva } = req.body || {};
         if (!password_actual || !password_nueva)
             return res.status(400).json({ error: 'Faltan campos requeridos.' });
         if (password_nueva.length < 5)
             return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 5 caracteres.' });
-        const { data: uActual } = await supabase.from('usuarios').select('password').eq('id_usuario', usuario.id).single();
+        const { data: uActual } = await db.from('usuarios').select('password').eq('id_usuario', usuario.id).single();
         if (!uActual) return res.status(404).json({ error: 'Usuario no encontrado.' });
         const valido = await bcrypt.compare(password_actual, uActual.password);
         if (!valido) return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
         const nuevoHash = await bcrypt.hash(password_nueva, 12);
-        const { error } = await supabase.from('usuarios').update({
+        const { error } = await db.from('usuarios').update({
             password: nuevoHash,
             token_valido_desde: new Date().toISOString()
         }).eq('id_usuario', usuario.id);
@@ -32,6 +33,7 @@ module.exports = async (req, res) => {
     // Resto de operaciones — solo ADMINISTRADOR
     const usuario = await requireAuth(req, res, 'dashboard');
     if (!usuario) return;
+    const db = usuario._db || supabase;
     if (usuario.rol !== 'ADMINISTRADOR') {
         return res.status(403).json({ error: 'Solo el administrador puede gestionar usuarios.' });
     }
@@ -69,7 +71,7 @@ module.exports = async (req, res) => {
 
         const hash = await bcrypt.hash(password, 12);
 
-        const { data, error } = await supabase.from('usuarios').insert([{
+        const { data, error } = await db.from('usuarios').insert([{
             nombre_completo: sanitize(nombre_completo.trim().toUpperCase()),
             usuario:         sanitize(user.trim().toUpperCase()),
             password:        hash,
@@ -108,7 +110,7 @@ module.exports = async (req, res) => {
         if (Object.keys(cambios).length === 0)
             return res.status(400).json({ error: 'No hay cambios que guardar.' });
 
-        const { error } = await supabase.from('usuarios').update(cambios).eq('id_usuario', parseInt(id_usuario));
+        const { error } = await db.from('usuarios').update(cambios).eq('id_usuario', parseInt(id_usuario));
         if (error) return res.status(500).json({ error: 'Error al actualizar usuario.' });
         return res.json({ exito: true });
     }
@@ -121,7 +123,7 @@ module.exports = async (req, res) => {
         if (parseInt(id_usuario) === usuario.id)
             return res.status(400).json({ error: 'No puedes eliminar tu propio usuario.' });
 
-        const { error } = await supabase.from('usuarios').delete().eq('id_usuario', parseInt(id_usuario));
+        const { error } = await db.from('usuarios').delete().eq('id_usuario', parseInt(id_usuario));
         if (error) return res.status(500).json({ error: 'Error al eliminar usuario.' });
         return res.json({ exito: true });
     }

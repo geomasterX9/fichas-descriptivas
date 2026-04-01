@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Acciones válidas para registro
 const ACCIONES_VALIDAS = [
@@ -22,6 +22,7 @@ module.exports = async (req, res) => {
     const recurso = req.method === 'GET' ? 'dashboard' : null;
     const usuario = await requireAuth(req, res, recurso);
     if (!usuario) return;
+    const db = usuario._db || supabase;
 
     // ── POST: registrar una acción ──
     if (req.method === 'POST') {
@@ -30,7 +31,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Acción no válida.' });
         }
         const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
-        const { error } = await supabase.from('logs_actividad').insert([{
+        const { error } = await db.from('logs_actividad').insert([{
             id_usuario:     usuario.id,
             nombre_usuario: usuario.nombre,
             rol:            usuario.rol,
