@@ -654,8 +654,9 @@
 </div>
 
 <script>
-    const grado = new URLSearchParams(window.location.search).get('grado');
-    const grupo = new URLSearchParams(window.location.search).get('grupo');
+    const grado  = new URLSearchParams(window.location.search).get('grado');
+    const grupo  = new URLSearchParams(window.location.search).get('grupo');
+    const esDemo = new URLSearchParams(window.location.search).get('demo') === '1';
     let alumnosGrupo = [];
     let alumnoSeleccionado = null;
 
@@ -663,7 +664,7 @@
     window.onload = async () => {
         if (!grado || !grupo) return mostrarEstado('estInvalido');
         try {
-            const res  = await fetch(`/api/ficha-publica?grado=${encodeURIComponent(grado)}&grupo=${encodeURIComponent(grupo)}`);
+            const res  = await fetch(`/api/ficha-publica?grado=${encodeURIComponent(grado)}&grupo=${encodeURIComponent(grupo)}${esDemo ? '&demo=1' : ''}`);
             const data = await res.json();
             if (!res.ok || !Array.isArray(data)) return mostrarEstado('estInvalido');
             alumnosGrupo = data;
@@ -801,6 +802,7 @@
         };
 
         try {
+            if (esDemo) payload.demo = '1';
             const res  = await fetch('/api/ficha-publica', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
