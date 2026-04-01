@@ -418,12 +418,12 @@ body {
     <div class="faltas-chips">
       <div class="falta-chip"><div class="falta-chip-num" id="faltaSemana">—</div><div class="falta-chip-label">Esta Semana</div></div>
       <div class="falta-chip"><div class="falta-chip-num" id="faltaMes">—</div><div class="falta-chip-label">Este Mes</div></div>
-      <div class="falta-chip"><div class="falta-chip-num" id="faltaTotal">—</div><div class="falta-chip-label">Total Ciclo</div></div>
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaTotal">—</div><div class="falta-chip-label">Hoy</div></div>
     </div>
     <div class="faltas-tabs">
       <button class="faltas-tab activo" onclick="cambiarTabFaltas('semana', this)">Semana</button>
       <button class="faltas-tab" onclick="cambiarTabFaltas('mes', this)">Mes</button>
-      <button class="faltas-tab" onclick="cambiarTabFaltas('trimestre', this)">Trimestre</button>
+      <button class="faltas-tab" onclick="cambiarTabFaltas('hoy', this)">Hoy</button>
     </div>
     <div id="faltasContenido">
       <p style="text-align:center; color:var(--muted); font-size:13px; padding:10px;">Cargando...</p>
@@ -632,56 +632,70 @@ body {
 
   async function cargarResumenFaltas() {
     try {
-      const hoy = new Date();
+      const hoy    = new Date();
       const hoyStr = hoy.toISOString().split('T')[0];
 
-      // 1. Ausentes de hoy (para el acordeón)
-      const resHoy = await apiFetch('/api/dashboard?tipo=asistencia');
-      if (!resHoy) return;
-      const ausentes = await resHoy.json();
-      if (!Array.isArray(ausentes)) return;
-
-      // 2. Calcular rango de semana actual
+      // ── Días de la semana actual (lunes → hoy) ──
       const diaSem = hoy.getDay();
       const lunes  = new Date(hoy);
       lunes.setDate(hoy.getDate() - (diaSem === 0 ? 6 : diaSem - 1));
-      const lunesStr = lunes.toISOString().split('T')[0];
+      const diasSemana = [];
+      for (let d = new Date(lunes); d <= hoy; d.setDate(d.getDate() + 1))
+        diasSemana.push(d.toISOString().split('T')[0]);
 
-      // 3. Obtener faltas de toda la semana (lunes a hoy)
+      // ── Días del mes actual (1 → hoy) ──
+      const mesInicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+      const diasMes   = [];
+      for (let d = new Date(mesInicio); d <= hoy; d.setDate(d.getDate() + 1))
+        diasMes.push(d.toISOString().split('T')[0]);
+
+      // ── Llamadas en paralelo: semana + mes ──
+      // Los días de semana ya están dentro del mes, así que pedimos todo el mes
+      // y separamos los de la semana en el cliente
+      const diasMesSinSemana = diasMes.filter(f => !diasSemana.includes(f));
+
+      const [resSemana, resMesExtra] = await Promise.all([
+        Promise.all(diasSemana.map(f =>
+          apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
+            .then(r => r ? r.json() : []).catch(() => [])
+        )),
+        Promise.all(diasMesSinSemana.map(f =>
+          apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
+            .then(r => r ? r.json() : []).catch(() => [])
+        ))
+      ]);
+
+      // ── Contar faltas ──
       let faltasSemana = 0;
       let faltasMes    = 0;
-      let faltasTotal  = 0;
 
-      // Iterar días de la semana actual para contar faltas
-      const diasSemana = [];
-      for (let d = new Date(lunes); d <= hoy; d.setDate(d.getDate() + 1)) {
-        diasSemana.push(d.toISOString().split('T')[0]);
-      }
-      // Llamadas paralelas por día de la semana
-      const resSemana = await Promise.all(
-        diasSemana.map(f => apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
-          .then(r => r ? r.json() : []).catch(() => []))
-      );
+      const faltasPorId = {}; // acumulado semanal para el acordeón
+
       resSemana.forEach(dia => {
-        if (Array.isArray(dia)) faltasSemana += dia.filter(r => !r.presente).length;
+        if (!Array.isArray(dia)) return;
+        const ausentes = dia.filter(r => !r.presente);
+        faltasSemana += ausentes.length;
+        faltasMes    += ausentes.length;
+        ausentes.forEach(r => {
+          faltasPorId[r.id_alumno] = (faltasPorId[r.id_alumno] || 0) + 1;
+        });
       });
 
-      // Mes actual: del 1 al día de hoy
-      const mesInicio = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-01`;
-      const resMes = await apiFetch(
-        `/api/dashboard?tipo=asistencia_fecha&fecha=${hoyStr}`, { silencioso: true }
-      );
-      // Para mes y total usamos el endpoint faltas_alumno sumando todos los alumnos
-      // Como no tenemos endpoint de totales globales, usamos los datos de hoy como base
-      // y consultamos fechas del mes agrupadas
-      faltasMes   = faltasSemana; // aproximación inicial; se refina abajo
-      faltasTotal = ausentes.length;
+      resMesExtra.forEach(dia => {
+        if (!Array.isArray(dia)) return;
+        faltasMes += dia.filter(r => !r.presente).length;
+      });
 
-      // Construir mapa por alumno para mostrar en acordeón: id_alumno → {nombre, faltas}
+      // ── Ausentes de HOY para el acordeón ──
+      const diaHoyData = resSemana[resSemana.length - 1] || [];
+      const ausentesHoy = Array.isArray(diaHoyData) ? diaHoyData.filter(r => !r.presente) : [];
+      const faltasHoy = ausentesHoy.length;
+
+      // ── Construir acordeón con ausentes de hoy agrupados por grupo ──
       const porAlumno = {};
-      ausentes.forEach(a => {
-        const id  = a.alumnos ? (a.id_alumno || a.alumnos.id_alumno) : null;
-        const nom = a.alumnos ? `${a.alumnos.apellidos || ''} ${a.alumnos.nombre || ''}`.trim() : '—';
+      ausentesHoy.forEach(a => {
+        const id    = a.id_alumno || a.alumnos?.id_alumno || null;
+        const nom   = a.alumnos ? `${a.alumnos.apellidos || ''} ${a.alumnos.nombre || ''}`.trim() : '—';
         const grado = String(a.alumnos?.grado || '');
         const grupo = String(a.alumnos?.grupo || '').toUpperCase();
         const key   = `${grado}-${grupo}`;
@@ -689,20 +703,10 @@ body {
         porAlumno[key].alumnos.push({ id, nombre: nom, faltasHoy: 1 });
       });
 
-      // Contar faltas acumuladas por alumno en la semana
-      const todosIdsHoy = ausentes.map(a => a.id_alumno).filter(Boolean);
-      const faltasPorId = {};
-      resSemana.forEach(dia => {
-        if (!Array.isArray(dia)) return;
-        dia.filter(r => !r.presente).forEach(r => {
-          faltasPorId[r.id_alumno] = (faltasPorId[r.id_alumno] || 0) + 1;
-        });
-      });
-
-      // Actualizar chips
+      // ── Actualizar chips ──
       document.getElementById('faltaSemana').textContent = faltasSemana;
       document.getElementById('faltaMes').textContent    = faltasMes;
-      document.getElementById('faltaTotal').textContent  = faltasTotal;
+      document.getElementById('faltaTotal').textContent  = faltasHoy;
 
       datosFaltasGlobal = { porGrupo: porAlumno, faltasPorId };
       renderAcordeonFaltas();
