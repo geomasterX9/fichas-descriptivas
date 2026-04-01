@@ -10,6 +10,18 @@ const supabase = createClient(
     process.env.SUPABASE_KEY
 );
 
+// ── Supabase DEMO (base de datos aislada para demos) ──────
+const supabaseDemo = createClient(
+    process.env.SUPABASE_URL_DEMO,
+    process.env.SUPABASE_KEY_DEMO
+);
+
+// Devuelve el cliente correcto según si el usuario es demo
+function getSupabase(usuario) {
+    if (usuario && usuario.esDemo) return supabaseDemo;
+    return supabase;
+}
+
 // ── Permisos por recurso ──────────────────────────────────
 const PERMISOS = {
     dashboard:                 ['ADMINISTRADOR', 'DIRECTIVO'],
@@ -36,7 +48,10 @@ async function requireAuth(req, res, recurso) {
     try {
         const usuario = jwt.verify(token, process.env.JWT_SECRET);
 
-        const { data: usuarioDB } = await supabase
+        // Usar cliente demo si el token lo indica
+        const db = getSupabase(usuario);
+
+        const { data: usuarioDB } = await db
             .from('usuarios')
             .select('token_valido_desde')
             .eq('id_usuario', usuario.id)
@@ -56,6 +71,8 @@ async function requireAuth(req, res, recurso) {
             return null;
         }
 
+        // Adjuntar el cliente correcto al objeto usuario para uso en las APIs
+        usuario._db = db;
         return usuario;
     } catch (e) {
         if (e.name === 'TokenExpiredError') {
@@ -67,8 +84,8 @@ async function requireAuth(req, res, recurso) {
     }
 }
 
-async function invalidarTokens(id_usuario) {
-    await supabase
+async function invalidarTokens(id_usuario, db = supabase) {
+    await db
         .from('usuarios')
         .update({ token_valido_desde: new Date().toISOString() })
         .eq('id_usuario', id_usuario);
@@ -115,29 +132,36 @@ function sanitize(val) {
 // ── Ciclo escolar activo ──────────────────────────────────
 let _cache = null;
 let _cacheTime = 0;
+let _cacheDemo = null;
+let _cacheDemoTime = 0;
 const CACHE_TTL_MS = 60 * 1000;
 
-async function getCicloActivo() {
+async function getCicloActivo(db = supabase) {
     const ahora = Date.now();
-    if (_cache && (ahora - _cacheTime) < CACHE_TTL_MS) return _cache;
+    const esDemo = db === supabaseDemo;
+    if (esDemo) {
+        if (_cacheDemo && (ahora - _cacheDemoTime) < CACHE_TTL_MS) return _cacheDemo;
+    } else {
+        if (_cache && (ahora - _cacheTime) < CACHE_TTL_MS) return _cache;
+    }
     try {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('configuracion').select('valor').eq('clave', 'ciclo_activo').single();
-        if (error || !data) return _cache || '2025-2026';
-        _cache = data.valor;
-        _cacheTime = ahora;
-        return _cache;
-    } catch (e) { return _cache || '2025-2026'; }
+        const fallback = esDemo ? '2026-2027' : '2025-2026';
+        if (error || !data) return esDemo ? (_cacheDemo || fallback) : (_cache || fallback);
+        if (esDemo) { _cacheDemo = data.valor; _cacheDemoTime = ahora; return _cacheDemo; }
+        _cache = data.valor; _cacheTime = ahora; return _cache;
+    } catch (e) { return esDemo ? (_cacheDemo || '2026-2027') : (_cache || '2025-2026'); }
 }
 
-async function setCicloActivo(nuevoCiclo) {
+async function setCicloActivo(nuevoCiclo, db = supabase) {
     if (!/^\d{4}-\d{4}$/.test(nuevoCiclo))
         throw new Error(`Formato de ciclo inválido: "${nuevoCiclo}".`);
-    const { error } = await supabase.from('configuracion')
+    const { error } = await db.from('configuracion')
         .upsert({ clave: 'ciclo_activo', valor: nuevoCiclo, updated_at: new Date().toISOString() });
     if (error) throw new Error('Error al actualizar ciclo activo: ' + error.message);
-    _cache = nuevoCiclo;
-    _cacheTime = Date.now();
+    if (db === supabaseDemo) { _cacheDemo = nuevoCiclo; _cacheDemoTime = Date.now(); }
+    else { _cache = nuevoCiclo; _cacheTime = Date.now(); }
 }
 
-module.exports = { supabase, requireAuth, invalidarTokens, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo };
+module.exports = { supabase, supabaseDemo, getSupabase, requireAuth, invalidarTokens, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo };
