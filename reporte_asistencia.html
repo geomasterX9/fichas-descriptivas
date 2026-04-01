@@ -189,16 +189,16 @@ tr:last-child td { border-bottom: none; }
 
 <div id="reporte">
 
-  <!-- ENCABEZADO INSTITUCIONAL -->
+  <!-- ENCABEZADO INSTITUCIONAL DINÁMICO -->
   <div class="enc-inst">
-    <img src="/logo_sege.png" alt="SEGE" onerror="this.style.display='none'">
+    <img id="encLogoIzq" src="" alt="" style="display:none;" onerror="this.style.display='none'">
     <div class="enc-inst-centro">
       <div class="dep">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
-      <div class="esc">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
-      <div class="clave">CLAVE: 24DST0092Z</div>
-      <div class="dir">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+      <div class="esc" id="encNombre">—</div>
+      <div class="clave" id="encClave"></div>
+      <div class="dir" id="encDir"></div>
     </div>
-    <img src="/logo_est84.png" alt="EST 84" onerror="this.style.display='none'">
+    <img id="encLogoDer" src="" alt="" style="display:none;" onerror="this.style.display='none'">
   </div>
 
   <!-- TÍTULO -->
@@ -284,6 +284,21 @@ tr:last-child td { border-bottom: none; }
   async function generarReporte() {
     const fecha = document.getElementById('selFecha').value;
     if (!fecha) { alert('Selecciona una fecha.'); return; }
+
+    // Cargar config institucional
+    try {
+      const resCfg = await apiFetch('/api/dashboard?tipo=config_institucional', { silencioso: true });
+      if (resCfg) {
+        const cfg = await resCfg.json();
+        document.getElementById('encNombre').textContent = cfg.nombre_escuela  || '—';
+        document.getElementById('encClave').textContent  = cfg.clave_escuela   ? `CLAVE: ${cfg.clave_escuela}` : '';
+        document.getElementById('encDir').textContent    = cfg.direccion_escuela || '';
+        const liEl = document.getElementById('encLogoIzq');
+        const ldEl = document.getElementById('encLogoDer');
+        if (cfg.logo_izquierdo) { liEl.src = cfg.logo_izquierdo; liEl.style.display = 'block'; }
+        if (cfg.logo_derecho)   { ldEl.src = cfg.logo_derecho;   ldEl.style.display = 'block'; }
+      }
+    } catch(e) {}
 
     document.getElementById('repSubtitulo').textContent = formatFecha(fecha);
     document.getElementById('repMeta').innerHTML =

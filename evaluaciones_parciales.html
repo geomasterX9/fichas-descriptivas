@@ -166,6 +166,7 @@
 <nav class="navbar">
     <div class="navbar-brand">📝 Evaluaciones Parciales</div>
     <div>
+        <button onclick="exportarEvaluacionesPDF()" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;" id="btnPDFEval">🖨️ PDF</button>
         <a href="inicio.html" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">← Volver al Inicio</a>
         <button onclick="cerrarSesion()" class="btn-nav salir">Salir 👋</button>
     </div>
@@ -249,35 +250,43 @@
         document.getElementById('btnGuardarTodos').style.display = 'none';
     }
 
+    // Parsear grupos asignados: ["1A","2B"] → [{grado:"1", grupo:"A"}, ...]
+    // Soporta grados de 1 dígito + grupo de 1 letra (formato estándar secundaria)
+    const GRUPOS_PARSED = GRUPOS_ACTIVOS.map(g => ({
+        grado: g.slice(0, -1),   // todo excepto el último char
+        grupo: g.slice(-1)       // último char
+    }));
+
     // Poblar selectores de grado y grupo según grupos asignados al docente
     function inicializarSelectores() {
-        if (PUEDE_TODO || GRUPOS_ACTIVOS.length === 0) return; // Admin ve todo
+        if (PUEDE_TODO || GRUPOS_PARSED.length === 0) return; // Admin/Directivo ven todo
         const selGrado = document.getElementById('selGrado');
         const selGrupo = document.getElementById('selGrupo');
-        // Extraer grados y grupos únicos de los grupos asignados
-        const grados = [...new Set(GRUPOS_ACTIVOS.map(g => g[0]))].sort();
-        const grupos  = [...new Set(GRUPOS_ACTIVOS.map(g => g[1]))].sort();
+
+        const grados = [...new Set(GRUPOS_PARSED.map(g => g.grado))].sort();
+
         // Filtrar opciones de grado
         Array.from(selGrado.options).forEach(opt => {
             opt.style.display = grados.includes(opt.value) ? '' : 'none';
         });
         selGrado.value = grados[0] || '1';
-        // Filtrar opciones de grupo
-        Array.from(selGrupo.options).forEach(opt => {
-            opt.style.display = grupos.includes(opt.value) ? '' : 'none';
-        });
-        selGrupo.value = grupos[0] || 'A';
-        // Al cambiar grado, reajustar grupos disponibles para ese grado
-        selGrado.addEventListener('change', () => {
+
+        // Función para actualizar grupos según grado seleccionado
+        function actualizarGrupos() {
             const gradoSel = selGrado.value;
-            const gruposDelGrado = GRUPOS_ACTIVOS
-                .filter(g => g[0] === gradoSel)
-                .map(g => g[1]);
+            const gruposDelGrado = GRUPOS_PARSED
+                .filter(g => g.grado === gradoSel)
+                .map(g => g.grupo);
             Array.from(selGrupo.options).forEach(opt => {
                 opt.style.display = gruposDelGrado.includes(opt.value) ? '' : 'none';
             });
-            selGrupo.value = gruposDelGrado[0] || selGrupo.value;
-        });
+            // Seleccionar primer grupo válido
+            const primerValido = Array.from(selGrupo.options).find(o => o.style.display !== 'none');
+            if (primerValido) selGrupo.value = primerValido.value;
+        }
+
+        actualizarGrupos();
+        selGrado.addEventListener('change', actualizarGrupos);
     }
     inicializarSelectores();
 
@@ -301,6 +310,15 @@
         const grupo     = document.getElementById('selGrupo').value;
         const trimestre = document.getElementById('selTrimestre').value;
         const lista     = document.getElementById('listaAlumnos');
+
+        // Validar que el docente solo cargue sus grupos asignados
+        if (!PUEDE_TODO && GRUPOS_PARSED.length > 0) {
+            const permitido = GRUPOS_PARSED.some(g => g.grado === grado && g.grupo === grupo);
+            if (!permitido) {
+                lista.innerHTML = '<div class="empty-state"><div class="icono">🔒</div><p>No tienes acceso a este grupo.</p></div>';
+                return;
+            }
+        }
 
         lista.innerHTML = '<div class="empty-state"><div class="icono">⏳</div><p>Cargando alumnos...</p></div>';
 
@@ -565,6 +583,82 @@
             input.value = '';
         };
         reader.readAsArrayBuffer(file);
+    }
+
+    async function exportarEvaluacionesPDF() {
+        if (alumnosActuales.length === 0) { alert('Carga un grupo primero.'); return; }
+        const grado     = document.getElementById('selGrado').value;
+        const grupo     = document.getElementById('selGrupo').value;
+        const trimestre = document.getElementById('selTrimestre').value;
+        const elaboro   = localStorage.getItem('nombreActivo') || '—';
+        const fecha     = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+
+        let cfg = {};
+        try {
+            const r = await apiFetch('/api/dashboard?tipo=config_institucional', { silencioso: true });
+            if (r) cfg = await r.json();
+        } catch(e) {}
+
+        const logoIzq   = cfg.logo_izquierdo  || '';
+        const logoDer   = cfg.logo_derecho    || '';
+        const nombre    = cfg.nombre_escuela  || 'ESCUELA SECUNDARIA';
+        const clave     = cfg.clave_escuela   || '';
+        const direccion = cfg.direccion_escuela || '';
+        const ciclo     = cfg.ciclo_activo    || '';
+
+        const SIGLAS = ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'];
+
+        const filas = alumnosActuales.map((a, i) => {
+            const cals = SIGLAS.map(s => {
+                const input = document.getElementById(`cal-${a.id_alumno}-${s}`);
+                const val   = input ? input.value : '—';
+                const num   = parseFloat(val);
+                const color = !isNaN(num) && num <= 6 ? 'color:#e63946;font-weight:800;' : '';
+                return `<td style="${color}">${val || '—'}</td>`;
+            }).join('');
+            return `<tr><td>${i+1}</td><td><b>${a.apellidos} ${a.nombre}</b></td>${cals}</tr>`;
+        }).join('');
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter landscape; margin: 10mm; }
+            body { font-family: Arial, sans-serif; font-size: 9px; color: #1a2332; }
+            .header-inst { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1B4F8A; padding-bottom:8px; margin-bottom:10px; }
+            .header-center { text-align:center; flex:1; padding:0 10px; }
+            img { height:50px; object-fit:contain; }
+            h3  { font-size:11px; color:#1B4F8A; margin:0 0 2px; }
+            p   { font-size:9px; color:#64748b; margin:0 0 8px; }
+            table { width:100%; border-collapse:collapse; }
+            th { background:#1B4F8A; color:white; padding:5px 4px; text-align:center; font-size:8px; }
+            td { padding:4px 4px; border-bottom:1px solid #e2e8f0; text-align:center; font-size:8px; }
+            td:nth-child(2) { text-align:left; }
+            tr:nth-child(even) td { background:#f8fafc; }
+        </style></head><body>
+        <div class="header-inst">
+            ${logoIzq ? `<img src="${logoIzq}">` : '<div style="width:50px;"></div>'}
+            <div class="header-center">
+                <div style="font-size:8px;color:#555;font-weight:600;">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                <div style="font-size:13px;font-weight:800;color:#1B4F8A;">${nombre}</div>
+                ${clave ? `<div style="font-size:9px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div style="font-size:9px;color:#555;">${direccion}</div>` : ''}
+            </div>
+            ${logoDer ? `<img src="${logoDer}">` : '<div style="width:50px;"></div>'}
+        </div>
+        <h3>📝 Evaluaciones Parciales — ${grado}° Grupo "${grupo}" — Trimestre ${trimestre}</h3>
+        <p>Ciclo: ${ciclo} &nbsp;|&nbsp; Generado: ${fecha} &nbsp;|&nbsp; Elaboró: ${elaboro} &nbsp;|&nbsp; ${alumnosActuales.length} alumnos</p>
+        <table>
+            <thead><tr>
+                <th>#</th><th style="text-align:left;">Alumno</th>
+                ${SIGLAS.map(s => `<th>${s}</th>`).join('')}
+            </tr></thead>
+            <tbody>${filas}</tbody>
+        </table>
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
     }
 
     function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
