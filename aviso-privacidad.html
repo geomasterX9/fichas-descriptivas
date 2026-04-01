@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aviso de Privacidad - EST 84</title>
+    <title>Aviso de Privacidad - la Institución</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -58,7 +58,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <meta name="apple-mobile-web-app-title" content="Sist. la Institución">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 <body>
@@ -67,16 +67,16 @@
     <a href="index.html" class="btn-back">← Regresar al inicio</a>
 
     <div class="encabezado">
-        <div class="inst" id="avisoInst">Secretaría de Educación Pública · DGET</div>
+        <div class="inst">Sistema de Gestión Escolar Institucional</div>
         <h1>Aviso de Privacidad</h1>
-        <p id="avisoEscuela">Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
+        <p>la Institución Educativa · [Ciudad, Estado]</p>
         <span class="fecha" id="fechaAviso">—</span>
     </div>
 
     <!-- I. RESPONSABLE -->
     <div class="card">
         <h2>I. Identidad y Domicilio del Responsable</h2>
-        <p>La <strong>Escuela Secundaria Técnica No. 84</strong>, con domicilio en San Luis Potosí, S.L.P., dependiente de la Dirección General de Educación Tecnológica (DGET) de la Secretaría de Educación Pública (SEP), en su carácter de sujeto obligado, es responsable del tratamiento de los datos personales de los alumnos matriculados en esta institución.</p>
+        <p>La <strong>la Institución Educativa</strong>, con domicilio en [Ciudad, Estado], dependiente de la Dirección General de Educación Tecnológica (DGET) de la Secretaría de Educación Pública (SEP), en su carácter de sujeto obligado, es responsable del tratamiento de los datos personales de los alumnos matriculados en esta institución.</p>
     </div>
 
     <!-- II. FUNDAMENTO -->
@@ -201,7 +201,7 @@
     </div>
 
     <div class="footer-aviso">
-        <p id="footerEscuela">Escuela Secundaria Técnica No. 84 · San Luis Potosí, S.L.P.</p>
+        <p>la Institución Educativa · [Ciudad, Estado]</p>
         <p style="margin-top:4px;">Para más información consulte directamente en la Dirección de la institución.</p>
     </div>
 
@@ -209,30 +209,6 @@
 <script>
     document.getElementById('fechaAviso').textContent =
         new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
-
-    // Si es modo demo, reemplazar datos reales por genéricos
-    const esDemo = new URLSearchParams(window.location.search).get('demo') === '1';
-    if (esDemo) {
-        document.title = 'Aviso de Privacidad — Sistema de Gestión Escolar';
-        document.getElementById('avisoInst').textContent   = 'Sistema de Gestión Escolar';
-        document.getElementById('avisoEscuela').textContent = 'Escuela Secundaria Demo · Sistema de Demostración';
-        document.getElementById('footerEscuela').textContent = 'Sistema de Gestión Escolar · Plataforma de Demostración';
-
-        // Reemplazar todas las menciones a EST 84 y San Luis Potosí en el contenido
-        document.querySelectorAll('.card p, .card li').forEach(el => {
-            el.innerHTML = el.innerHTML
-                .replace(/Escuela Secundaria Técnica No\. 84/g, 'la institución educativa')
-                .replace(/San Luis Potosí, S\.L\.P\./g, '[Ciudad, Estado]')
-                .replace(/DGET/g, 'autoridad educativa correspondiente')
-                .replace(/Dirección General de Educación Tecnológica/g, 'dirección general correspondiente');
-        });
-
-        // Banner demo
-        const banner = document.createElement('div');
-        banner.style.cssText = 'background:#f59e0b;color:white;text-align:center;padding:10px;font-weight:700;font-size:13px;position:sticky;top:0;z-index:100;';
-        banner.textContent = '⚠️ MODO DEMO — Este aviso es de carácter ilustrativo con datos ficticios';
-        document.body.prepend(banner);
-    }
 </script>
     <script>
       if ('serviceWorker' in navigator) {

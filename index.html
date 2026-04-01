@@ -104,7 +104,7 @@ body {
     <div id="msgError" class="mensaje-error"></div>
     <div class="footer-login">
       🔒 Acceso encriptado · Uso exclusivo para personal autorizado<br>
-      <a href="aviso-privacidad.html" target="_blank" id="linkAviso" style="display:none;">📄 Aviso de Privacidad</a>
+      <a href="aviso-privacidad.html" target="_blank" id="linkAviso">📄 Aviso de Privacidad</a>
     </div>
   </div>
 </div>
@@ -149,12 +149,9 @@ body {
         btn.innerText = '¡Acceso correcto! ✅';
         btn.style.background = '#2d9b6f';
 
-        // Mostrar aviso de privacidad con datos correctos según tipo de usuario
-        const linkAviso = document.getElementById('linkAviso');
-        linkAviso.href = data.esDemo ? 'aviso-privacidad.html?demo=1' : 'aviso-privacidad.html';
-        linkAviso.style.display = 'inline';
         if (data.esDemo) {
           document.getElementById('subtituloLogin').textContent = 'MODO DEMO • Datos ficticios';
+          document.getElementById('linkAviso').href = 'aviso-privacidad.html?demo=1';
         }
 
         setTimeout(() => {
