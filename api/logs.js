@@ -1,4 +1,4 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Acciones válidas para registro
 const ACCIONES_VALIDAS = [

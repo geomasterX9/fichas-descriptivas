@@ -11,6 +11,7 @@ module.exports = async (req, res) => {
     if (req.method === 'PATCH' && req.body?.accion === 'cambiar_password') {
         const usuario = await requireAuth(req, res, null);
         if (!usuario) return;
+        const db = usuario._db || supabase;
         const { password_actual, password_nueva } = req.body || {};
         if (!password_actual || !password_nueva)
             return res.status(400).json({ error: 'Faltan campos requeridos.' });
@@ -32,6 +33,7 @@ module.exports = async (req, res) => {
     // Resto de operaciones — solo ADMINISTRADOR
     const usuario = await requireAuth(req, res, 'dashboard');
     if (!usuario) return;
+    const db = usuario._db || supabase;
     if (usuario.rol !== 'ADMINISTRADOR') {
         return res.status(403).json({ error: 'Solo el administrador puede gestionar usuarios.' });
     }

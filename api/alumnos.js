@@ -1,4 +1,4 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 // Convierte caracteres griegos/especiales a su equivalente ASCII
 // Previene que copias desde sistemas SEP introduzcan caracteres invisiblemente distintos

@@ -1,4 +1,4 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, OPTIONS', req.headers.origin);

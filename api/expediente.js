@@ -1,4 +1,4 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
         const ROLES_MEDICO_H = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'];
         if (!ROLES_MEDICO_H.includes(usuario.rol))
             return res.status(403).json({ error: 'Sin acceso.' });
-        const { data } = await supabase
+        const { data } = await db
             .from('expedientes_medicos')
             .select('*, alumnos(apellidos, nombre, grado, grupo)')
             .order('fecha_actualizacion', { ascending: false })
@@ -135,7 +135,7 @@ module.exports = async (req, res) => {
 
         // Verificar permisos: admin puede todo, docente solo su materia
         if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'DIRECTIVO') {
-            const { data: uDB } = await supabase
+            const { data: uDB } = await db
                 .from('usuarios').select('materia').eq('id_usuario', usuario.id).single();
             const materias = Array.isArray(uDB?.materia) ? uDB.materia : [];
             if (!materias.includes(sigla))
@@ -143,7 +143,7 @@ module.exports = async (req, res) => {
         }
 
         // Leer recuperacion actual
-        const { data: calActual } = await supabase
+        const { data: calActual } = await db
             .from('calificaciones')
             .select('recuperacion, materias')
             .eq('id_alumno', parseInt(id_alumno))

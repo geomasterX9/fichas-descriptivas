@@ -1,4 +1,4 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
 
 const GRAVEDADES_VALIDAS = ['Positiva', 'Leve', 'Moderada', 'Grave'];
 
@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
             const cicloQuery = req.query.ciclo || null;
             const ciclo = cicloQuery || await getCicloActivo(db);
 
-            const { data: reportes } = await supabase
+            const { data: reportes } = await db
                 .from('reportes_disciplinarios').select('*')
                 .eq('id_alumno', parseInt(id))
                 .eq('ciclo_escolar', ciclo)
