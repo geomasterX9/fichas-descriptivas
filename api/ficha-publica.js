@@ -1,4 +1,4 @@
-const { supabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+const { supabase, supabaseDemo, setSecurityHeaders, sanitize, getCicloActivo } = require('./_lib');
 // ============================================================
 // FICHA PÚBLICA — Sin JWT
 // GET  ?grado=1&grupo=A   → lista alumnos del grupo
@@ -26,6 +26,10 @@ module.exports = async (req, res) => {
     setCorsPublico(res, req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
+    // Seleccionar base de datos según parámetro demo
+    const esDemo = req.query.demo === '1' || req.body?.demo === '1';
+    const db = esDemo ? supabaseDemo : supabase;
+
     // ── GET: listar alumnos del grupo ──
     if (req.method === 'GET') {
         const grado = (req.query.grado || '').trim();
@@ -35,7 +39,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Se requiere grado y grupo.' });
         }
 
-        const ciclo    = await getCicloActivo();
+        const ciclo    = await getCicloActivo(db);
         const gradoNum = parseInt(grado);
         if (isNaN(gradoNum) || gradoNum < 1 || gradoNum > 3) {
             return res.status(400).json({ error: 'Grado inválido.' });
@@ -44,7 +48,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Grupo inválido.' });
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('alumnos')
             .select('id_alumno, nombre, apellidos, grado, grupo, ficha_completada')
             .eq('grado', gradoNum)
@@ -67,7 +71,7 @@ module.exports = async (req, res) => {
         }
 
         // Verificar que el alumno existe y no tiene ficha
-        const { data: alumno, error: errAlu } = await supabase
+        const { data: alumno, error: errAlu } = await db
             .from('alumnos')
             .select('id_alumno, nombre, apellidos, ficha_completada')
             .eq('id_alumno', idAlumno)
@@ -88,7 +92,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        const ciclo = await getCicloActivo();
+        const ciclo = await getCicloActivo(db);
         const ficha = {
             id_alumno:          idAlumno,
             ciclo_escolar:      ciclo,
@@ -114,14 +118,14 @@ module.exports = async (req, res) => {
             observaciones:      String(d.observaciones || '').trim().substring(0, 500),
         };
 
-        const { error: errFicha } = await supabase
+        const { error: errFicha } = await db
             .from('datos_socioeconomicos')
             .upsert(ficha, { onConflict: 'id_alumno' });
 
         if (errFicha) return res.status(500).json({ error: 'Error al guardar. Intenta de nuevo.' });
 
         // Marcar ficha como completada
-        await supabase
+        await db
             .from('alumnos')
             .update({ ficha_completada: true })
             .eq('id_alumno', idAlumno);

@@ -132,6 +132,7 @@
 <script>
     verificarSesion();
     const BASE = window.location.origin;
+    const esDemo = localStorage.getItem('esDemo') === 'true';
     let todos = [];
     let filtrados = [];
 
@@ -232,7 +233,7 @@
 
         grid.innerHTML = grupos.map(clave => {
             const [grado, grupo] = clave.split('-');
-            const liga = `${BASE}/captura_ficha.html?grado=${grado}&grupo=${grupo}`;
+            const liga = `${BASE}/captura_ficha.html?grado=${grado}&grupo=${grupo}${esDemo ? '&demo=1' : ''}`;
             const total = todos.filter(a => String(a.grado) === grado && a.grupo === grupo).length;
             const completas = todos.filter(a => String(a.grado) === grado && a.grupo === grupo && a.ficha_completada).length;
             return `<div class="grupo-card">
