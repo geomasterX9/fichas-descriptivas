@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Usuarios — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --azul:#1d4ed8; --azul-hover:#1e40af; --azul-claro:#eff6ff;
+    --rojo:#dc2626; --rojo-claro:#fef2f2;
+    --verde:#16a34a; --verde-claro:#f0fdf4;
+    --amarillo:#d97706; --amarillo-claro:#fffbeb;
+    --fondo:#f1f5f9; --blanco:#fff; --texto:#0f172a; --gris:#64748b;
+    --borde:#e2e8f0;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Outfit',sans-serif; background:var(--fondo); color:var(--texto); min-height:100vh; }
+
+  /* HEADER */
+  .header { background:linear-gradient(135deg,#0f172a,#1d4ed8); color:white; padding:20px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .header-icon { width:44px; height:44px; background:rgba(255,255,255,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .header h1 { font-size:20px; font-weight:800; }
+  .header p  { font-size:13px; color:#93c5fd; margin-top:2px; }
+  .btn-volver { background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.25); padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; font-family:inherit; transition:background 0.2s; }
+  .btn-volver:hover { background:rgba(255,255,255,0.22); }
+
+  .contenido { max-width:1000px; margin:0 auto; padding:28px 20px 60px; }
+
+  /* BARRA ACCIONES */
+  .barra { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+  .barra-izq { display:flex; align-items:center; gap:10px; }
+  .contador { font-size:14px; color:var(--gris); font-weight:600; }
+  .btn-nuevo { background:var(--azul); color:white; border:none; padding:11px 20px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px; transition:background 0.2s; }
+  .btn-nuevo:hover { background:var(--azul-hover); }
+  .btn-importar { background:#f8fafc; color:var(--gris); border:2px dashed var(--borde); padding:11px 20px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
+  .btn-importar:hover { background:var(--azul-claro); border-color:var(--azul); color:var(--azul); }
+  .btn-plantilla { background:#fefce8; color:#854d0e; border:1px solid #fde68a; padding:11px 16px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:background 0.2s; text-decoration:none; display:flex; align-items:center; gap:6px; }
+  .btn-plantilla:hover { background:#fef08a; }
+
+  /* PREVIEW IMPORTACIÓN */
+  .preview-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); margin-bottom:20px; overflow:hidden; display:none; }
+  .preview-wrap.open { display:block; }
+  .preview-header { background:#f8fafc; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--borde); }
+  .preview-header h3 { font-size:15px; font-weight:800; }
+  .preview-resumen { display:flex; gap:16px; flex-wrap:wrap; }
+  .preview-chip { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+  .chip-ok     { background:var(--verde-claro); color:var(--verde); }
+  .chip-error  { background:var(--rojo-claro);  color:var(--rojo); }
+  .chip-total  { background:var(--azul-claro);  color:var(--azul); }
+  .preview-tabla { overflow-x:auto; max-height:300px; overflow-y:auto; }
+  .preview-tabla table { font-size:13px; }
+  .fila-ok    td { background:#f0fdf4; }
+  .fila-error td { background:#fef2f2; }
+  .fila-error .error-msg { color:var(--rojo); font-size:11px; font-weight:600; }
+  .preview-footer { padding:14px 18px; border-top:1px solid var(--borde); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .progress-wrap { display:none; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--gris); }
+  .progress-wrap.open { display:flex; }
+  .progress-bar { width:200px; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--azul); border-radius:4px; transition:width 0.3s; }
+
+  /* TABLA */
+  .tabla-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); overflow:hidden; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  thead tr { background:#f8fafc; }
+  th { padding:13px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--gris); border-bottom:2px solid var(--borde); white-space:nowrap; }
+  td { padding:14px 16px; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#fafbfc; }
+
+  .avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:white; flex-shrink:0; }
+  .nombre-wrap { display:flex; align-items:center; gap:10px; }
+  .nombre-txt { font-weight:700; font-size:14px; }
+  .usuario-txt { font-size:12px; color:var(--gris); margin-top:2px; font-family:monospace; }
+
+  .rol-badge { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; }
+  .rol-ADMINISTRADOR { background:#fef3c7; color:#92400e; }
+  .rol-DIRECTIVO     { background:#ede9fe; color:#5b21b6; }
+  .rol-DOCENTE       { background:var(--azul-claro); color:var(--azul); }
+  .rol-PREFECTO      { background:#fce7f3; color:#9d174d; }
+  .rol-TRABAJO-SOCIAL{ background:var(--verde-claro); color:var(--verde); }
+
+  .acciones { display:flex; gap:8px; }
+  .btn-accion { border:none; border-radius:8px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .btn-editar  { background:#eff6ff; color:var(--azul); }
+  .btn-editar:hover  { background:#dbeafe; }
+  .btn-clave   { background:#fefce8; color:#854d0e; }
+  .btn-clave:hover   { background:#fef08a; }
+  .btn-eliminar{ background:var(--rojo-claro); color:var(--rojo); }
+  .btn-eliminar:hover{ background:#fecaca; }
+
+  .yo-badge { background:#f0fdf4; color:var(--verde); border:1px solid #bbf7d0; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; margin-left:6px; }
+
+  /* MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); display:none; align-items:center; justify-content:center; z-index:1000; padding:20px; backdrop-filter:blur(3px); }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--blanco); border-radius:16px; padding:28px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.2s ease; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .modal h2 { font-size:18px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+  .campo { margin-bottom:16px; }
+  .campo label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--gris); margin-bottom:6px; }
+  .campo input, .campo select {
+    width:100%; padding:11px 14px; border:2px solid var(--borde); border-radius:10px;
+    font-size:14px; font-family:inherit; color:var(--texto); background:var(--blanco);
+    transition:border-color 0.15s; outline:none;
+  }
+  .campo input:focus, .campo select:focus { border-color:var(--azul); }
+  .campo .hint { font-size:12px; color:var(--gris); margin-top:5px; }
+  .modal-acciones { display:flex; gap:10px; margin-top:22px; }
+  .btn-guardar { flex:1; background:var(--azul); color:white; border:none; padding:12px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition:background 0.2s; }
+  .btn-guardar:hover { background:var(--azul-hover); }
+  .btn-cancelar { background:#f1f5f9; color:var(--gris); border:none; padding:12px 18px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn-cancelar:hover { background:#e2e8f0; }
+
+  /* ALERTA */
+  .alerta { padding:12px 16px; border-radius:10px; font-size:13px; font-weight:600; margin-bottom:16px; display:none; }
+  .alerta.error   { background:var(--rojo-claro); color:var(--rojo); display:block; }
+  .alerta.exito   { background:var(--verde-claro); color:var(--verde); display:block; }
+
+  /* EMPTY STATE */
+  .empty { text-align:center; padding:48px 20px; color:var(--gris); }
+  .empty .icon { font-size:48px; margin-bottom:12px; }
+
+  /* CONFIRM */
+  .confirm-nombre { font-weight:800; color:var(--rojo); }
+
+  @media(max-width:640px) {
+    th:nth-child(3), td:nth-child(3) { display:none; }
+    .acciones { flex-direction:column; }
+  }
+</style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">👥</div>
+    <div>
+      <h1>Gestión de Usuarios</h1>
+      <p>Administra el acceso al sistema EST 84</p>
+    </div>
+  </div>
+  <a href="dashboard.html" class="btn-volver">← Volver al Dashboard</a>
+</div>
+
+<div class="contenido">
+
+  <div class="barra">
+    <div class="barra-izq">
+      <span class="contador" id="contadorUsuarios">Cargando...</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <a class="btn-plantilla" onclick="descargarPlantilla()">📥 Descargar plantilla Excel</a>
+      <label class="btn-importar">
+        📂 Importar desde Excel/CSV
+        <input type="file" id="inputImportar" accept=".xlsx,.xls,.csv" style="display:none" onchange="procesarArchivo(event)">
+      </label>
+      <button class="btn-nuevo" onclick="abrirModalNuevo()">+ Nuevo Usuario</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW IMPORTACIÓN -->
+  <div class="preview-wrap" id="previewWrap">
+    <div class="preview-header">
+      <h3>📋 Vista previa — Importación de usuarios</h3>
+      <div class="preview-resumen">
+        <span class="preview-chip chip-total" id="chipTotal"></span>
+        <span class="preview-chip chip-ok"    id="chipOk"></span>
+        <span class="preview-chip chip-error" id="chipError"></span>
+      </div>
+    </div>
+    <div class="preview-tabla">
+      <table>
+        <thead><tr><th>#</th><th>Nombre completo</th><th>Usuario</th><th>Contraseña</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="preview-footer">
+      <button class="btn-guardar" style="background:var(--verde);border:none;padding:10px 20px;border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="importarUsuarios()">
+        ✅ Importar válidos
+      </button>
+      <button class="btn-cancelar" style="background:#f1f5f9;border:none;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--gris);" onclick="cancelarImportacion()">
+        Cancelar
+      </button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <span id="progressTxt">0 / 0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Login</th>
+          <th>Rol</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaUsuarios">
+        <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gris);">Cargando usuarios...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR -->
+<div class="modal-overlay" id="modalUsuario">
+  <div class="modal">
+    <h2 id="modalTitulo">👤 Nuevo Usuario</h2>
+    <div class="alerta" id="modalAlerta"></div>
+    <input type="hidden" id="campoId">
+
+    <div class="campo">
+      <label>Nombre completo</label>
+      <input type="text" id="campoNombre" placeholder="Ej: GARCÍA PÉREZ JUAN CARLOS" maxlength="100">
+    </div>
+    <div class="campo">
+      <label>Nombre de usuario (para login)</label>
+      <input type="text" id="campoUsuario" placeholder="Ej: JGARCIA" maxlength="50">
+      <div class="hint">Sin espacios, se guardará en mayúsculas</div>
+    </div>
+    <div class="campo" id="campoPasswordWrap">
+      <label>Contraseña</label>
+      <input type="password" id="campoPassword" placeholder="Mínimo 6 caracteres" maxlength="100">
+    </div>
+    <div class="campo">
+      <label>Rol</label>
+      <select id="campoRol" onchange="toggleCampoGrupos()">
+        <option value="">— Selecciona un rol —</option>
+        <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+        <option value="DIRECTIVO">DIRECTIVO</option>
+        <option value="DOCENTE">DOCENTE</option>
+        <option value="PREFECTO">PREFECTO</option>
+        <option value="TRABAJO SOCIAL">TRABAJO SOCIAL</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label>Nombre para saludo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(opcional)</span></label>
+      <input type="text" id="campoNombreCorto" placeholder="Ej: ISRAEL, MARI, PROFE JUAN" maxlength="40">
+      <div class="hint">Así aparecerá en el saludo de bienvenida</div>
+    </div>
+
+    <div class="campo" id="campoGruposWrap" style="display:none">
+      <label>Grupos asignados <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(selecciona los que imparte)</span></label>
+      <div id="campoGrupos" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1A"> 1°A</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1B"> 1°B</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1C"> 1°C</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1D"> 1°D</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1E"> 1°E</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="1F"> 1°F</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2A"> 2°A</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2B"> 2°B</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2C"> 2°C</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2D"> 2°D</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2E"> 2°E</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="2F"> 2°F</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3A"> 3°A</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3B"> 3°B</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3C"> 3°C</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3D"> 3°D</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3E"> 3°E</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="3F"> 3°F</label>
+      </div>
+    </div>
+
+    <div class="modal-acciones">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardar" onclick="guardarUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR CONTRASEÑA -->
+<div class="modal-overlay" id="modalClave">
+  <div class="modal">
+    <h2>🔑 Cambiar Contraseña</h2>
+    <div class="alerta" id="claveAlerta"></div>
+    <input type="hidden" id="claveId">
+    <p style="font-size:14px;color:var(--gris);margin-bottom:16px;" id="claveNombreLabel"></p>
+
+    <div class="campo">
+      <label>Nueva contraseña</label>
+      <input type="password" id="campoClave1" placeholder="Mínimo 6 caracteres" maxlength="100">
+    </div>
+    <div class="campo">
+      <label>Confirmar contraseña</label>
+      <input type="password" id="campoClave2" placeholder="Repite la contraseña" maxlength="100">
+      <div class="hint">⚠️ Al cambiar la contraseña, la sesión activa del usuario se cerrará automáticamente.</div>
+    </div>
+
+    <div class="modal-acciones">
+      <button class="btn-cancelar" onclick="cerrarModalClave()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarClave()">Actualizar Contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINAR -->
+<div class="modal-overlay" id="modalEliminar">
+  <div class="modal">
+    <h2>🗑️ Eliminar Usuario</h2>
+    <input type="hidden" id="eliminarId">
+    <p style="font-size:14px;line-height:1.6;color:#374151;">
+      ¿Estás seguro de que deseas eliminar al usuario <span class="confirm-nombre" id="eliminarNombre"></span>?
+      <br><br>
+      <span style="color:var(--rojo);font-weight:600;">Esta acción no se puede deshacer.</span>
+    </p>
+    <div class="modal-acciones" style="margin-top:22px;">
+      <button class="btn-cancelar" onclick="cerrarModalEliminar()">Cancelar</button>
+      <button class="btn-guardar" style="background:var(--rojo);" onclick="confirmarEliminar()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+
+  const miId = (() => {
+    try { return JSON.parse(atob(localStorage.getItem('authToken').split('.')[1])).id; } catch(e) { return null; }
+  })();
+
+  const COLORES_ROL = {
+    'ADMINISTRADOR':'#92400e','DIRECTIVO':'#5b21b6','DOCENTE':'#1d4ed8','PREFECTO':'#9d174d','TRABAJO SOCIAL':'#166534'
+  };
+  const BG_ROL = {
+    'ADMINISTRADOR':'#fef3c7','DIRECTIVO':'#ede9fe','DOCENTE':'#eff6ff','PREFECTO':'#fce7f3','TRABAJO SOCIAL':'#f0fdf4'
+  };
+
+  let usuarios = [];
+  let modoEdicion = false;
+
+  window.onload = cargarUsuarios;
+
+  async function cargarUsuarios() {
+    const res = await apiFetch('/api/usuarios');
+    if (!res) return;
+    usuarios = await res.json();
+    renderTabla();
+  }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tablaUsuarios');
+    document.getElementById('contadorUsuarios').textContent = `${usuarios.length} usuario${usuarios.length !== 1 ? 's' : ''} registrado${usuarios.length !== 1 ? 's' : ''}`;
+
+    if (usuarios.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="icon">👥</div><p>No hay usuarios registrados.</p></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = usuarios.map(u => {
+      const iniciales = u.nombre_completo.split(' ').slice(0,2).map(w => w[0]).join('');
+      const rolKey = u.rol.replace(' ','-');
+      const esYo = u.id_usuario === miId;
+      return `<tr>
+        <td>
+          <div class="nombre-wrap">
+            <div class="avatar" style="background:${COLORES_ROL[u.rol] || '#64748b'};">${iniciales}</div>
+            <div>
+              <div class="nombre-txt">${esc(u.nombre_completo)} ${esYo ? '<span class="yo-badge">Tú</span>' : ''}</div>
+              <div class="usuario-txt">@${esc(u.usuario)}</div>
+            </div>
+          </div>
+        </td>
+        <td><code style="font-size:13px;background:#f1f5f9;padding:3px 8px;border-radius:6px;">${esc(u.usuario)}</code></td>
+        <td><span class="rol-badge rol-${rolKey}" style="background:${BG_ROL[u.rol]};color:${COLORES_ROL[u.rol]};">${esc(u.rol)}</span></td>
+        <td>
+          <div class="acciones">
+            <button class="btn-accion btn-editar" onclick="abrirModalEditar(${u.id_usuario})">✏️ Editar</button>
+            <button class="btn-accion btn-clave"  onclick="abrirModalClave(${u.id_usuario})">🔑 Contraseña</button>
+            ${!esYo ? `<button class="btn-accion btn-eliminar" onclick="abrirModalEliminar(${u.id_usuario})">🗑️ Eliminar</button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── IMPORTACIÓN MASIVA ──
+  const ROLES_VALIDOS_SET = new Set(['ADMINISTRADOR','DIRECTIVO','DOCENTE','PREFECTO','TRABAJO SOCIAL']);
+  let filasPendientes = [];
+
+  function descargarPlantilla() {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['nombre_completo','usuario','password','rol'],
+      ['GARCÍA PÉREZ JUAN','JGARCIA','Contraseña123','DOCENTE'],
+      ['LÓPEZ TORRES ANA','ALOPEZ','Contraseña456','PREFECTO'],
+    ]);
+    ws['!cols'] = [{wch:35},{wch:20},{wch:20},{wch:20}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+    XLSX.writeFile(wb, 'plantilla_usuarios_EST84.xlsx');
+  }
+
+  function procesarArchivo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = ''; // Permitir re-subir el mismo archivo
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const wb = XLSX.read(ev.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      filasPendientes = filas.map((f, i) => {
+        const nombre = String(f.nombre_completo || '').trim().toUpperCase();
+        const usuario = String(f.usuario || '').trim().toUpperCase();
+        const password = String(f.password || '').trim();
+        const rol = String(f.rol || '').trim().toUpperCase();
+        let errores = [];
+        if (!nombre)                              errores.push('Nombre vacío');
+        if (!usuario || usuario.length < 3)       errores.push('Usuario inválido');
+        if (!password || password.length < 6)     errores.push('Contraseña < 6 chars');
+        if (!ROLES_VALIDOS_SET.has(rol))          errores.push(`Rol inválido: "${rol}"`);
+        return { num: i+1, nombre, usuario, password, rol, errores, valido: errores.length === 0 };
+      });
+
+      renderPreview();
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  function renderPreview() {
+    const validos = filasPendientes.filter(f => f.valido).length;
+    const errores = filasPendientes.filter(f => !f.valido).length;
+    document.getElementById('chipTotal').textContent = `${filasPendientes.length} filas`;
+    document.getElementById('chipOk').textContent    = `✅ ${validos} válidos`;
+    document.getElementById('chipError').textContent = `❌ ${errores} con error`;
+    document.getElementById('chipError').style.display = errores > 0 ? '' : 'none';
+
+    document.getElementById('previewBody').innerHTML = filasPendientes.map(f => `
+      <tr class="${f.valido ? 'fila-ok' : 'fila-error'}">
+        <td>${f.num}</td>
+        <td>${esc(f.nombre)}</td>
+        <td><code>${esc(f.usuario)}</code></td>
+        <td>${'•'.repeat(Math.min(f.password.length, 10))}</td>
+        <td>${esc(f.rol)}</td>
+        <td>${f.valido ? '✅ OK' : `<span class="error-msg">❌ ${esc(f.errores.join(', '))}</span>`}</td>
+      </tr>`).join('');
+
+    document.getElementById('previewWrap').classList.add('open');
+    document.getElementById('progressWrap').classList.remove('open');
+  }
+
+  function cancelarImportacion() {
+    filasPendientes = [];
+    document.getElementById('previewWrap').classList.remove('open');
+  }
+
+  async function importarUsuarios() {
+    const validos = filasPendientes.filter(f => f.valido);
+    if (validos.length === 0) { alert('No hay filas válidas para importar.'); return; }
+
+    const progress = document.getElementById('progressWrap');
+    const fill     = document.getElementById('progressFill');
+    const txt      = document.getElementById('progressTxt');
+    progress.classList.add('open');
+
+    let ok = 0, errores = 0;
+    for (let i = 0; i < validos.length; i++) {
+      const f = validos[i];
+      txt.textContent  = `${i+1} / ${validos.length}`;
+      fill.style.width = `${Math.round((i+1)/validos.length*100)}%`;
+
+      const res = await apiFetch('/api/usuarios', {
+        method: 'POST',
+        body: JSON.stringify({ nombre_completo: f.nombre, usuario: f.usuario, password: f.password, rol: f.rol })
+      });
+      if (res) {
+        const data = await res.json();
+        data.exito ? ok++ : errores++;
+      } else { errores++; }
+    }
+
+    progress.classList.remove('open');
+    cancelarImportacion();
+    await cargarUsuarios();
+    registrarLog('IMPORTAR_USUARIOS', `${ok} usuarios creados`);
+    alert(`Importación completada:\n✅ ${ok} usuarios creados\n❌ ${errores} errores (usuarios duplicados o datos inválidos)`);
+  }
+
+  // ── MODAL NUEVO ──
+  function abrirModalNuevo() {
+    modoEdicion = false;
+    document.getElementById('modalTitulo').textContent = '👤 Nuevo Usuario';
+    document.getElementById('campoId').value = '';
+    document.getElementById('campoNombre').value = '';
+    document.getElementById('campoUsuario').value = '';
+    document.getElementById('campoPassword').value = '';
+    document.getElementById('campoRol').value = '';
+    document.getElementById('campoPasswordWrap').style.display = 'block';
+    document.getElementById('campoPassword').required = true;
+    document.getElementById('modalAlerta').className = 'alerta';
+    document.getElementById('modalUsuario').classList.add('open');
+    document.getElementById('campoNombreCorto').value = '';
+    setGrupos([]);
+    document.getElementById('campoGruposWrap').style.display = 'none';
+    document.getElementById('campoNombre').focus();
+  }
+
+  function abrirModalEditar(id) {
+    const u = usuarios.find(x => x.id_usuario === id);
+    if (!u) return;
+    modoEdicion = true;
+    document.getElementById('modalTitulo').textContent = '✏️ Editar Usuario';
+    document.getElementById('campoId').value = u.id_usuario;
+    document.getElementById('campoNombre').value = u.nombre_completo;
+    document.getElementById('campoUsuario').value = u.usuario;
+    document.getElementById('campoPassword').value = '';
+    document.getElementById('campoRol').value = u.rol;
+    document.getElementById('campoNombreCorto').value = u.nombre_corto || '';
+    const rolActual = u.rol;
+    document.getElementById('campoGruposWrap').style.display = (rolActual === 'DOCENTE' || rolActual === 'PREFECTO') ? 'block' : 'none';
+    setGrupos(u.grupos || []);
+    document.getElementById('campoPasswordWrap').style.display = 'none';
+    document.getElementById('modalAlerta').className = 'alerta';
+    document.getElementById('modalUsuario').classList.add('open');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalUsuario').classList.remove('open');
+  }
+
+  function toggleCampoGrupos() {
+    const rol = document.getElementById('campoRol').value;
+    const wrap = document.getElementById('campoGruposWrap');
+    wrap.style.display = (rol === 'DOCENTE' || rol === 'PREFECTO') ? 'block' : 'none';
+    if (rol !== 'DOCENTE' && rol !== 'PREFECTO') setGrupos([]);
+  }
+
+  function getGrupos() {
+    return Array.from(document.querySelectorAll('#campoGrupos input[type=checkbox]:checked')).map(cb => cb.value);
+  }
+
+  function setGrupos(arr) {
+    document.querySelectorAll('#campoGrupos input[type=checkbox]').forEach(cb => {
+      cb.checked = Array.isArray(arr) && arr.includes(cb.value);
+    });
+  }
+
+  async function guardarUsuario() {
+    const alerta = document.getElementById('modalAlerta');
+    alerta.className = 'alerta';
+
+    const nombre   = document.getElementById('campoNombre').value.trim();
+    const usuario  = document.getElementById('campoUsuario').value.trim();
+    const password = document.getElementById('campoPassword').value;
+    const rol      = document.getElementById('campoRol').value;
+    const id       = document.getElementById('campoId').value;
+
+    if (!nombre || !usuario || !rol) {
+      alerta.textContent = 'Nombre, usuario y rol son obligatorios.';
+      alerta.className = 'alerta error';
+      return;
+    }
+    if (!modoEdicion && !password) {
+      alerta.textContent = 'La contraseña es obligatoria para usuarios nuevos.';
+      alerta.className = 'alerta error';
+      return;
+    }
+
+    const btn = document.getElementById('btnGuardar');
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
+
+    const nombre_corto = document.getElementById('campoNombreCorto').value.trim();
+    const grupos = getGrupos();
+    const body = { nombre_completo: nombre, usuario, rol, nombre_corto: nombre_corto || null, grupos: grupos.length > 0 ? grupos : null };
+    if (!modoEdicion) body.password = password;
+
+    const metodo = modoEdicion ? 'PATCH' : 'POST';
+    if (modoEdicion) body.id_usuario = parseInt(id);
+
+    const res = await apiFetch('/api/usuarios', {
+      method: metodo,
+      body: JSON.stringify(body)
+    });
+
+    btn.textContent = 'Guardar';
+    btn.disabled = false;
+
+    if (!res) return;
+    const data = await res.json();
+    if (data.error) {
+      alerta.textContent = data.error;
+      alerta.className = 'alerta error';
+      return;
+    }
+
+    cerrarModal();
+    if (!modoEdicion) registrarLog('CREAR_USUARIO', `Usuario: ${usuario}`);
+    else registrarLog('EDITAR_USUARIO', `ID: ${id}`);
+    await cargarUsuarios();
+  }
+
+  // ── MODAL CONTRASEÑA ──
+  function abrirModalClave(id) {
+    const u = usuarios.find(x => x.id_usuario === id);
+    if (!u) return;
+    document.getElementById('claveId').value = id;
+    document.getElementById('claveNombreLabel').textContent = `Usuario: ${u.nombre_completo}`;
+    document.getElementById('campoClave1').value = '';
+    document.getElementById('campoClave2').value = '';
+    document.getElementById('claveAlerta').className = 'alerta';
+    document.getElementById('modalClave').classList.add('open');
+  }
+
+  function cerrarModalClave() {
+    document.getElementById('modalClave').classList.remove('open');
+  }
+
+  async function guardarClave() {
+    const alerta = document.getElementById('claveAlerta');
+    alerta.className = 'alerta';
+    const id    = document.getElementById('claveId').value;
+    const clave1 = document.getElementById('campoClave1').value;
+    const clave2 = document.getElementById('campoClave2').value;
+
+    if (!clave1 || clave1.length < 6) {
+      alerta.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+      alerta.className = 'alerta error'; return;
+    }
+    if (clave1 !== clave2) {
+      alerta.textContent = 'Las contraseñas no coinciden.';
+      alerta.className = 'alerta error'; return;
+    }
+
+    const res = await apiFetch('/api/usuarios', {
+      method: 'PATCH',
+      body: JSON.stringify({ id_usuario: parseInt(id), password: clave1 })
+    });
+    if (!res) return;
+    const data = await res.json();
+    if (data.error) {
+      alerta.textContent = data.error;
+      alerta.className = 'alerta error'; return;
+    }
+    cerrarModalClave();
+    alerta.className = 'alerta';
+    registrarLog('CAMBIAR_CONTRASENA', `Usuario ID: ${id}`);
+    await cargarUsuarios();
+    alert('✅ Contraseña actualizada. La sesión activa del usuario se cerró automáticamente.');
+  }
+
+  // ── MODAL ELIMINAR ──
+  function abrirModalEliminar(id) {
+    const u = usuarios.find(x => x.id_usuario === id);
+    if (!u) return;
+    document.getElementById('eliminarId').value = id;
+    document.getElementById('eliminarNombre').textContent = u.nombre_completo;
+    document.getElementById('modalEliminar').classList.add('open');
+  }
+
+  function cerrarModalEliminar() {
+    document.getElementById('modalEliminar').classList.remove('open');
+  }
+
+  async function confirmarEliminar() {
+    const id = parseInt(document.getElementById('eliminarId').value);
+    const res = await apiFetch('/api/usuarios', {
+      method: 'DELETE',
+      body: JSON.stringify({ id_usuario: id })
+    });
+    if (!res) return;
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    cerrarModalEliminar();
+    registrarLog('ELIMINAR_USUARIO', `ID: ${id}`);
+    await cargarUsuarios();
+  }
+
+  // Cerrar modales con ESC
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      cerrarModal();
+      cerrarModalClave();
+      cerrarModalEliminar();
+    }
+  });
+</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+</body>
+</html>

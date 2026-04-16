@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --naranja: #f59e0b; --naranja-claro: #fffbeb;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            background: var(--azul);
+            padding: 0 28px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { display: flex; align-items: center; gap: 10px; color: white; font-weight: 800; font-size: 17px; }
+        .navbar-brand span { font-size: 22px; }
+        .navbar-menu { display: flex; align-items: center; gap: 8px; }
+        .navbar-menu a {
+            text-decoration: none; color: rgba(255,255,255,0.8); font-weight: 600;
+            font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s;
+        }
+        .navbar-menu a:hover { background: rgba(255,255,255,0.12); color: white; }
+        .navbar-menu a.salir { color: #fca5a5; }
+        .navbar-menu a.salir:hover { background: rgba(230,57,70,0.2); color: #fca5a5; }
+        .navbar-nombre {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 5px 14px; color: white; font-size: 13px; font-weight: 600;
+        }
+
+        /* ── CONTENIDO ── */
+        .contenido { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+
+        /* ── KPI CARDS ── */
+        .grid-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .tarjeta-kpi {
+            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+            padding: 24px 22px;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative; overflow: hidden;
+        }
+        .tarjeta-kpi.clickable { cursor: pointer; }
+        .tarjeta-kpi.clickable:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .tarjeta-kpi::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 4px; height: 100%; background: var(--azul);
+            border-radius: 16px 0 0 16px;
+        }
+        .tarjeta-kpi.naranja::before { background: var(--naranja); }
+        .tarjeta-kpi.rojo::before    { background: var(--rojo); }
+        .tarjeta-kpi.verde::before   { background: var(--verde); }
+        .kpi-icono { font-size: 22px; margin-bottom: 12px; display: block; }
+        .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+        .kpi-valor { font-size: 36px; font-weight: 900; color: var(--texto); line-height: 1; margin-bottom: 6px; }
+        .tarjeta-kpi.naranja .kpi-valor { color: var(--naranja); }
+        .tarjeta-kpi.rojo .kpi-valor    { color: var(--rojo); }
+        .tarjeta-kpi.verde .kpi-valor   { color: var(--verde); }
+        .kpi-hint { font-size: 12px; color: var(--muted); }
+        .kpi-badge-accion {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 700; margin-top: 10px;
+            color: var(--azul); background: var(--azul-claro);
+            padding: 3px 10px; border-radius: 20px;
+        }
+        .tarjeta-kpi.naranja .kpi-badge-accion { color: #92400e; background: var(--naranja-claro); }
+        .tarjeta-kpi.rojo .kpi-badge-accion    { color: var(--rojo); background: var(--rojo-claro); }
+
+        /* ── SECCIÓN TÍTULO ── */
+        .seccion-titulo {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .seccion-titulo::after {
+            content: ''; flex: 1; height: 1px; background: var(--borde);
+        }
+
+        /* ── GRID DE ALERTAS (2 columnas) ── */
+        .grid-alertas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+
+        /* ── TARJETA DE ALERTA ── */
+        .tarjeta-alerta {
+            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+            padding: 22px 24px;
+            display: flex; flex-direction: column; gap: 16px;
+            transition: box-shadow 0.15s;
+        }
+        .tarjeta-alerta:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.07); }
+        .alerta-top { display: flex; align-items: flex-start; gap: 14px; }
+        .alerta-icono {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .alerta-icono.naranja { background: var(--naranja-claro); }
+        .alerta-icono.morado  { background: #f5f3ff; }
+        .alerta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; }
+        .alerta-valor { font-size: 32px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+        .alerta-valor.naranja { color: #d97706; }
+        .alerta-valor.morado  { color: #7c3aed; }
+        .alerta-desc  { font-size: 12px; color: var(--muted); }
+        .alerta-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--borde); }
+        .alerta-meta  { font-size: 12px; color: var(--muted); font-weight: 600; }
+        .btn-ver-detalle {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 18px; border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s; text-decoration: none;
+        }
+        .btn-ver-detalle.naranja { background: var(--naranja-claro); color: #92400e; border: 1.5px solid #fde68a; }
+        .btn-ver-detalle.naranja:hover { background: #fde68a; }
+        .btn-ver-detalle.morado  { background: #f5f3ff; color: #6b21a8; border: 1.5px solid #e9d5ff; }
+        .btn-ver-detalle.morado:hover  { background: #e9d5ff; }
+
+        /* ── INDICADOR SECUNDARIO (Motivos de Reprobación) ── */
+        .panel-indicador {
+            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+            padding: 16px 22px; margin-bottom: 28px;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+        .indicador-izq { display: flex; align-items: center; gap: 12px; }
+        .indicador-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rojo); flex-shrink: 0; }
+        .indicador-texto { font-size: 13px; font-weight: 600; color: var(--texto); }
+        .indicador-valor { font-size: 20px; font-weight: 900; color: var(--rojo); margin-left: 8px; }
+        .indicador-sub   { font-size: 12px; color: var(--muted); margin-left: 4px; }
+        .btn-indicador {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px; border: 1.5px solid var(--rojo-claro);
+            border-radius: 8px; background: var(--rojo-claro);
+            font-size: 12px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            color: var(--rojo); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-indicador:hover { background: #fecdd3; border-color: #fecdd3; }
+
+        /* ── HERRAMIENTAS ── */
+        .panel-tools {
+            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+            padding: 20px 24px; margin-bottom: 28px;
+        }
+        .panel-tools-titulo {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted); margin-bottom: 14px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tools-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tool-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            border-radius: 10px; padding: 10px 16px;
+            text-decoration: none; font-weight: 700; font-size: 13px;
+            transition: all 0.15s; border: 1.5px solid transparent;
+        }
+        .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tool-azul    { background: var(--azul-claro); color: var(--azul); border-color: #bfdbfe; }
+        .tool-verde   { background: var(--verde-claro); color: var(--verde); border-color: #bbf7d0; }
+        .tool-naranja { background: var(--naranja-claro); color: #92400e; border-color: #fde68a; }
+        .tool-morado  { background: #f5f3ff; color: #6b21a8; border-color: #e9d5ff; }
+        .tool-esmeralda { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+        .tool-gris    { background: #f8fafc; color: #334155; border-color: var(--borde); }
+        .tool-rojo    { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+
+        /* ── GRÁFICA ── */
+        .panel-grafica {
+            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); padding: 24px;
+        }
+        .panel-grafica-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+        }
+        .panel-grafica-titulo { font-size: 16px; font-weight: 800; }
+        .grafica-select {
+            padding: 9px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 600;
+            color: var(--azul); background: var(--azul-claro); cursor: pointer; outline: none;
+        }
+        .chart-container { position: relative; height: 320px; width: 100%; }
+        @media (max-width: 600px) { .chart-container { height: 240px; } }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.55); display: none; align-items: center;
+            justify-content: center; z-index: 1000; backdrop-filter: blur(4px); padding: 16px;
+        }
+        .modal-contenido {
+            background: var(--blanco); border-radius: 20px; width: 100%;
+            max-width: 920px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            padding: 22px 28px 18px; border-bottom: 1px solid var(--borde);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; background: var(--blanco); z-index: 1;
+            border-radius: 20px 20px 0 0;
+        }
+        .modal-titulo { font-size: 18px; font-weight: 800; color: var(--azul); }
+        .modal-cerrar {
+            width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--borde);
+            background: var(--blanco); font-size: 18px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: background 0.15s;
+        }
+        .modal-cerrar:hover { background: var(--fondo); }
+        .modal-body { padding: 20px 28px 28px; overflow-x: auto; }
+        .modal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .modal-table th {
+            background: #f8fafc; padding: 11px 14px; text-align: left;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--muted); border-bottom: 2px solid var(--borde);
+        }
+        .modal-table td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .modal-table tr:last-child td { border-bottom: none; }
+        .modal-table tr:hover td { background: #fafbfc; }
+        .badge-grupo { background: var(--azul-claro); color: var(--azul); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-riesgo { color: var(--rojo); font-weight: 800; font-size: 15px; }
+        .link-exp { color: var(--azul); text-decoration: none; font-weight: 700; font-size: 12px; background: var(--azul-claro); padding: 5px 12px; border-radius: 8px; }
+        .link-exp:hover { background: #dbeafe; }
+        .modal-footer { padding: 16px 28px; border-top: 1px solid var(--borde); display:flex; justify-content:flex-end; gap:12px; align-items:center; }
+        .btn-cerrar-modal {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            background: var(--azul); color: white; font-size: 14px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-cerrar-modal:hover { background: var(--azul-hover); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) { .grid-kpi { grid-template-columns: repeat(2, 1fr); } .grid-alertas { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) {
+            .navbar { padding: 0 16px; }
+            .navbar-nombre { display: none; }
+            .navbar-brand { font-size: 15px; }
+            .contenido { padding: 16px 12px 40px; }
+            .grid-kpi { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .kpi-valor { font-size: 26px; }
+            .tools-grid { gap: 8px; }
+            .tool-btn { font-size: 12px; padding: 9px 12px; }
+            .panel-grafica { padding: 16px; }
+            .modal-contenido { max-height: 90vh; }
+            .modal-header, .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <span>🎓</span> EST 84 · Sistema Directivo
+        </div>
+        <div class="navbar-menu">
+            <span class="navbar-nombre" id="headerNombre">—</span>
+            <a href="inicio.html" id="btnInicio" style="display:none;">🏠 Inicio</a>
+            <a href="buscador.html">🔍 Alumnos</a>
+            <a href="cambiar_password.html" class="btn-nav">🔑 Contraseña</a>
+            <a href="#" onclick="cerrarSesion()" class="salir">Salir 👋</a>
+        </div>
+    </nav>
+
+    <div class="contenido">
+
+        <!-- KPIs -->
+        <div class="grid-kpi">
+            <div class="tarjeta-kpi">
+                <span class="kpi-icono">🎓</span>
+                <div class="kpi-label">Total Alumnos</div>
+                <div class="kpi-valor" id="k-alu">—</div>
+                <div class="kpi-hint">Inscritos ciclo activo</div>
+            </div>
+            <div class="tarjeta-kpi naranja clickable" onclick="abrirModal('reportes')">
+                <span class="kpi-icono">📋</span>
+                <div class="kpi-label">Reportes Disciplinarios</div>
+                <div class="kpi-valor" id="k-rep">—</div>
+                <div class="kpi-badge-accion">Ver listado →</div>
+            </div>
+            <div class="tarjeta-kpi rojo clickable" onclick="abrirModal('riesgo')">
+                <span class="kpi-icono">⚠️</span>
+                <div class="kpi-label">Alumnos en Riesgo</div>
+                <div class="kpi-valor" id="k-rie">—</div>
+                <div class="kpi-badge-accion">Ver listado →</div>
+            </div>
+            <div class="tarjeta-kpi verde">
+                <span class="kpi-icono">📈</span>
+                <div class="kpi-label">Eficiencia Terminal</div>
+                <div class="kpi-valor">98%</div>
+                <div class="kpi-hint">Ciclo escolar actual</div>
+            </div>
+        </div>
+
+        <!-- HERRAMIENTAS — solo ADMINISTRADOR -->
+        <div class="panel-tools" id="panelHerramientas" style="display:none">
+            <div class="panel-tools-titulo">🛠️ Herramientas de Administración</div>
+            <div class="tools-grid">
+                <button onclick="abrirConfigInstitucional()" class="tool-btn" style="background:#f0f9ff;color:#0369a1;border-color:#bae6fd;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Configuración Institucional</button>
+                <a href="tool_usuarios.html"       class="tool-btn tool-verde">👥 Gestión de Usuarios</a>
+                <a href="tool_logs.html"           class="tool-btn tool-gris">📋 Logs de Actividad</a>
+                <a href="tool_calificaciones.html" class="tool-btn tool-naranja">📊 Importar Calificaciones</a>
+                <a href="tool_fichas.html"         class="tool-btn tool-morado">📋 Fichas Socioeconómicas</a>
+                <a href="tool_lista_fotos.html"    class="tool-btn tool-azul">📋 Lista para Fotografías</a>
+                <a href="tool_fotos.html"          class="tool-btn tool-esmeralda">📷 Carga Masiva de Fotos</a>
+                <a href="tool_ciclo.html"          class="tool-btn" style="background:#fef3c7;color:#92400e;border-color:#fcd34d;font-weight:800;border-width:2px;">🔄 Cierre de Ciclo Escolar</a>
+                <a href="tool_reset.html"          class="tool-btn" style="background:#fef2f2;color:#dc2626;border-color:#fca5a5;font-weight:800;border-width:2px;">🗑️ Reseteo de Datos</a>
+            </div>
+        </div>
+
+        <!-- ALERTAS ACADÉMICAS -->
+        <div id="seccionAlertas" style="display:none; margin-bottom:28px;">
+            <div class="seccion-titulo">Alertas Académicas</div>
+            <div class="grid-alertas">
+
+                <!-- Riesgo Académico Parcial -->
+                <div class="tarjeta-alerta" id="seccionRiesgoParcial" style="display:none;">
+                    <div class="alerta-top">
+                        <div class="alerta-icono naranja">⚠️</div>
+                        <div>
+                            <div class="alerta-label">Riesgo Académico</div>
+                            <div class="alerta-valor naranja" id="contadorRiesgoParcial">—</div>
+                            <div class="alerta-desc">alumnos con materias en riesgo este trimestre</div>
+                        </div>
+                    </div>
+                    <div class="alerta-footer">
+                        <span class="alerta-meta">Evaluaciones parciales</span>
+                        <button onclick="abrirModalParcial()" class="btn-ver-detalle naranja">Ver detalle →</button>
+                    </div>
+                </div>
+
+                <!-- Alumnos a Recuperación -->
+                <div class="tarjeta-alerta" id="seccionRecuperacion" style="display:none;">
+                    <div class="alerta-top">
+                        <div class="alerta-icono morado">📚</div>
+                        <div>
+                            <div class="alerta-label">A Recuperación</div>
+                            <div class="alerta-valor morado" id="contadorRecuperacion">—</div>
+                            <div class="alerta-desc">alumnos con materias en período de recuperación</div>
+                        </div>
+                    </div>
+                    <div class="alerta-footer">
+                        <span class="alerta-meta">Período de recuperación</span>
+                        <button onclick="abrirModalRecuperacion()" class="btn-ver-detalle morado">Ver detalle →</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- INDICADOR SECUNDARIO: Motivos de Reprobación -->
+        <div class="panel-indicador" id="seccionMotivosAdmin" style="display:none;">
+            <div class="indicador-izq">
+                <div class="indicador-dot"></div>
+                <span class="indicador-texto">Motivos de reprobación registrados</span>
+                <span class="indicador-valor" id="contadorMotivosAdmin">—</span>
+                <span class="indicador-sub">alumnos</span>
+            </div>
+            <button onclick="abrirModalMotivos()" class="btn-indicador">Ver registros →</button>
+        </div>
+
+        <!-- GRÁFICA -->
+        <div class="panel-grafica">
+            <div class="panel-grafica-header">
+                <div class="panel-grafica-titulo">📈 Desempeño Académico Escolar</div>
+                <select class="grafica-select" id="filtro" onchange="actualizarGrafica()">
+                    <option value="materia">📚 Por Disciplina</option>
+                    <option value="grado">🏫 Por Grado</option>
+                    <option value="trimestre" id="optTrimestre" style="display:none">📅 Por Trimestre</option>
+                    <option value="comparativo" id="optComparativo" style="display:none">🔀 Comparativo trimestres</option>
+                    <option value="gradomateria">🏫 Por Disciplina y Grado</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <canvas id="graficaAprovechamiento" style="display:block; width:100%; height:100%;"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL RIESGO PARCIAL -->
+    <div class="modal-overlay" id="modalParcial">
+        <div class="modal-contenido" style="max-width:980px;">
+            <div class="modal-header">
+                <div class="modal-titulo">⚠️ Riesgo Académico — Evaluaciones Parciales</div>
+                <button class="modal-cerrar" onclick="cerrarModalParcial()">✕</button>
+            </div>
+            <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+<select id="filtroParcialTrimestre" onchange="filtrarParcial()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los trimestres</option>
+                    <option value="1">Trimestre 1</option>
+                    <option value="2">Trimestre 2</option>
+                    <option value="3">Trimestre 3</option>
+                </select>
+                <select id="filtroParcialGrado" onchange="filtrarParcial()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grados</option>
+                    <option value="1">1° Grado</option>
+                    <option value="2">2° Grado</option>
+                    <option value="3">3° Grado</option>
+                </select>
+                <select id="filtroParcialGrupo" onchange="filtrarParcial()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grupos</option>
+                    <option value="A">Grupo A</option>
+                    <option value="B">Grupo B</option>
+                    <option value="C">Grupo C</option>
+                    <option value="D">Grupo D</option>
+                    <option value="E">Grupo E</option>
+                    <option value="F">Grupo F</option>
+                </select>
+                <span id="contadorFiltroParcial" style="font-size:13px; color:var(--muted); font-weight:600; margin-left:4px;"></span>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <table class="modal-table" id="tablaParcialModal">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Grado/Grupo</th>
+                            <th>Materias en riesgo</th>
+                            <th style="text-align:center;">Expediente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyParcialModal"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:12px;">
+                <button onclick="exportarParcialPDF()" style="padding:10px 20px; background:#f59e0b; color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">🖨️ Exportar PDF</button>
+                <button class="btn-cerrar-modal" style="width:auto; padding:10px 20px;" onclick="cerrarModalParcial()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="miModal">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <div class="modal-titulo" id="m-tit">Detalles</div>
+                <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <table class="modal-table" id="m-tab"></table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth-helper.js"></script>
+    <script>
+        verificarSesion();
+        let myChart = null;
+        let statsData = null;
+
+        window.onload = async () => {
+            const nombre      = localStorage.getItem('nombreActivo');
+            const nombreCorto = localStorage.getItem('nombreCorto') || nombre;
+            const rol    = localStorage.getItem('rolActivo');
+            window.ROL_DASHBOARD = rol;
+            if (!nombre) return window.location.href = 'index.html';
+
+            document.getElementById('headerNombre').textContent = nombreCorto;
+
+            if (rol === 'DIRECTIVO' || rol === 'ADMINISTRADOR') {
+                document.getElementById('btnInicio').style.display = 'inline-block';
+            }
+
+            if (rol === 'ADMINISTRADOR') {
+                document.getElementById('panelHerramientas').style.display = 'block';
+            }
+
+            registrarLog('VER_DASHBOARD');
+            await cargarKpis();
+            cargarRiesgoParcial();
+            cargarMotivosAdmin();
+            cargarRecuperacion();
+
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=estadisticas');
+                statsData = await res.json();
+
+                const trimsCon = statsData.porTrimestre.valores.filter(v => v > 0).length;
+                if (trimsCon >= 1) document.getElementById('optTrimestre').style.display = '';
+                if (trimsCon >= 2) document.getElementById('optComparativo').style.display = '';
+                const todosEnCero = statsData.porMateria.valores.every(v => v === 0);
+                if (todosEnCero) {
+                    document.querySelector('.chart-container').innerHTML = '<div style="text-align:center; padding:50px; color:var(--muted);"><div style="font-size:36px; margin-bottom:10px;">📭</div><p style="font-weight:700;">Sin calificaciones registradas</p><p style="font-size:13px; margin-top:4px;">Importa las calificaciones con la herramienta correspondiente.</p></div>';
+                    return;
+                }
+                requestAnimationFrame(() => setTimeout(() => actualizarGrafica(), 50));
+            } catch(e) {
+                console.error('Error gráficas', e);
+                document.querySelector('.chart-container').innerHTML = '<p style="text-align:center; padding:40px; color:red; font-size:13px;">ERROR: ' + e.message + '</p>';
+            }
+        };
+
+        if (typeof esc === 'undefined') var esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+        let datosRiesgoParcial = [];
+
+        async function cargarRiesgoParcial() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=riesgo_academico_parcial');
+                if (!res) return;
+                const data = await res.json();
+                if (!data || !Array.isArray(data) || data.length === 0) return;
+                datosRiesgoParcial = data;
+                document.getElementById('seccionRiesgoParcial').style.display = 'flex';
+                document.getElementById('contadorRiesgoParcial').textContent = data.length;
+                document.getElementById('seccionAlertas').style.display = 'block';
+            } catch(e) { console.error('Error riesgo parcial:', e); }
+        }
+
+        function abrirModalParcial() {
+            document.getElementById('modalParcial').style.display = 'flex';
+            document.getElementById('filtroParcialTrimestre').value = '';
+            document.getElementById('filtroParcialGrado').value = '';
+            document.getElementById('filtroParcialGrupo').value = '';
+            filtrarParcial();
+        }
+
+        function cerrarModalParcial() {
+            document.getElementById('modalParcial').style.display = 'none';
+        }
+
+        function filtrarParcial() {
+            const trimestre = document.getElementById('filtroParcialTrimestre').value;
+            const grado = document.getElementById('filtroParcialGrado').value;
+            const grupo = document.getElementById('filtroParcialGrupo').value;
+            let lista = [...datosRiesgoParcial];
+            if (trimestre) lista = lista.filter(a => a.materias_riesgo && a.materias_riesgo.some(m => m.startsWith(`T${trimestre}`)));
+            if (grado) lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo) lista = lista.filter(a => a.grupo === grupo);
+            document.getElementById('contadorFiltroParcial').textContent = `Mostrando ${lista.length} alumno(s)`;
+            document.getElementById('bodyParcialModal').innerHTML = lista.map(a => `
+                <tr>
+                    <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
+                    <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
+                    <td>${(a.materias_riesgo || []).map(m => `<span style="background:#fff7ed;color:#92400e;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;margin:2px;display:inline-block;">${m}</span>`).join('')}</td>
+                    <td style="text-align:center;"><a href="expediente.html?id_alumno=${a.id_alumno}" class="link-exp">Ver →</a></td>
+                </tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos en este filtro.</td></tr>`;
+        }
+
+
+
+        let datosRecuperacion = [];
+
+        async function cargarRecuperacion() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=recuperacion');
+                if (!res) return;
+                const data = await res.json();
+                if (!data || !Array.isArray(data) || data.length === 0) return;
+                datosRecuperacion = data;
+                // Contar alumnos únicos
+                const uniqueIds = new Set(data.map(a => a.id_alumno));
+                document.getElementById('seccionRecuperacion').style.display = 'flex';
+                document.getElementById('contadorRecuperacion').textContent = uniqueIds.size;
+                document.getElementById('seccionAlertas').style.display = 'block';
+            } catch(e) { console.error('Error recuperacion:', e); }
+        }
+
+        function abrirModalRecuperacion() {
+            document.getElementById('modalRecuperacion').style.display = 'flex';
+            // Preseleccionar el trimestre más reciente
+            if (datosRecuperacion.length > 0) {
+                const maxTrim = Math.max(...datosRecuperacion.map(a => a.trimestre));
+                document.getElementById('filtroRecTrimestre').value = String(maxTrim);
+            } else {
+                document.getElementById('filtroRecTrimestre').value = '';
+            }
+            document.getElementById('filtroRecGrado').value = '';
+            document.getElementById('filtroRecGrupo').value = '';
+            filtrarRecuperacion();
+        }
+
+        function cerrarModalRecuperacion() {
+            document.getElementById('modalRecuperacion').style.display = 'none';
+        }
+
+        function filtrarRecuperacion() {
+            const trimestre = document.getElementById('filtroRecTrimestre').value;
+            const grado     = document.getElementById('filtroRecGrado').value;
+            const grupo     = document.getElementById('filtroRecGrupo').value;
+            let lista = [...datosRecuperacion];
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            // Ordenar: trimestre → grado → grupo → apellido ASC
+            lista.sort((a, b) => {
+                if (a.trimestre !== b.trimestre) return a.trimestre - b.trimestre;
+                if (a.grado !== b.grado) return a.grado - b.grado;
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
+            document.getElementById('contadorFiltroRec').textContent = `Mostrando ${lista.length} registro(s)`;
+            const tbody = document.getElementById('bodyRecuperacion');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Sin alumnos con estos filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map(a => {
+                const materiasHtml = a.materias_recuperacion.map(m => {
+                    const recObj = (a.recuperacion || []).find(r => r.sigla === m.sigla);
+                    const califRec = recObj ? recObj.calif_recuperacion : null;
+                    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="font-weight:800;color:#7c3aed;min-width:36px;">${esc(m.sigla)}</span>
+                        <span style="background:#f5f3ff;color:#7c3aed;border-radius:6px;padding:2px 8px;font-size:12px;">Orig: ${m.calif}</span>
+                        ${(window.ROL_DASHBOARD === 'ADMINISTRADOR')
+                            ? `<input type="number" min="5" max="10" step="1"
+                                value="${califRec || ''}"
+                                placeholder="Cal. rec."
+                                style="width:80px;padding:5px 8px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;color:#7c3aed;text-align:center;"
+                                onchange="guardarRecuperacion(${a.id_alumno}, ${a.trimestre}, '${m.sigla}', this.value, this)">`
+                            : `<span style="width:80px;display:inline-block;padding:5px 8px;border:1.5px solid #e9d5ff;border-radius:8px;font-size:13px;font-weight:700;color:#7c3aed;text-align:center;background:#faf5ff;">${califRec || '—'}</span>`
+                        }
+                        ${califRec ? `<span style="background:#f0fdf6;color:#166534;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">✅ ${califRec}</span>` : ''}
+                    </div>`;
+                }).join('');
+                return `<tr>
+                    <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
+                    <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
+                    <td style="font-weight:600;">T${a.trimestre}</td>
+                    <td>${materiasHtml}</td>
+                    <td style="text-align:center;"><button class="link-exp" onclick="irRecExp(${a.id_alumno})">Ver →</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function guardarRecuperacion(idAlumno, trimestre, sigla, valor, inputEl) {
+            const calif = parseFloat(valor);
+            if (isNaN(calif) || calif < 5 || calif > 10) {
+                inputEl.style.borderColor = 'var(--rojo)';
+                return;
+            }
+            inputEl.style.borderColor = '#e9d5ff';
+            try {
+                const res = await apiFetch('/api/expediente?tipo=recuperacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_alumno: idAlumno, trimestre, sigla, calif_recuperacion: calif })
+                });
+                if (res && res.ok) {
+                    inputEl.style.borderColor = 'var(--verde)';
+                    // Actualizar datos locales
+                    const reg = datosRecuperacion.find(a => a.id_alumno === idAlumno && a.trimestre === trimestre);
+                    if (reg) {
+                        const idx = (reg.recuperacion || []).findIndex(r => r.sigla === sigla);
+                        if (idx >= 0) reg.recuperacion[idx].calif_recuperacion = calif;
+                        else { reg.recuperacion = reg.recuperacion || []; reg.recuperacion.push({sigla, calif_recuperacion: calif}); }
+                    }
+                    setTimeout(() => { inputEl.style.borderColor = '#e9d5ff'; filtrarRecuperacion(); }, 1500);
+                } else {
+                    inputEl.style.borderColor = 'var(--rojo)';
+                }
+            } catch(e) { inputEl.style.borderColor = 'var(--rojo)'; }
+        }
+
+        async function exportarRecuperacionPDF() {
+            const trimestre = document.getElementById('filtroRecTrimestre').value;
+            const grado     = document.getElementById('filtroRecGrado').value;
+            const grupo     = document.getElementById('filtroRecGrupo').value;
+            let lista = [...datosRecuperacion];
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            lista.sort((a, b) => {
+                if (a.trimestre !== b.trimestre) return a.trimestre - b.trimestre;
+                if (a.grado !== b.grado) return a.grado - b.grado;
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
+
+            const subtitulo = [
+                trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
+                grado ? `${grado}° Grado` : '',
+                grupo ? `Grupo ${grupo}` : ''
+            ].filter(Boolean).join(' · ') || 'Todos';
+
+            const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+            const cfg   = await getConfigInst();
+
+            // Sección de firma — solo Coordinador Académico
+            const firmasHtml = `<div style="margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;display:flex;justify-content:center;">
+                <div style="width:280px;text-align:center;">
+                    <div style="border-bottom:1px solid #000;height:40px;margin-bottom:6px;"></div>
+                    <div style="font-size:10px;color:#374151;">Coordinador(a) Académico(a)</div>
+                </div>
+            </div>`;
+
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                @page { size: letter; margin: 15mm 12mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+                table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+                th { background:#1B4F8A; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+                td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; font-size:10px; }
+                tr:nth-child(even) td { background:#f8fafc; }
+                .rec { font-weight:700; color:#7c3aed; }
+                .ok  { font-weight:700; color:#166534; }
+                h3   { font-size:12px; color:#1B4F8A; margin:0 0 2px; }
+                p    { font-size:10px; color:#64748b; margin:0 0 12px; }
+            </style></head><body>
+            ${headerInstHTML(cfg)}
+            <h3>Lista de Alumnos — Período de Recuperación</h3>
+            <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha}</p>
+            <table><thead><tr>
+                <th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Trim.</th><th>Materia</th><th>Cal. Original</th><th>Cal. Recuperación</th>
+            </tr></thead><tbody>`;
+
+            let num = 1;
+            lista.forEach(a => {
+                a.materias_recuperacion.forEach(m => {
+                    const rec = (a.recuperacion || []).find(r => r.sigla === m.sigla);
+                    const califRec = rec ? rec.calif_recuperacion : '';
+                    html += `<tr>
+                        <td style="color:#64748b;">${num++}</td>
+                        <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                        <td>${a.grado}° "${a.grupo}"</td>
+                        <td>T${a.trimestre}</td>
+                        <td class="rec">${esc(m.sigla)}</td>
+                        <td style="color:#e63946;font-weight:700;">${m.calif}</td>
+                        <td class="${califRec ? 'ok' : ''}">${califRec || '—'}</td>
+                    </tr>`;
+                });
+            });
+
+            html += `</tbody></table>${firmasHtml}</body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+        }
+
+        async function exportarParcialPDF() {
+            const trimestre = document.getElementById('filtroParcialTrimestre').value;
+            const grado     = document.getElementById('filtroParcialGrado').value;
+            const grupo     = document.getElementById('filtroParcialGrupo').value;
+            let lista = [...datosRiesgoParcial];
+            if (trimestre) lista = lista.filter(a => a.materias_riesgo && a.materias_riesgo.some(m => m.startsWith(`T${trimestre}`)));
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            lista.sort((a, b) => {
+                if (a.grado !== b.grado) return a.grado - b.grado;
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
+
+            const subtitulo = [
+                trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
+                grado ? `${grado}° Grado` : '',
+                grupo ? `Grupo ${grupo}` : ''
+            ].filter(Boolean).join(' · ') || 'Todos';
+
+            const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+            const cfg   = await getConfigInst();
+
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                @page { size: letter; margin: 15mm 12mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+                table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+                th { background:#f59e0b; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+                td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; font-size:10px; }
+                tr:nth-child(even) td { background:#fffbeb; }
+                .chip { background:#fff7ed; color:#92400e; border-radius:4px; padding:2px 6px; font-size:9px; font-weight:700; display:inline-block; margin:1px; }
+                h3 { font-size:12px; color:#92400e; margin:0 0 2px; }
+                p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+            </style></head><body>
+            ${headerInstHTML(cfg)}
+            <h3>⚠️ Riesgo Académico — Evaluaciones Parciales</h3>
+            <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+            <table><thead><tr>
+                <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Materias en riesgo</th>
+            </tr></thead><tbody>`;
+
+            lista.forEach((a, i) => {
+                const materias = (a.materias_riesgo || []).map(m => `<span class="chip">${esc(m)}</span>`).join(' ');
+                html += `<tr>
+                    <td style="color:#64748b;">${i + 1}</td>
+                    <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                    <td>${a.grado}° "${a.grupo}"</td>
+                    <td>${materias}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>
+            <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Responsable</div>
+                </div>
+            </div>
+            </body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+        }
+
+        async function exportarMotivosPDF() {
+            const trimestre = document.getElementById('filtroMotivoTrimestre').value;
+            const grado     = document.getElementById('filtroMotivoGrado').value;
+            const grupo     = document.getElementById('filtroMotivoGrupo').value;
+            let lista = [...datosMotivosAdmin];
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            if (grado)     lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo)     lista = lista.filter(a => a.grupo === grupo);
+            lista.sort((a, b) => {
+                if (a.trimestre !== b.trimestre) return a.trimestre - b.trimestre;
+                if (a.grado !== b.grado) return a.grado - b.grado;
+                if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+                return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+            });
+
+            const subtitulo = [
+                trimestre ? `Trimestre ${trimestre}` : 'Todos los trimestres',
+                grado ? `${grado}° Grado` : '',
+                grupo ? `Grupo ${grupo}` : ''
+            ].filter(Boolean).join(' · ') || 'Todos';
+
+            const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+            const cfg   = await getConfigInst();
+
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                @page { size: letter; margin: 15mm 12mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+                table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+                th { background:#e63946; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+                td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; font-size:10px; }
+                tr:nth-child(even) td { background:#fff0f1; }
+                h3 { font-size:12px; color:#e63946; margin:0 0 2px; }
+                p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+                .rep { color:#e63946; font-weight:700; }
+                .mut { color:#64748b; }
+            </style></head><body>
+            ${headerInstHTML(cfg)}
+            <h3>📝 Motivos de Reprobación Registrados</h3>
+            <p>${subtitulo} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} registro(s)</p>
+            <table><thead><tr>
+                <th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Trim.</th><th>Materias reprobadas</th><th>Motivos</th><th>Registrado por</th>
+            </tr></thead><tbody>`;
+
+            lista.forEach((a, i) => {
+                html += `<tr>
+                    <td class="mut">${i + 1}</td>
+                    <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                    <td>${a.grado}° "${a.grupo}"</td>
+                    <td style="font-weight:700;">T${a.trimestre}</td>
+                    <td class="rep">${esc(a.materias_reprobadas || '—')}</td>
+                    <td class="mut" style="max-width:180px;">${esc(a.motivos_reprobacion || '—')}</td>
+                    <td class="mut">${esc(a.nombre_docente || '—')} <b style="color:#1B4F8A;">${esc(a.materia_docente || '')}</b></td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>
+            <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                    <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Responsable</div>
+                </div>
+            </div>
+            </body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+        }
+
+                function irRecExp(id) {
+            cerrarModalRecuperacion();
+            setTimeout(() => { window.location.href = 'expediente.html?id_alumno=' + id + '&from=dashboard'; }, 80);
+        }
+
+        let datosMotivosAdmin = [];
+
+        async function cargarMotivosAdmin() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=motivos_reprobacion');
+                if (!res) return;
+                const data = await res.json();
+                if (!data || !Array.isArray(data) || data.length === 0) return;
+                datosMotivosAdmin = data;
+                document.getElementById('seccionMotivosAdmin').style.display = 'block';
+                document.getElementById('contadorMotivosAdmin').textContent = data.length;
+            } catch(e) { console.error('Error motivos admin:', e); }
+        }
+
+        function abrirModalMotivos() {
+            document.getElementById('modalMotivos').style.display = 'flex';
+            document.getElementById('filtroMotivoTrimestre').value = '';
+            document.getElementById('filtroMotivoGrado').value = '';
+            document.getElementById('filtroMotivoGrupo').value = '';
+            filtrarMotivos();
+        }
+
+        function cerrarModalMotivos() {
+            document.getElementById('modalMotivos').style.display = 'none';
+        }
+
+        function irMotivosExp(id) {
+            if (!id || id === 'undefined') return;
+            cerrarModalMotivos();
+            setTimeout(() => { window.location.href = 'expediente.html?id_alumno=' + id + '&from=dashboard'; }, 80);
+        }
+
+        function filtrarMotivos() {
+            const trimestre = document.getElementById('filtroMotivoTrimestre').value;
+            const grado = document.getElementById('filtroMotivoGrado').value;
+            const grupo = document.getElementById('filtroMotivoGrupo').value;
+            let lista = [...datosMotivosAdmin];
+            if (trimestre) lista = lista.filter(a => String(a.trimestre) === trimestre);
+            if (grado) lista = lista.filter(a => String(a.grado) === grado);
+            if (grupo) lista = lista.filter(a => a.grupo === grupo);
+            document.getElementById('contadorFiltroMotivos').textContent = `Mostrando ${lista.length} alumno(s)`;
+            const tbody = document.getElementById('bodyMotivos');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">Sin registros con estos filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map(a => `
+                <tr>
+                    <td style="font-weight:700;">${esc(a.apellidos)} ${esc(a.nombre)}</td>
+                    <td><span class="badge-grupo">${a.grado}° "${a.grupo}"</span></td>
+                    <td style="font-weight:600;">T${a.trimestre}</td>
+                    <td style="font-size:12px; color:var(--rojo); font-weight:700;">${esc(a.materias_reprobadas || '')}</td>
+                    <td style="font-size:12px; color:var(--muted); max-width:220px;">${esc(a.motivos_reprobacion || '—')}</td>
+                    <td style="font-size:12px; color:var(--muted);">${esc(a.nombre_docente || '—')} <span style="color:var(--azul); font-weight:700;">${esc(a.materia_docente || '')}</span></td>
+                    <td style="text-align:center;"><button class="link-exp" onclick="irMotivosExp(${a.id_alumno})">Ver →</button></td>
+                </tr>`).join('');
+        }
+
+
+        // Almacenes temporales de logos en base64
+        let logoIzqB64 = '';
+        let logoDerB64 = '';
+
+        async function abrirConfigInstitucional() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+                if (!res) return;
+                const cfg = await res.json();
+                document.getElementById('cfgNombre').value    = cfg.nombre_escuela || '';
+                document.getElementById('cfgClave').value     = cfg.clave_escuela || '';
+                document.getElementById('cfgDireccion').value = cfg.direccion_escuela || '';
+                document.getElementById('cfgCiclo').value     = cfg.ciclo_activo || '';
+                if (cfg.logo_izquierdo) {
+                    logoIzqB64 = cfg.logo_izquierdo;
+                    document.getElementById('prevLogoIzq').src = cfg.logo_izquierdo;
+                    document.getElementById('prevLogoIzq').style.display = 'block';
+                    document.getElementById('lblLogoIzq').textContent = '✅ Logo cargado';
+                }
+                if (cfg.logo_derecho) {
+                    logoDerB64 = cfg.logo_derecho;
+                    document.getElementById('prevLogoDer').src = cfg.logo_derecho;
+                    document.getElementById('prevLogoDer').style.display = 'block';
+                    document.getElementById('lblLogoDer').textContent = '✅ Logo cargado';
+                }
+            } catch(e) {}
+            document.getElementById('cfgMensaje').style.display = 'none';
+            document.getElementById('modalConfigInst').style.display = 'flex';
+        }
+
+        function cerrarConfigInstitucional() {
+            document.getElementById('modalConfigInst').style.display = 'none';
+        }
+
+        function previewLogo(input, imgId, lblId, varName) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const b64 = e.target.result;
+                if (varName === 'logoIzqB64') logoIzqB64 = b64;
+                else logoDerB64 = b64;
+                document.getElementById(imgId).src = b64;
+                document.getElementById(imgId).style.display = 'block';
+                document.getElementById(lblId).textContent = '✅ ' + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function guardarConfigInstitucional() {
+            const msg = document.getElementById('cfgMensaje');
+            msg.style.display = 'none';
+            const body = {
+                nombre_escuela:    document.getElementById('cfgNombre').value.trim(),
+                clave_escuela:     document.getElementById('cfgClave').value.trim(),
+                direccion_escuela: document.getElementById('cfgDireccion').value.trim(),
+            };
+            if (logoIzqB64) body.logo_izquierdo = logoIzqB64;
+            if (logoDerB64) body.logo_derecho   = logoDerB64;
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=config_institucional', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (res && res.ok) {
+                    msg.textContent = '✅ Configuración guardada correctamente.';
+                    msg.style.color = 'var(--verde)';
+                    msg.style.display = 'block';
+                    setTimeout(() => cerrarConfigInstitucional(), 1500);
+                } else {
+                    msg.textContent = '❌ Error al guardar.';
+                    msg.style.color = 'var(--rojo)';
+                    msg.style.display = 'block';
+                }
+            } catch(e) {
+                msg.textContent = '❌ Error de conexión.';
+                msg.style.color = 'var(--rojo)';
+                msg.style.display = 'block';
+            }
+        }
+
+
+        // ── Helper: obtener config institucional ──────────────────
+        async function getConfigInst() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+                if (res) return await res.json();
+            } catch(e) {}
+            return {};
+        }
+
+        function headerInstHTML(cfg) {
+            const nombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+            const clave     = cfg.clave_escuela     || '';
+            const direccion = cfg.direccion_escuela || '';
+            const ciclo     = cfg.ciclo_activo      || '';
+            const logoIzq   = cfg.logo_izquierdo    || '';
+            const logoDer   = cfg.logo_derecho      || '';
+            return `
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+                <div style="width:90px;text-align:center;">
+                    ${logoIzq ? `<img src="${logoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+                </div>
+                <div style="flex:1;text-align:center;padding:0 16px;">
+                    <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                    <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${nombre}</div>
+                    ${clave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                    ${direccion ? `<div style="font-size:10px;color:#555;">${direccion}</div>` : ''}
+                    ${ciclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${ciclo}</div>` : ''}
+                </div>
+                <div style="width:90px;text-align:center;">
+                    ${logoDer ? `<img src="${logoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+                </div>
+            </div>`;
+        }
+
+        async function cargarKpis() {
+            try {
+                const res = await apiFetch('/api/dashboard?tipo=kpis');
+                const d = await res.json();
+                document.getElementById('k-alu').innerText = d.totalAlumnos;
+                document.getElementById('k-rep').innerText = d.totalReportes;
+                document.getElementById('k-rie').innerText = d.alumnosEnRiesgo;
+            } catch(e) { console.error('Error KPIs'); }
+        }
+
+        function actualizarGrafica() {
+            if (!statsData) return;
+            const f = document.getElementById('filtro').value;
+            if (myChart) myChart.destroy();
+            const ctx = document.getElementById('graficaAprovechamiento').getContext('2d');
+            const COLORES = ['#E63946','#1B4F8A','#FF9800','#2d9b6f','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
+
+            if (f === 'comparativo') {
+                const trimsDisp = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
+                const materias  = statsData.porMateria.labels;
+                const datasets  = materias.map((mat, i) => ({
+                    label: mat,
+                    data: statsData.comparativoPorTrimestre ? statsData.comparativoPorTrimestre[mat] || [] : trimsDisp.map(() => null),
+                    backgroundColor: COLORES[i % COLORES.length] + 'cc',
+                    borderColor: COLORES[i % COLORES.length],
+                    borderWidth: 1, borderRadius: 4
+                }));
+                datasets.unshift({
+                    label: 'PROMEDIO GENERAL',
+                    data: statsData.porTrimestre.valores.filter(v => v > 0),
+                    backgroundColor: '#00000022',
+                    borderColor: '#000',
+                    borderWidth: 2, borderRadius: 4,
+                    borderDash: [4, 4]
+                });
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: trimsDisp, datasets },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11, family: 'Outfit' } } } },
+                        scales: { y: { min: 0, max: 10, ticks: { stepSize: 1 }, grid: { color: '#f5f5f5' } } }
+                    }
+                });
+            } else if (f === 'trimestre') {
+                const labels  = statsData.porTrimestre.labels.filter((_, i) => statsData.porTrimestre.valores[i] > 0);
+                const valores = statsData.porTrimestre.valores.filter(v => v > 0);
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Promedio', data: valores, backgroundColor: ['#1B4F8A','#2d9b6f','#f59e0b'], borderRadius: 8 }] },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' Promedio: ' + c.parsed.y.toFixed(1) } } },
+                        scales: { y: { min: 0, max: 10, ticks: { stepSize: 1 } } }
+                    }
+                });
+            } else if (f === 'gradomateria') {
+                const pgm = statsData.porGradoMateria;
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: pgm.labels,
+                        datasets: [
+                            { label: '1° Grado', data: pgm.grado1, backgroundColor: '#1565C0', borderRadius: 4 },
+                            { label: '2° Grado', data: pgm.grado2, backgroundColor: '#FDD835', borderRadius: 4 },
+                            { label: '3° Grado', data: pgm.grado3, backgroundColor: '#E63946', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12, family: 'Outfit' } } },
+                            tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + c.parsed.y.toFixed(1) } }
+                        },
+                        scales: { y: { min: 0, max: 10, ticks: { stepSize: 1 }, grid: { color: '#f5f5f5' } } }
+                    }
+                });
+            } else {
+                let labels, valores, colores;
+                if (f === 'materia') {
+                    labels = statsData.porMateria.labels; valores = statsData.porMateria.valores; colores = COLORES;
+                } else {
+                    labels = statsData.porGrado.labels; valores = statsData.porGrado.valores; colores = ['#1B4F8A','#f59e0b','#E63946'];
+                }
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ data: valores, backgroundColor: colores, borderRadius: 8 }] },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: { y: { min: 0, max: 10, ticks: { stepSize: 1 }, grid: { color: '#f5f5f5' } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            // Forzar repintado en Safari/iOS
+            setTimeout(() => { if (myChart) myChart.resize(); }, 100);
+        }
+
+        async function abrirModal(tipo) {
+            const modal = document.getElementById('miModal');
+            const tabla = document.getElementById('m-tab');
+            modal.style.display = 'flex';
+            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:32px; color:var(--muted);'>Cargando datos...</td></tr>";
+
+            try {
+                if (tipo === 'riesgo') {
+                    document.getElementById('m-tit').innerText = '🚨 Alumnos en Riesgo Académico';
+                    const res = await apiFetch('/api/dashboard?tipo=riesgo');
+                    const datos = await res.json();
+                    tabla.innerHTML = `<tr><th>Alumno</th><th>Grado/Grupo</th><th>Promedio</th><th>Materias</th><th>Acción</th></tr>` +
+                        datos.map(a => `<tr>
+                            <td><strong>${esc(a.apellidos)} ${esc(a.nombre)}</strong></td>
+                            <td><span class="badge-grupo">${a.grado}°"${a.grupo}"</span></td>
+                            <td class="badge-riesgo">${a.promedio}</td>
+                            <td style="font-size:11px; color:var(--muted);">${esc(a.materiasRiesgo)}</td>
+                            <td><a href="expediente.html?id_alumno=${a.id_alumno}" class="link-exp">Ver expediente</a></td>
+                        </tr>`).join('');
+                } else {
+                    document.getElementById('m-tit').innerText = '📋 Historial General de Reportes';
+                    const res = await apiFetch('/api/dashboard?tipo=reportes');
+                    const datos = await res.json();
+                    tabla.innerHTML = `<tr><th>Fecha</th><th>Alumno</th><th>G/G</th><th>Gravedad</th><th>Motivo</th></tr>` +
+                        datos.map(r => `<tr>
+                            <td style="white-space:nowrap; font-size:12px;">${esc(r.fecha)}</td>
+                            <td><strong>${esc(r.nombre_alumno)}</strong></td>
+                            <td><span class="badge-grupo">${esc(r.grado_grupo)}</span></td>
+                            <td style="font-weight:700;">${esc(r.gravedad)}</td>
+                            <td style="font-size:12px; color:var(--muted); max-width:200px;">${esc(r.motivo)}</td>
+                        </tr>`).join('');
+                }
+            } catch(e) {
+                tabla.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:24px; color:var(--rojo);'>Error al cargar.</td></tr>";
+            }
+        }
+
+        function cerrarModal() { document.getElementById('miModal').style.display = 'none'; }
+        function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+
+    <!-- MODAL MOTIVOS DE REPROBACIÓN -->
+    <div class="modal-overlay" id="modalMotivos">
+        <div class="modal-contenido" style="max-width:980px;">
+            <div class="modal-header">
+                <div class="modal-titulo">📝 Motivos de Reprobación Registrados</div>
+                <button class="modal-cerrar" onclick="cerrarModalMotivos()">✕</button>
+            </div>
+            <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+<select id="filtroMotivoTrimestre" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los trimestres</option>
+                    <option value="1">Trimestre 1</option>
+                    <option value="2">Trimestre 2</option>
+                    <option value="3">Trimestre 3</option>
+                </select>
+                <select id="filtroMotivoGrado" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grados</option>
+                    <option value="1">1° Grado</option>
+                    <option value="2">2° Grado</option>
+                    <option value="3">3° Grado</option>
+                </select>
+                <select id="filtroMotivoGrupo" onchange="filtrarMotivos()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grupos</option>
+                    <option value="A">Grupo A</option><option value="B">Grupo B</option>
+                    <option value="C">Grupo C</option><option value="D">Grupo D</option>
+                    <option value="E">Grupo E</option><option value="F">Grupo F</option>
+                </select>
+                <span id="contadorFiltroMotivos" style="font-size:13px; color:var(--muted); font-weight:600; margin-left:4px;"></span>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <table class="modal-table" id="tablaMotivos">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Grado/Grupo</th>
+                            <th>Trimestre</th>
+                            <th>Materias reprobadas</th>
+                            <th>Motivos registrados</th>
+                            <th>Registrado por</th>
+                            <th style="text-align:center;">Expediente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyMotivos"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:12px;">
+                <button onclick="exportarMotivosPDF()" style="padding:10px 20px; background:var(--rojo); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#c0303a'" onmouseout="this.style.background='var(--rojo)'">🖨️ Exportar PDF</button>
+                <button class="btn-cerrar-modal" style="width:auto; padding:10px 20px;" onclick="cerrarModalMotivos()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL ALUMNOS A RECUPERACIÓN -->
+    <div class="modal-overlay" id="modalRecuperacion">
+        <div class="modal-contenido" style="max-width:1000px;">
+            <div class="modal-header">
+                <div class="modal-titulo">📋 Alumnos a Recuperación</div>
+                <button class="modal-cerrar" onclick="cerrarModalRecuperacion()">✕</button>
+            </div>
+            <div style="padding:16px 28px; border-bottom:1px solid var(--borde); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <select id="filtroRecTrimestre" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los trimestres</option>
+                    <option value="1">Trimestre 1</option><option value="2">Trimestre 2</option><option value="3">Trimestre 3</option>
+                </select>
+                <select id="filtroRecGrado" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grados</option>
+                    <option value="1">1° Grado</option><option value="2">2° Grado</option><option value="3">3° Grado</option>
+                </select>
+                <select id="filtroRecGrupo" onchange="filtrarRecuperacion()" style="padding:8px 12px; border:1.5px solid var(--borde); border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; color:var(--azul); background:var(--azul-claro);">
+                    <option value="">Todos los grupos</option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                </select>
+                <span id="contadorFiltroRec" style="font-size:13px; color:var(--muted); font-weight:600;"></span>
+                <button onclick="exportarRecuperacionPDF()" style="padding:8px 18px; background:#1B4F8A; color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#163f6e'" onmouseout="this.style.background='#1B4F8A'">🖨️ Exportar PDF</button>
+            </div>
+            <div class="modal-body" style="padding:0; overflow-x:auto;">
+                <table class="modal-table" id="tablaRecuperacion">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Grado/Grupo</th>
+                            <th>Trim.</th>
+                            <th>Materias (calificación de recuperación)</th>
+                            <th style="text-align:center;">Expediente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyRecuperacion"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarModalRecuperacion()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL CONFIGURACIÓN INSTITUCIONAL -->
+    <div class="modal-overlay" id="modalConfigInst">
+        <div class="modal-contenido" style="max-width:600px;">
+            <div class="modal-header">
+                <div class="modal-titulo">⚙️ Configuración Institucional</div>
+                <button class="modal-cerrar" onclick="cerrarConfigInstitucional()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:24px; display:flex; flex-direction:column; gap:16px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <!-- Logo izquierdo -->
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Izquierdo</label>
+                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoIzq').click()">
+                            <img id="prevLogoIzq" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
+                            <div id="lblLogoIzq" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
+                        </div>
+                        <input type="file" id="inputLogoIzq" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoIzq','lblLogoIzq','logoIzqB64')">
+                    </div>
+                    <!-- Logo derecho -->
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:8px;">Logo Derecho</label>
+                        <div style="border:2px dashed var(--borde);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f8fafc;" onclick="document.getElementById('inputLogoDer').click()">
+                            <img id="prevLogoDer" src="" style="max-height:60px;max-width:100%;display:none;margin:0 auto 8px;">
+                            <div id="lblLogoDer" style="font-size:12px;color:var(--muted);">📁 Subir imagen</div>
+                        </div>
+                        <input type="file" id="inputLogoDer" accept="image/*" style="display:none" onchange="previewLogo(this,'prevLogoDer','lblLogoDer','logoDerB64')">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Nombre de la Escuela</label>
+                    <input type="text" id="cfgNombre" maxlength="100" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Clave del Centro</label>
+                        <input type="text" id="cfgClave" maxlength="20" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Ciclo Escolar</label>
+                        <input type="text" id="cfgCiclo" maxlength="10" placeholder="2025-2026" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;">Dirección</label>
+                    <input type="text" id="cfgDireccion" maxlength="150" style="width:100%;padding:10px 14px;border:1.5px solid var(--borde);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;">
+                </div>
+                <div id="cfgMensaje" style="font-size:13px;font-weight:700;text-align:center;display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cerrar-modal" onclick="cerrarConfigInstitucional()">Cancelar</button>
+                <button onclick="guardarConfigInstitucional()" style="background:var(--azul);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

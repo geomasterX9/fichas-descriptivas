@@ -1,0 +1,15 @@
+insertar_usuarios.sql
+corregir_nombres.sql
+migracion_reportes.sql
+docs_est84.html
+auditoria_seguridad_est84_final.html
+generar_iconos.js
+generar_usuarios.js
+extras/
+fotos/
+evaluaciones/
+node_modules/
+.vercel
+.env*.local
+.vercel
+.env*.local

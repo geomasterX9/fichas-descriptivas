@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logs de Actividad — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul:#1d4ed8; --azul-hover:#1e40af; --azul-claro:#eff6ff;
+    --rojo:#dc2626; --rojo-claro:#fef2f2;
+    --verde:#16a34a; --verde-claro:#f0fdf4;
+    --amarillo:#d97706; --amarillo-claro:#fffbeb;
+    --morado:#7c3aed; --morado-claro:#f5f3ff;
+    --gris-osc:#334155;
+    --fondo:#f1f5f9; --blanco:#fff; --texto:#0f172a; --gris:#64748b; --borde:#e2e8f0;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Outfit',sans-serif; background:var(--fondo); color:var(--texto); min-height:100vh; }
+
+  .header { background:linear-gradient(135deg,#0f172a,#1d4ed8); color:white; padding:20px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .header-icon { width:44px; height:44px; background:rgba(255,255,255,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .header h1 { font-size:20px; font-weight:800; }
+  .header p  { font-size:13px; color:#93c5fd; margin-top:2px; }
+  .btn-volver { background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.25); padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; font-family:inherit; }
+
+  .contenido { max-width:1100px; margin:0 auto; padding:28px 20px 60px; }
+
+  /* KPIs */
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  .kpi { background:var(--blanco); border-radius:12px; border:1px solid var(--borde); padding:16px 18px; }
+  .kpi-num { font-size:28px; font-weight:900; line-height:1; }
+  .kpi-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--gris); margin-top:5px; }
+  .kpi.azul .kpi-num { color:var(--azul); }
+  .kpi.verde .kpi-num { color:var(--verde); }
+  .kpi.amarillo .kpi-num { color:var(--amarillo); }
+  .kpi.morado .kpi-num { color:var(--morado); }
+
+  /* FILTROS */
+  .filtros { background:var(--blanco); border-radius:12px; border:1px solid var(--borde); padding:18px 20px; margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .filtro-campo { display:flex; flex-direction:column; gap:5px; min-width:150px; flex:1; }
+  .filtro-campo label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--gris); }
+  .filtro-campo input, .filtro-campo select {
+    padding:9px 12px; border:2px solid var(--borde); border-radius:8px;
+    font-size:13px; font-family:inherit; color:var(--texto); outline:none; transition:border 0.15s;
+  }
+  .filtro-campo input:focus, .filtro-campo select:focus { border-color:var(--azul); }
+  .btn-filtrar { background:var(--azul); color:white; border:none; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .btn-limpiar { background:#f1f5f9; color:var(--gris); border:none; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+
+  /* TABLA */
+  .tabla-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); overflow:hidden; }
+  .tabla-header { padding:14px 18px; border-bottom:2px solid var(--borde); display:flex; align-items:center; justify-content:space-between; }
+  .tabla-header h3 { font-size:15px; font-weight:800; }
+  .tabla-info { font-size:12px; color:var(--gris); }
+  .tabla-scroll { overflow-x:auto; max-height:560px; overflow-y:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead tr { background:#f8fafc; position:sticky; top:0; z-index:1; }
+  th { padding:11px 14px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--gris); border-bottom:2px solid var(--borde); white-space:nowrap; }
+  td { padding:11px 14px; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#fafbfc; }
+
+  /* BADGES DE ACCIÓN */
+  .accion-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .ac-LOGIN              { background:#f0fdf4; color:#166534; }
+  .ac-LOGOUT             { background:#f8fafc; color:#475569; }
+  .ac-VER_EXPEDIENTE     { background:var(--azul-claro); color:var(--azul); }
+  .ac-VER_BUSCADOR       { background:var(--azul-claro); color:var(--azul); }
+  .ac-VER_DASHBOARD      { background:#f5f3ff; color:#6d28d9; }
+  .ac-REGISTRAR_OBSERVACION { background:var(--amarillo-claro); color:var(--amarillo); }
+  .ac-IMPORTAR_CALIFICACIONES { background:#fce7f3; color:#9d174d; }
+  .ac-SUBIR_FOTO         { background:#ecfdf5; color:#065f46; }
+  .ac-CARGA_MASIVA_FOTOS { background:#ecfdf5; color:#065f46; }
+  .ac-CREAR_USUARIO      { background:var(--verde-claro); color:var(--verde); }
+  .ac-EDITAR_USUARIO     { background:#fefce8; color:#854d0e; }
+  .ac-ELIMINAR_USUARIO   { background:var(--rojo-claro); color:var(--rojo); }
+  .ac-CAMBIAR_CONTRASENA { background:var(--rojo-claro); color:var(--rojo); }
+  .ac-CREAR_ALUMNO       { background:var(--verde-claro); color:var(--verde); }
+  .ac-EDITAR_ALUMNO      { background:#fefce8; color:#854d0e; }
+  .ac-BAJA_ALUMNO        { background:var(--rojo-claro); color:var(--rojo); }
+  .ac-REACTIVAR_ALUMNO   { background:var(--verde-claro); color:var(--verde); }
+  .ac-GUARDAR_FICHA      { background:#f5f3ff; color:#6d28d9; }
+  .ac-IMPORTAR_USUARIOS  { background:#fce7f3; color:#9d174d; }
+
+  .rol-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
+  .rol-ADMINISTRADOR { background:#fef3c7; color:#92400e; }
+  .rol-DIRECTIVO     { background:#ede9fe; color:#5b21b6; }
+  .rol-DOCENTE       { background:var(--azul-claro); color:var(--azul); }
+  .rol-PREFECTO      { background:#fce7f3; color:#9d174d; }
+  .rol-TRABAJO-SOCIAL{ background:var(--verde-claro); color:var(--verde); }
+
+  .ip-txt { font-family:monospace; font-size:11px; color:var(--gris); }
+  .fecha-txt { font-size:12px; color:var(--gris); white-space:nowrap; }
+  .detalle-txt { font-size:12px; color:#475569; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .empty { text-align:center; padding:48px; color:var(--gris); }
+  .cargando { text-align:center; padding:32px; color:var(--gris); font-size:14px; }
+
+  /* ICONOS POR ACCIÓN */
+  .ICON_LOGIN { content:'🔑'; }
+
+  @media(max-width:700px) {
+    .kpi-grid { grid-template-columns:repeat(2,1fr); }
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(5), td:nth-child(5) { display:none; }
+  }
+</style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">📋</div>
+    <div>
+      <h1>Logs de Actividad</h1>
+      <p>Registro de acciones del sistema EST 84</p>
+    </div>
+  </div>
+  <a href="dashboard.html" class="btn-volver">← Volver al Dashboard</a>
+</div>
+
+<div class="contenido">
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi azul">   <div class="kpi-num" id="kTotal">—</div>   <div class="kpi-label">Total registros</div></div>
+    <div class="kpi verde">  <div class="kpi-num" id="kLogins">—</div>  <div class="kpi-label">Logins hoy</div></div>
+    <div class="kpi amarillo"><div class="kpi-num" id="kExpedientes">—</div><div class="kpi-label">Expedientes vistos hoy</div></div>
+    <div class="kpi morado"> <div class="kpi-num" id="kUsuarios">—</div><div class="kpi-label">Usuarios activos hoy</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <div class="filtro-campo">
+      <label>Usuario</label>
+      <input type="text" id="fUsuario" placeholder="Buscar por nombre...">
+    </div>
+    <div class="filtro-campo">
+      <label>Acción</label>
+      <select id="fAccion">
+        <option value="">— Todas —</option>
+        <option value="LOGIN">🔑 Login</option>
+        <option value="LOGOUT">🚪 Logout</option>
+        <option value="VER_EXPEDIENTE">📁 Ver expediente</option>
+        <option value="VER_DASHBOARD">📊 Ver dashboard</option>
+        <option value="REGISTRAR_OBSERVACION">📝 Registrar observación</option>
+        <option value="IMPORTAR_CALIFICACIONES">📥 Importar calificaciones</option>
+        <option value="SUBIR_FOTO">📷 Subir foto</option>
+        <option value="CARGA_MASIVA_FOTOS">🖼️ Carga masiva fotos</option>
+        <option value="CREAR_USUARIO">👤 Crear usuario</option>
+        <option value="EDITAR_USUARIO">✏️ Editar usuario</option>
+        <option value="ELIMINAR_USUARIO">🗑️ Eliminar usuario</option>
+        <option value="CAMBIAR_CONTRASENA">🔐 Cambiar contraseña</option>
+        <option value="CREAR_ALUMNO">🎒 Crear alumno</option>
+        <option value="BAJA_ALUMNO">⛔ Baja alumno</option>
+        <option value="REACTIVAR_ALUMNO">✅ Reactivar alumno</option>
+        <option value="GUARDAR_FICHA">📋 Guardar ficha</option>
+      </select>
+    </div>
+    <div class="filtro-campo">
+      <label>Desde</label>
+      <input type="date" id="fDesde">
+    </div>
+    <div class="filtro-campo">
+      <label>Hasta</label>
+      <input type="date" id="fHasta">
+    </div>
+    <button class="btn-filtrar" onclick="cargarLogs()">🔍 Filtrar</button>
+    <button class="btn-limpiar" onclick="limpiarFiltros()">✕ Limpiar</button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="tabla-wrap">
+    <div class="tabla-header">
+      <h3>📋 Registros de actividad</h3>
+      <span class="tabla-info" id="infoTabla"></span>
+    </div>
+    <div class="tabla-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha / Hora</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Acción</th>
+            <th>Detalle</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody id="tablaLogs">
+          <tr><td colspan="6" class="cargando">Cargando registros...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+
+  const ICONOS = {
+    LOGIN:'🔑', LOGOUT:'🚪', VER_EXPEDIENTE:'📁', VER_BUSCADOR:'🔍',
+    VER_DASHBOARD:'📊', REGISTRAR_OBSERVACION:'📝', IMPORTAR_CALIFICACIONES:'📥',
+    SUBIR_FOTO:'📷', CARGA_MASIVA_FOTOS:'🖼️', CREAR_USUARIO:'👤',
+    EDITAR_USUARIO:'✏️', ELIMINAR_USUARIO:'🗑️', CAMBIAR_CONTRASENA:'🔐',
+    CREAR_ALUMNO:'🎒', EDITAR_ALUMNO:'✏️', BAJA_ALUMNO:'⛔',
+    REACTIVAR_ALUMNO:'✅', GUARDAR_FICHA:'📋', IMPORTAR_USUARIOS:'📦'
+  };
+
+  let todosLogs = [];
+
+  window.onload = async () => {
+    // Fecha por defecto: inicio del mes actual hasta hoy
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    document.getElementById('fDesde').value = primerDia.toISOString().split('T')[0];
+    document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
+    await cargarLogs();
+  };
+
+  async function cargarLogs() {
+    const usuario = document.getElementById('fUsuario').value.trim();
+    const accion  = document.getElementById('fAccion').value;
+    const desde   = document.getElementById('fDesde').value;
+    const hasta   = document.getElementById('fHasta').value;
+
+    let url = '/api/logs?limit=500';
+    if (usuario) url += `&usuario=${encodeURIComponent(usuario)}`;
+    if (accion)  url += `&accion=${encodeURIComponent(accion)}`;
+    if (desde)   url += `&fecha_ini=${desde}`;
+    if (hasta)   url += `&fecha_fin=${hasta}`;
+
+    document.getElementById('tablaLogs').innerHTML = '<tr><td colspan="6" class="cargando">Cargando...</td></tr>';
+
+    const res = await apiFetch(url);
+    if (!res) return;
+    todosLogs = await res.json();
+
+    calcularKpis();
+    renderTabla();
+  }
+
+  function calcularKpis() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const logsHoy = todosLogs.filter(l => l.fecha.startsWith(hoy));
+    document.getElementById('kTotal').textContent       = todosLogs.length.toLocaleString();
+    document.getElementById('kLogins').textContent      = logsHoy.filter(l => l.accion === 'LOGIN').length;
+    document.getElementById('kExpedientes').textContent = logsHoy.filter(l => l.accion === 'VER_EXPEDIENTE').length;
+    document.getElementById('kUsuarios').textContent    = new Set(logsHoy.map(l => l.id_usuario)).size;
+  }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tablaLogs');
+    document.getElementById('infoTabla').textContent = `${todosLogs.length} registro${todosLogs.length !== 1 ? 's' : ''}`;
+
+    if (todosLogs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty">📭 No hay registros con los filtros seleccionados.</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = todosLogs.map(l => {
+      const fecha = new Date(l.fecha);
+      const fechaStr = fecha.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' });
+      const horaStr  = fecha.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      const icono    = ICONOS[l.accion] || '•';
+      const rolKey   = (l.rol || '').replace(' ','-');
+      return `<tr>
+        <td><div class="fecha-txt">${fechaStr}</div><div style="font-size:11px;color:var(--gris);font-family:monospace;">${horaStr}</div></td>
+        <td><div style="font-weight:700;font-size:13px;">${esc(l.nombre_usuario || '—')}</div></td>
+        <td><span class="rol-badge rol-${rolKey}">${esc(l.rol || '—')}</span></td>
+        <td><span class="accion-badge ac-${l.accion}">${icono} ${esc(l.accion.replace(/_/g,' '))}</span></td>
+        <td><div class="detalle-txt" title="${esc(l.detalle || '')}">${esc(l.detalle || '—')}</div></td>
+        <td><span class="ip-txt">${esc(l.ip || '—')}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function limpiarFiltros() {
+    document.getElementById('fUsuario').value = '';
+    document.getElementById('fAccion').value  = '';
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    document.getElementById('fDesde').value = primerDia.toISOString().split('T')[0];
+    document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
+    cargarLogs();
+  }
+</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+</body>
+</html>

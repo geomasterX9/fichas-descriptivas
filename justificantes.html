@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Justificantes Médicos — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --rojo: #e63946; --rojo-claro: #fff0f1;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
+.header {
+  background: var(--azul); padding: 0 24px; height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25); position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.btn-back {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  color: white; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; text-decoration: none; transition: background 0.15s;
+}
+.btn-back:hover { background: rgba(255,255,255,0.25); }
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-nombre { font-size: 13px; font-weight: 700; color: white; }
+.contenido { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; }
+.buscador-box {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.buscador-box input {
+  width: 100%; padding: 12px 16px; border: 1.5px solid var(--borde);
+  border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif;
+  color: var(--texto); outline: none; transition: border-color 0.15s;
+}
+.buscador-box input:focus { border-color: var(--azul); }
+.lista-resultados { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.item-alumno {
+  padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--borde);
+  background: var(--blanco); cursor: pointer; transition: all 0.15s;
+}
+.item-alumno:hover { border-color: var(--azul); background: var(--azul-claro); }
+.alumno-nombre { font-weight: 700; font-size: 14px; }
+.alumno-grupo  { font-size: 12px; color: var(--muted); }
+.chip-alumno {
+  background: var(--azul-claro); border: 1.5px solid #bfdbfe;
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+  display: none; align-items: center; gap: 12px;
+}
+.chip-nombre { font-weight: 800; font-size: 15px; color: var(--azul); }
+.chip-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.panel {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: none;
+}
+.panel-titulo { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 20px; }
+.campo { margin-bottom: 18px; }
+.campo label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+.campo input, .campo textarea {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--borde);
+  border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif;
+  color: var(--texto); outline: none; transition: border-color 0.15s;
+}
+.campo input:focus, .campo textarea:focus { border-color: var(--azul); }
+.campo textarea { resize: none; height: 80px; }
+.campo-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.btn-guardar {
+  width: 100%; padding: 13px; border: none; border-radius: 10px;
+  background: var(--azul); color: white; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s; margin-top: 4px;
+}
+.btn-guardar:hover { background: var(--azul-hover); }
+.btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
+.msg-ok    { color: var(--verde); font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
+.msg-error { color: var(--rojo);  font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
+.just-item {
+  background: var(--verde-claro); border: 1.5px solid #bbf7d0; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+}
+.just-fechas { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+.just-motivo { font-size: 13px; color: var(--texto); }
+.btn-desactivar {
+  padding: 6px 14px; border: 1.5px solid #fecdd3; border-radius: 8px;
+  background: var(--rojo-claro); color: var(--rojo);
+  font-size: 12px; font-weight: 700; font-family: 'Outfit', sans-serif;
+  cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+}
+.btn-desactivar:hover { background: #fecdd3; }
+.estado-vacio { text-align: center; padding: 32px 0; color: var(--muted); font-size: 14px; }
+
+/* Panel global de justificantes activos hoy */
+.panel-global {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 24px;
+}
+.just-item-global {
+  background: var(--verde-claro); border: 1.5px solid #bbf7d0; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px;
+}
+.just-alumno { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+@media (max-width: 480px) { .campo-fila { grid-template-columns: 1fr; } }
+
+.filtros-grupo {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+}
+.filtros-grupo select {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--borde);
+  border-radius: 10px; font-size: 13px; font-family: 'Outfit', sans-serif;
+  color: var(--texto); background: var(--blanco); outline: none;
+  transition: border-color 0.15s; cursor: pointer;
+}
+.filtros-grupo select:focus { border-color: var(--azul); }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">📄 Justificantes Médicos</div>
+      <div class="header-sub">EST 84 · Avisos a Docentes</div>
+    </div>
+  </div>
+  <div class="header-nombre" id="headerNombre">—</div>
+</div>
+
+<div class="contenido">
+
+  <!-- Justificantes activos hoy — visible siempre -->
+  <div class="panel-global">
+    <div class="panel-titulo">Justificantes Activos Hoy</div>
+    <div id="listaGlobal"><div class="estado-vacio">Cargando...</div></div>
+  </div>
+
+  <!-- Buscador para emitir nuevo justificante — solo ENFERMERIA/ADMIN -->
+  <div id="seccionEmitir">
+    <div class="buscador-box">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">Emitir Justificante — Buscar Alumno</div>
+      <div class="filtros-grupo">
+      <select id="filtroGrado" onchange="actualizarFiltros()">
+        <option value="">— Todos los grados —</option>
+        <option value="1">1° Grado</option>
+        <option value="2">2° Grado</option>
+        <option value="3">3° Grado</option>
+      </select>
+      <select id="filtroGrupo" onchange="actualizarFiltros()">
+        <option value="">— Todos los grupos —</option>
+        <option value="A">Grupo A</option>
+        <option value="B">Grupo B</option>
+        <option value="C">Grupo C</option>
+        <option value="D">Grupo D</option>
+        <option value="E">Grupo E</option>
+        <option value="F">Grupo F</option>
+      </select>
+    </div>
+    <input type="text" id="inputBuscar" placeholder="Nombre o apellido del alumno..." oninput="buscarAlumno()">
+      <div class="lista-resultados" id="listaResultados"></div>
+    </div>
+
+    <div class="chip-alumno" id="chipAlumno">
+      <div style="font-size:28px;">🎓</div>
+      <div>
+        <div class="chip-nombre" id="chipNombre">—</div>
+        <div class="chip-sub"   id="chipSub">—</div>
+      </div>
+      <button onclick="limpiarAlumno()" style="margin-left:auto;background:none;border:none;color:var(--azul);font-size:13px;font-weight:700;cursor:pointer;">Cambiar</button>
+    </div>
+
+    <div class="panel" id="panelJust">
+      <div class="panel-titulo">Emitir Justificante</div>
+      <div class="campo-fila">
+        <div class="campo">
+          <label>Fecha Inicio</label>
+          <input type="date" id="j-inicio">
+        </div>
+        <div class="campo">
+          <label>Fecha Fin</label>
+          <input type="date" id="j-fin">
+        </div>
+      </div>
+      <div class="campo">
+        <label>Motivo Médico</label>
+        <textarea id="j-motivo" placeholder="ej. fractura de muñeca, enfermedad respiratoria..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></textarea>
+      </div>
+      <button class="btn-guardar" onclick="emitirJustificante()" id="btnEmitirJust">Emitir Justificante</button>
+      <div class="msg-ok"    id="okJust">✅ Justificante emitido</div>
+      <div class="msg-error" id="errJust"></div>
+
+      <div style="margin-top:28px;">
+        <div class="panel-titulo">Historial del Alumno</div>
+        <div id="listaJustAlumno"><div class="estado-vacio">Sin justificantes registrados</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rol    = localStorage.getItem('rolActivo') || '';
+  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  document.getElementById('headerNombre').textContent = nombre;
+
+  const PUEDE_EDITAR = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'].includes(rol);
+
+  // Docentes y prefectos solo ven lista global — no pueden emitir
+  if (!PUEDE_EDITAR) {
+    document.getElementById('seccionEmitir').style.display = 'none';
+  }
+
+  let alumnoActual = null;
+  let todosAlumnos = [];
+
+  // Cargar justificantes activos hoy
+  cargarGlobal();
+
+  if (PUEDE_EDITAR) {
+    (async () => {
+      try {
+        const res = await apiFetch('/api/alumnos');
+        if (res) todosAlumnos = await res.json();
+      } catch(e) {}
+    })();
+  }
+
+  async function cargarGlobal() {
+    try {
+      const res  = await apiFetch('/api/expediente?tipo=justificante');
+      let data   = await res.json();
+      const cont = document.getElementById('listaGlobal');
+
+      // DOCENTE y PREFECTO: filtrar solo sus grupos asignados
+      if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          data = data.filter(j => {
+            const grado = String(j.alumnos?.grado || '');
+            const grupo = String(j.alumnos?.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
+      }
+      // TRABAJO SOCIAL, ENFERMERIA, ADMIN, DIRECTIVO: ven todos
+
+      cont.innerHTML = data.length ? data.map(j => `
+        <div class="just-item-global">
+          <div class="just-alumno">${j.alumnos?.apellidos} ${j.alumnos?.nombre} — ${j.alumnos?.grado}° "${j.alumnos?.grupo}"</div>
+          <div class="just-fechas">Del ${j.fecha_inicio} al ${j.fecha_fin}</div>
+          <div class="just-motivo">${j.motivo}</div>
+          ${PUEDE_EDITAR ? `<div style="margin-top:8px;"><button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar justificante</button></div>` : ''}
+        </div>`).join('') : '<div class="estado-vacio">Sin justificantes activos esta semana</div>';
+    } catch(e) {}
+  }
+
+  function actualizarFiltros() {
+    document.getElementById('inputBuscar').value = '';
+    mostrarFiltrados();
+  }
+
+  function buscarAlumno() { mostrarFiltrados(); }
+
+  function mostrarFiltrados() {
+    const q     = document.getElementById('inputBuscar').value.trim().toUpperCase();
+    const grado = document.getElementById('filtroGrado').value;
+    const grupo = document.getElementById('filtroGrupo').value;
+    const lista = document.getElementById('listaResultados');
+    if (!q && !grado && !grupo) { lista.innerHTML = ''; return; }
+    const filtrados = todosAlumnos.filter(a => {
+      const matchNombre = !q || `${a.apellidos} ${a.nombre}`.toUpperCase().includes(q);
+      const matchGrado  = !grado || String(a.grado) === String(grado);
+      const matchGrupo  = !grupo || String(a.grupo).toUpperCase() === grupo.toUpperCase();
+      return matchNombre && matchGrado && matchGrupo;
+    }).slice(0, 30);
+    lista.innerHTML = filtrados.length ? filtrados.map(a => `
+      <div class="item-alumno" onclick="seleccionarAlumno(${a.id_alumno})">
+        <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
+        <div class="alumno-grupo">${a.grado}° Grupo "${a.grupo}"</div>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:8px;">Sin resultados</div>';
+  }
+
+  async function seleccionarAlumno(id) {
+    alumnoActual = todosAlumnos.find(a => a.id_alumno === id);
+    if (!alumnoActual) return;
+    document.getElementById('inputBuscar').value = '';
+    document.getElementById('listaResultados').innerHTML = '';
+    document.getElementById('chipNombre').textContent = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
+    document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
+    document.getElementById('chipAlumno').style.display = 'flex';
+    document.getElementById('panelJust').style.display  = 'block';
+    cargarJustAlumno();
+  }
+
+  function limpiarAlumno() {
+    alumnoActual = null;
+    document.getElementById('chipAlumno').style.display = 'none';
+    document.getElementById('panelJust').style.display  = 'none';
+    document.getElementById('inputBuscar').value = '';
+  }
+
+  async function cargarJustAlumno() {
+    if (!alumnoActual) return;
+    try {
+      const res  = await apiFetch(`/api/expediente?tipo=justificante&id=${alumnoActual.id_alumno}`);
+      const data = await res.json();
+      const cont = document.getElementById('listaJustAlumno');
+      const activos = data.filter(j => j.activo);
+      cont.innerHTML = activos.length ? activos.map(j => `
+        <div class="just-item">
+          <div>
+            <div class="just-fechas">Del ${j.fecha_inicio} al ${j.fecha_fin}</div>
+            <div class="just-motivo">${j.motivo}</div>
+          </div>
+          <button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar</button>
+        </div>`).join('') : '<div class="estado-vacio">Sin justificantes activos</div>';
+    } catch(e) {}
+  }
+
+  async function emitirJustificante() {
+    if (!alumnoActual) return;
+    const btn    = document.getElementById('btnEmitirJust');
+    const inicio = document.getElementById('j-inicio').value;
+    const fin    = document.getElementById('j-fin').value;
+    const motivo = document.getElementById('j-motivo').value.trim();
+    if (!inicio || !fin || !motivo) return;
+    btn.disabled = true; btn.textContent = 'Emitiendo...';
+    try {
+      const res = await apiFetch('/api/expediente?tipo=justificante', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_alumno: alumnoActual.id_alumno, fecha_inicio: inicio, fecha_fin: fin, motivo: motivo.toUpperCase() })
+      });
+      const data = await res.json();
+      if (data.exito) {
+        document.getElementById('okJust').style.display = 'block';
+        setTimeout(() => document.getElementById('okJust').style.display = 'none', 3000);
+        document.getElementById('j-inicio').value = '';
+        document.getElementById('j-fin').value    = '';
+        document.getElementById('j-motivo').value = '';
+        cargarJustAlumno();
+        cargarGlobal();
+      } else {
+        document.getElementById('errJust').textContent   = data.error;
+        document.getElementById('errJust').style.display = 'block';
+      }
+    } catch(e) {
+      document.getElementById('errJust').textContent   = 'Error de conexión.';
+      document.getElementById('errJust').style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = 'Emitir Justificante';
+  }
+
+  async function desactivarJust(id) {
+    try {
+      await apiFetch(`/api/expediente?tipo=justificante&id=${id}`, { method: 'DELETE' });
+      cargarGlobal();
+      if (alumnoActual) cargarJustAlumno();
+    } catch(e) {}
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>

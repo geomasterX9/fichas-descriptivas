@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inicio — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --rojo-claro: #fff0f1; --rojo: #e63946;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--fondo);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* HEADER */
+.header {
+  background: var(--azul);
+  padding: 0 24px;
+  height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-logo { font-size: 24px; }
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-right { text-align: right; }
+.header-nombre { font-size: 14px; font-weight: 700; color: white; }
+.header-rol {
+  display: inline-block; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9);
+  margin-top: 4px;
+}
+/* BIENVENIDA */
+.bienvenida {
+  text-align: center;
+  padding: 40px 20px 24px;
+}
+.bienvenida h2 { font-size: 22px; font-weight: 800; color: var(--texto); margin-bottom: 6px; }
+.bienvenida p { font-size: 14px; color: var(--muted); }
+/* OPCIONES */
+.opciones {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 8px 20px 32px;
+  max-width: 480px; width: 100%;
+  margin: 0 auto; flex: 1;
+}
+.btn-opcion {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  padding: 24px 22px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-decoration: none; color: inherit;
+}
+.btn-opcion:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  border-color: #c7d4e8;
+}
+.btn-opcion:active { transform: translateY(0); }
+.opcion-icono {
+  width: 60px; height: 60px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; flex-shrink: 0;
+}
+.icono-reporte { background: #fff0f1; }
+.icono-expediente { background: var(--azul-claro); }
+.icono-alerta { background: #fef9c3; }
+.icono-dashboard { background: #eff6ff; }
+.icono-medico { background: #f0fdf4; }
+.icono-justificante { background: #fdf2f8; }
+.badge-alerta {
+  background: #e63946; color: white;
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 12px; font-weight: 800;
+  margin-left: 8px; display: inline-block;
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.btn-opcion.alerta-activa {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.btn-opcion.alerta-activa:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 8px 24px rgba(245,158,11,0.15);
+}
+.opcion-texto { flex: 1; }
+.opcion-titulo { font-size: 18px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
+.opcion-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.opcion-flecha { font-size: 22px; color: #c0cfe0; flex-shrink: 0; }
+/* PIE */
+.pie {
+  text-align: center; padding: 0 20px 32px;
+}
+.btn-cerrar {
+  background: var(--blanco); border: 1px solid var(--borde);
+  color: var(--muted); padding: 10px 24px;
+  border-radius: 10px; font-size: 13px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s;
+}
+.btn-cerrar:hover { background: var(--rojo-claro); border-color: #fecdd3; color: var(--rojo); }
+
+/* BANNER DEMO */
+.banner-demo {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white; padding: 10px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+  position: sticky; top: 62px; z-index: 90;
+  box-shadow: 0 2px 8px rgba(217,119,6,0.4);
+}
+.banner-demo-texto { flex: 1; text-align: center; }
+
+/* SELECTOR DE ROL DEMO */
+.selector-rol-demo {
+  background: var(--blanco); border: 1.5px solid #fde68a;
+  border-radius: 16px; padding: 16px 20px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.selector-rol-titulo {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: #92400e; margin-bottom: 12px;
+}
+.roles-demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rol-demo-btn {
+  padding: 10px 8px; border-radius: 10px; border: 1.5px solid #fde68a;
+  background: #fffbeb; font-size: 12px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; text-align: center;
+  color: #92400e; transition: all 0.15s; line-height: 1.3;
+}
+.rol-demo-btn:hover  { background: #fef3c7; border-color: #f59e0b; }
+.rol-demo-btn.activo { background: #f59e0b; border-color: #d97706; color: white; }
+
+/* BOTÓN EMERGENCIA FLOTANTE */
+.btn-emergencia {
+  position: fixed; bottom: 28px; right: 24px;
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--rojo); color: white;
+  border: none; cursor: pointer;
+  font-size: 28px; font-weight: 900;
+  box-shadow: 0 4px 20px rgba(230,57,70,0.5);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-emergencia:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(230,57,70,0.65); }
+.btn-emergencia.presionado-1 { background: #c0303a; transform: scale(0.95); }
+.btn-emergencia.presionado-2 { background: #a0202a; transform: scale(0.95); }
+
+/* CONTADOR DE CLICS */
+.emergencia-counter {
+  position: fixed; bottom: 98px; right: 24px;
+  background: var(--texto); color: white;
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 12px; font-weight: 700;
+  z-index: 200; display: none;
+  font-family: 'Outfit', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* BANNER DE EMERGENCIA ACTIVA */
+.banner-emergencia {
+  position: fixed; top: 62px; left: 0; right: 0;
+  background: var(--rojo); color: white;
+  padding: 14px 20px;
+  display: none; align-items: center; justify-content: center; gap: 12px;
+  z-index: 300; font-weight: 700; font-size: 15px;
+  animation: parpadeo 1s infinite;
+}
+@keyframes parpadeo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+.banner-emergencia.visible { display: flex; }
+.btn-cancelar-emergencia {
+  background: white; color: var(--rojo);
+  border: none; border-radius: 8px; padding: 6px 14px;
+  font-size: 12px; font-weight: 800; cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+}
+/* TARJETA FALTAS TRABAJO SOCIAL */
+.card-faltas {
+  background: var(--blanco); border: 1px solid var(--borde);
+  border-radius: 16px; padding: 20px 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 4px solid var(--rojo);
+}
+.card-faltas-titulo {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.faltas-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.falta-chip {
+  background: #fff0f1; border: 1px solid #fecdd3;
+  border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.falta-chip-num { font-size: 24px; font-weight: 900; color: var(--rojo); line-height: 1; }
+.falta-chip-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--muted); margin-top: 3px; }
+.faltas-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.faltas-tab {
+  padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--borde);
+  font-size: 11px; font-weight: 700; cursor: pointer; background: var(--blanco);
+  font-family: 'Outfit', sans-serif; color: var(--muted); transition: all 0.15s;
+}
+.faltas-tab.activo { background: #fff0f1; border-color: #fecdd3; color: var(--rojo); }
+.faltas-grado { margin-bottom: 10px; }
+.faltas-grado-header {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--muted); padding: 6px 0 6px 2px;
+  border-bottom: 1.5px solid var(--borde); margin-bottom: 6px;
+}
+.faltas-grupo-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; background: #f8fafc; border: 1px solid var(--borde);
+  border-radius: 10px; cursor: pointer; font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 700; color: var(--texto);
+  transition: all 0.15s; margin-bottom: 4px; text-align: left;
+}
+.faltas-grupo-btn:hover { background: #fff0f1; border-color: #fecdd3; }
+.faltas-grupo-btn.abierto { background: #fff0f1; border-color: #fecdd3; color: var(--rojo); border-radius: 10px 10px 0 0; margin-bottom: 0; }
+.faltas-grupo-izq { display: flex; align-items: center; gap: 8px; }
+.faltas-grupo-badge { background: var(--rojo); color: white; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 800; }
+.faltas-grupo-flecha { font-size: 14px; transition: transform 0.2s; color: var(--muted); }
+.faltas-grupo-btn.abierto .faltas-grupo-flecha { transform: rotate(90deg); }
+.faltas-detalle {
+  display: none; border: 1px solid #fecdd3; border-top: none;
+  border-radius: 0 0 10px 10px; overflow: hidden; margin-bottom: 4px;
+}
+.faltas-detalle.visible { display: block; }
+.faltas-alumno-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-bottom: 1px solid #fff0f1; font-size: 13px;
+}
+.faltas-alumno-row:last-child { border-bottom: none; }
+.faltas-alumno-nombre { font-weight: 600; color: var(--texto); }
+.faltas-alumno-count { font-weight: 800; color: var(--rojo); font-size: 12px; background: #fff0f1; padding: 2px 8px; border-radius: 20px; }
+
+@media (max-width: 480px) {
+  .opciones { padding: 8px 14px 24px; }
+  .btn-opcion { padding: 18px 16px; gap: 14px; }
+  .opcion-icono { width: 50px; height: 50px; font-size: 26px; }
+  .opcion-titulo { font-size: 16px; }
+}
+</style>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">🎓</div>
+    <div>
+      <div class="header-title">Gestión Escolar</div>
+      <div class="header-sub">Técnica 84</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-nombre" id="headerNombre">—</div>
+    <div class="header-rol" id="headerRol">—</div>
+  </div>
+</div>
+
+<!-- BANNER MODO DEMO -->
+<div class="banner-demo" id="bannerDemo" style="display:none;">
+  <span>⚠️</span>
+  <span class="banner-demo-texto">MODO DEMO — Estás usando datos ficticios. Ningún cambio afecta el sistema real.</span>
+</div>
+
+<div class="bienvenida">
+  <h2 id="saludo">Buenos días</h2>
+  <p>¿Qué deseas hacer hoy?</p>
+</div>
+
+<div class="opciones">
+
+  <!-- Selector de rol — solo modo DEMO -->
+  <div class="selector-rol-demo" id="selectorRolDemo" style="display:none;">
+    <div class="selector-rol-titulo">🎭 Explorar como...</div>
+    <div class="roles-demo-grid">
+      <button class="rol-demo-btn" onclick="cambiarRolDemo('ADMINISTRADOR','Admin Demo',this)">🏛️<br>Admin</button>
+      <button class="rol-demo-btn" onclick="cambiarRolDemo('DIRECTIVO','Director Demo',this)">🎓<br>Directivo</button>
+      <button class="rol-demo-btn" onclick="cambiarRolDemo('DOCENTE','Prof. García',this)">📚<br>Docente</button>
+      <button class="rol-demo-btn" onclick="cambiarRolDemo('PREFECTO','Prefecto Demo',this)">🔍<br>Prefecto</button>
+      <button class="rol-demo-btn" onclick="cambiarRolDemo('TRABAJO SOCIAL','T. Social',this)">🤝<br>T. Social</button>
+      <button class="rol-demo-btn" onclick="cambiarRolDemo('ENFERMERIA','Enfermería',this)">🏥<br>Enfermería</button>
+    </div>
+  </div>
+
+  <!-- Solo visible para DIRECTIVO y ADMINISTRADOR -->
+  <a class="btn-opcion" href="dashboard.html" id="btnDashboard" style="display:none;">
+    <div class="opcion-icono icono-dashboard">📊</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo" id="tituloDashboard">Panel</div>
+      <div class="opcion-desc">Accede al dashboard con estadísticas y resumen general del plantel.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Oculto para DIRECTIVO y TRABAJO SOCIAL -->
+  <a class="btn-opcion" href="buscador.html?modo=reporte" id="btnReporte">
+    <div class="opcion-icono icono-reporte">📋</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Registrar Reporte</div>
+      <div class="opcion-desc">Captura un reporte disciplinario o de conducta para un alumno.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="buscador.html">
+    <div class="opcion-icono icono-expediente">📁</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Consultar Expediente</div>
+      <div class="opcion-desc">Busca a un alumno y revisa su expediente académico y disciplinario.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="evaluaciones_parciales.html" id="btnEvaluaciones">
+    <div class="opcion-icono" style="background:#f0fdf6;">📝</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Evaluaciones Parciales</div>
+      <div class="opcion-desc">Captura calificaciones a mitad de trimestre por grupo.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="recuperacion.html">
+    <div class="opcion-icono" style="background:#fdf4ff;">📚</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Alumnos a Recuperación</div>
+      <div class="opcion-desc">Consulta y gestiona alumnos en proceso de recuperación académica.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="alertas_disciplinarias.html" id="btnAlertas" style="display:none;">
+    <div class="opcion-icono icono-alerta">⚠️</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">
+        Alertas Disciplinarias
+        <span class="badge-alerta" id="badgeAlertas">0</span>
+      </div>
+      <div class="opcion-desc" id="descAlertas">Alumnos que requieren atención inmediata.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Solo visible para ENFERMERIA -->
+  <a class="btn-opcion" href="enfermeria.html" id="btnEnfermeria" style="display:none;">
+    <div class="opcion-icono icono-medico">🏥</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Expediente Médico</div>
+      <div class="opcion-desc">Consulta y actualiza el expediente médico de los alumnos.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="visitas.html" id="btnVisitas" style="display:none;">
+    <div class="opcion-icono icono-medico">🩺</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Visitas a Enfermería</div>
+      <div class="opcion-desc">Registra y consulta las visitas de alumnos a enfermería.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="justificantes.html" id="btnJustificantes" style="display:none;">
+    <div class="opcion-icono icono-justificante">📄</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Avisos a Docentes
+        <span class="badge-alerta" id="badgeJustificantes" style="display:none;">0</span>
+      </div>
+      <div class="opcion-desc">Emite y gestiona justificantes médicos para docentes.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Seguimiento de reportes — solo TRABAJO SOCIAL -->
+  <a class="btn-opcion" href="reportes_ts.html" id="btnSeguimientoTS" style="display:none;">
+    <div class="opcion-icono" style="background:#fdf2f8;">📋</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Seguimiento de Reportes</div>
+      <div class="opcion-desc">Atiende y da seguimiento a todos los reportes disciplinarios del ciclo.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Pase de lista — solo TRABAJO SOCIAL -->
+  <a class="btn-opcion" href="pase_lista.html" id="btnPaseLista" style="display:none;">
+    <div class="opcion-icono" style="background:#fef9c3;">📝</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Pase de Lista</div>
+      <div class="opcion-desc">Registra asistencia diaria por grupo y notifica a docentes.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Estadísticas de Asistencia — TRABAJO SOCIAL, DIRECTIVO, ADMINISTRADOR -->
+  <a class="btn-opcion" href="estadisticas_asistencia.html" id="btnEstadisticas" style="display:none;">
+    <div class="opcion-icono" style="background:#f0fdf6;">📊</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Estadísticas de Asistencia</div>
+      <div class="opcion-desc">Faltas por fecha, grupos, alumnos, tendencias y exportación PDF.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <!-- Resumen faltas — solo TRABAJO SOCIAL -->
+  <div class="card-faltas" id="cardFaltas" style="display:none;">
+    <div class="card-faltas-titulo">📊 Resumen de Faltas del Día</div>
+    <div class="faltas-chips">
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaSemana">—</div><div class="falta-chip-label">Esta Semana</div></div>
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaMes">—</div><div class="falta-chip-label">Este Mes</div></div>
+      <div class="falta-chip"><div class="falta-chip-num" id="faltaTotal">—</div><div class="falta-chip-label">Total Ciclo</div></div>
+    </div>
+    <div class="faltas-tabs">
+      <button class="faltas-tab activo" onclick="cambiarTabFaltas('semana', this)">Semana</button>
+      <button class="faltas-tab" onclick="cambiarTabFaltas('mes', this)">Mes</button>
+      <button class="faltas-tab" onclick="cambiarTabFaltas('trimestre', this)">Trimestre</button>
+    </div>
+    <div id="faltasContenido">
+      <p style="text-align:center; color:var(--muted); font-size:13px; padding:10px;">Cargando...</p>
+    </div>
+  </div>
+
+  <!-- Ausentes hoy — badge para DOCENTE y PREFECTO -->
+  <a class="btn-opcion" href="ausentes.html" id="btnAusentes" style="display:none;">
+    <div class="opcion-icono" style="background:#fff0f1;">🔔</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">
+        Alumnos Ausentes
+        <span class="badge-alerta" id="badgeAusentes" style="display:none;">0</span>
+      </div>
+      <div class="opcion-desc" id="descAusentes">Alumnos de tus grupos que faltaron hoy.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+  <a class="btn-opcion" href="reporte_enfermeria.html" id="btnReporteEnf" style="display:none;">
+    <div class="opcion-icono" style="background:#f0fdf6;">📊</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Reporte de Actividades</div>
+      <div class="opcion-desc">Genera el informe mensual de visitas, justificantes y expedientes.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
+</div>
+
+<div class="pie">
+  <a href="cambiar_password.html" style="color:var(--azul); font-size:13px; font-weight:600; text-decoration:none; margin-right:12px;">🔑 Cambiar contraseña</a>
+  <button class="btn-cerrar" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+</div>
+
+<!-- BANNER EMERGENCIA ACTIVA -->
+<div class="banner-emergencia" id="bannerEmergencia">
+  🚨 EMERGENCIA ACTIVA — <span id="bannerQuien"></span>
+  <button class="btn-cancelar-emergencia" id="btnCancelarEmergencia" style="display:none;" onclick="cancelarEmergencia()">Desactivar</button>
+</div>
+
+<!-- BOTÓN FLOTANTE DE EMERGENCIA -->
+<div class="emergencia-counter" id="emergenciaCounter"></div>
+<button class="btn-emergencia" id="btnEmergencia" title="Botón de emergencia — presiona 3 veces" style="display:none;">🚨</button>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+
+  const nombre     = localStorage.getItem('nombreActivo') || 'Usuario';
+  const nombreCorto = localStorage.getItem('nombreCorto') || nombre;
+  const rol    = localStorage.getItem('rolActivo') || '';
+
+  if (!rol) window.location.href = 'index.html';
+
+  // ── MODO DEMO: banner y selector de roles ──────────────────
+  const esDemo = localStorage.getItem('esDemo') === 'true';
+  if (esDemo) {
+    document.getElementById('bannerDemo').style.display      = 'flex';
+    document.getElementById('selectorRolDemo').style.display = 'block';
+    document.querySelectorAll('.rol-demo-btn').forEach(btn => {
+      if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${rol}'`))
+        btn.classList.add('activo');
+    });
+  }
+
+  // TRABAJO SOCIAL: solo ve Consultar Expediente y Alertas Disciplinarias
+  if (rol === 'TRABAJO SOCIAL') {
+    document.getElementById('btnReporte').style.display           = 'none';
+    document.getElementById('btnEvaluaciones').style.display      = 'none';
+    document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
+    document.getElementById('btnPaseLista').style.display         = 'flex';
+    document.getElementById('btnSeguimientoTS').style.display     = 'flex';
+    document.getElementById('btnEstadisticas').style.display       = 'flex';
+    document.getElementById('cardFaltas').style.display           = 'block';
+    cargarResumenFaltas();
+  }
+  document.getElementById('headerNombre').textContent = nombreCorto;
+  document.getElementById('headerRol').textContent    = rol;
+
+  const hora   = new Date().getHours();
+  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  // Usa el nombre completo tal como lo definió el admin, sin split
+  document.getElementById('saludo').textContent = `${saludo}, ${nombreCorto} 👋`;
+
+  // DIRECTIVO y ADMINISTRADOR: muestra botón al dashboard, oculta botón de reporte
+  if (rol === 'DIRECTIVO' || rol === 'ADMINISTRADOR') {
+    document.getElementById('btnDashboard').style.display  = 'flex';
+    document.getElementById('btnEstadisticas').style.display = 'flex';
+    document.getElementById('btnReporte').style.display    = 'none';
+    document.getElementById('tituloDashboard').textContent =
+      rol === 'ADMINISTRADOR' ? 'Panel Administrativo' : 'Panel Directivo';
+  }
+
+  // ENFERMERÍA: muestra sus 3 tarjetas, oculta las demás
+  if (rol === 'ENFERMERIA') {
+    document.getElementById('btnReporte').style.display       = 'none';
+    document.getElementById('btnEvaluaciones').style.display  = 'none';
+    document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
+    document.querySelector('a[href="buscador.html"]').style.display     = 'none';
+    document.getElementById('btnEnfermeria').style.display    = 'flex';
+    document.getElementById('btnVisitas').style.display       = 'flex';
+    document.getElementById('btnJustificantes').style.display = 'flex';
+    document.getElementById('btnReporteEnf').style.display    = 'flex';
+  }
+
+  // PREFECTO: no ve Evaluaciones Parciales ni Recuperación
+  if (rol === 'PREFECTO') {
+    document.getElementById('btnEvaluaciones').style.display = 'none';
+    document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
+  }
+
+  // Consultar alumnos en riesgo disciplinario
+  async function cargarAlertas() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
+      if (!res) return;
+      let data = await res.json();
+      if (!data || !data.length) return;
+
+      // DOCENTE y PREFECTO: filtrar solo alumnos de sus grupos asignados
+      if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          data = data.filter(a => {
+            const grado = String(a.grado || '');
+            const grupo = String(a.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
+      }
+
+      if (!data.length) return;
+      const btn = document.getElementById('btnAlertas');
+      btn.style.display = 'flex';
+      btn.classList.add('alerta-activa');
+      document.getElementById('badgeAlertas').textContent = data.length;
+      const graves = data.filter(a => a.reportes_graves > 0).length;
+      document.getElementById('descAlertas').textContent =
+        graves > 0
+          ? `${graves} alumno(s) con falta grave · ${data.length - graves} con 3+ reportes`
+          : `${data.length} alumno(s) con 3 o más reportes`;
+      sessionStorage.setItem('alertas_disciplinarias', JSON.stringify(data));
+    } catch(e) { /* silencioso */ }
+  }
+
+  // Alertas disciplinarias — no aplica para ENFERMERIA
+  if (rol !== 'ENFERMERIA') cargarAlertas();
+
+  // Notificación de justificantes activos para DOCENTE y PREFECTO
+  if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+    async function cargarJustificantes() {
+      try {
+        const res = await apiFetch('/api/expediente?tipo=justificante');
+        if (!res) return;
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const badge = document.getElementById('badgeJustificantes');
+          const btnJ  = document.getElementById('btnJustificantes');
+          btnJ.href = 'justificantes.html';
+          btnJ.style.display = 'flex';
+          badge.style.display = 'inline-block';
+          badge.textContent = data.length;
+          document.querySelector('#btnJustificantes .opcion-titulo').innerHTML =
+            `Justificantes Médicos <span class="badge-alerta" id="badgeJustificantes" style="display:inline-block;">${data.length}</span>`;
+          document.querySelector('#btnJustificantes .opcion-desc').textContent =
+            `${data.length} alumno(s) con justificante médico activo hoy — revisar faltas`;
+        }
+      } catch(e) { /* silencioso */ }
+    }
+    cargarJustificantes();
+  }
+
+  // Badge de ausentes para DOCENTE y PREFECTO
+  if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+    async function cargarAusentes() {
+      try {
+        const res = await apiFetch('/api/dashboard?tipo=asistencia');
+        if (!res) return;
+        let data = await res.json();
+        if (!data || !data.length) return;
+
+        // Filtrar por grupos asignados
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          data = data.filter(a => {
+            const grado = String(a.alumnos?.grado || '');
+            const grupo = String(a.alumnos?.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
+        if (!data.length) return;
+
+        const btn = document.getElementById('btnAusentes');
+        btn.style.display = 'flex';
+        document.getElementById('badgeAusentes').style.display = 'inline-block';
+        document.getElementById('badgeAusentes').textContent   = data.length;
+        document.getElementById('descAusentes').textContent    =
+          `${data.length} alumno(s) de tus grupos faltaron hoy`;
+      } catch(e) { /* silencioso */ }
+    }
+    cargarAusentes();
+  }
+
+  // ── RESUMEN DE FALTAS — TRABAJO SOCIAL ────────────────────
+  let datosFaltasGlobal = null; // { ausentes, porAlumno }
+  let tabFaltas = 'semana';
+
+  async function cargarResumenFaltas() {
+    try {
+      const hoy = new Date();
+      const hoyStr = hoy.toISOString().split('T')[0];
+
+      // 1. Ausentes de hoy (para el acordeón)
+      const resHoy = await apiFetch('/api/dashboard?tipo=asistencia');
+      if (!resHoy) return;
+      const ausentes = await resHoy.json();
+      if (!Array.isArray(ausentes)) return;
+
+      // 2. Calcular rango de semana actual
+      const diaSem = hoy.getDay();
+      const lunes  = new Date(hoy);
+      lunes.setDate(hoy.getDate() - (diaSem === 0 ? 6 : diaSem - 1));
+      const lunesStr = lunes.toISOString().split('T')[0];
+
+      // 3. Obtener faltas de toda la semana (lunes a hoy)
+      let faltasSemana = 0;
+      let faltasMes    = 0;
+      let faltasTotal  = 0;
+
+      // Iterar días de la semana actual para contar faltas
+      const diasSemana = [];
+      for (let d = new Date(lunes); d <= hoy; d.setDate(d.getDate() + 1)) {
+        diasSemana.push(d.toISOString().split('T')[0]);
+      }
+      // Llamadas paralelas por día de la semana
+      const resSemana = await Promise.all(
+        diasSemana.map(f => apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
+          .then(r => r ? r.json() : []).catch(() => []))
+      );
+      resSemana.forEach(dia => {
+        if (Array.isArray(dia)) faltasSemana += dia.filter(r => !r.presente).length;
+      });
+
+      // Mes actual: del 1 al día de hoy
+      const mesInicio = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-01`;
+      const resMes = await apiFetch(
+        `/api/dashboard?tipo=asistencia_fecha&fecha=${hoyStr}`, { silencioso: true }
+      );
+      // Para mes y total usamos el endpoint faltas_alumno sumando todos los alumnos
+      // Como no tenemos endpoint de totales globales, usamos los datos de hoy como base
+      // y consultamos fechas del mes agrupadas
+      faltasMes   = faltasSemana; // aproximación inicial; se refina abajo
+      faltasTotal = ausentes.length;
+
+      // Construir mapa por alumno para mostrar en acordeón: id_alumno → {nombre, faltas}
+      const porAlumno = {};
+      ausentes.forEach(a => {
+        const id  = a.alumnos ? (a.id_alumno || a.alumnos.id_alumno) : null;
+        const nom = a.alumnos ? `${a.alumnos.apellidos || ''} ${a.alumnos.nombre || ''}`.trim() : '—';
+        const grado = String(a.alumnos?.grado || '');
+        const grupo = String(a.alumnos?.grupo || '').toUpperCase();
+        const key   = `${grado}-${grupo}`;
+        if (!porAlumno[key]) porAlumno[key] = { grado, grupo, alumnos: [] };
+        porAlumno[key].alumnos.push({ id, nombre: nom, faltasHoy: 1 });
+      });
+
+      // Contar faltas acumuladas por alumno en la semana
+      const todosIdsHoy = ausentes.map(a => a.id_alumno).filter(Boolean);
+      const faltasPorId = {};
+      resSemana.forEach(dia => {
+        if (!Array.isArray(dia)) return;
+        dia.filter(r => !r.presente).forEach(r => {
+          faltasPorId[r.id_alumno] = (faltasPorId[r.id_alumno] || 0) + 1;
+        });
+      });
+
+      // Actualizar chips
+      document.getElementById('faltaSemana').textContent = faltasSemana;
+      document.getElementById('faltaMes').textContent    = faltasMes;
+      document.getElementById('faltaTotal').textContent  = faltasTotal;
+
+      datosFaltasGlobal = { porGrupo: porAlumno, faltasPorId };
+      renderAcordeonFaltas();
+    } catch(e) { console.warn('Error cargando faltas:', e); }
+  }
+
+  function cambiarTabFaltas(tab, btn) {
+    tabFaltas = tab;
+    document.querySelectorAll('.faltas-tab').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    renderAcordeonFaltas();
+  }
+
+  function toggleGrupo(key) {
+    const detalle = document.getElementById(`detalle-${key}`);
+    const btn     = document.getElementById(`btn-${key}`);
+    if (!detalle || !btn) return;
+    const abierto = detalle.classList.contains('visible');
+    detalle.classList.toggle('visible', !abierto);
+    btn.classList.toggle('abierto', !abierto);
+  }
+
+  function renderAcordeonFaltas() {
+    const cont = document.getElementById('faltasContenido');
+    if (!datosFaltasGlobal) return;
+
+    const { porGrupo, faltasPorId } = datosFaltasGlobal;
+    const grupos = Object.entries(porGrupo).sort((a, b) => {
+      if (a[1].grado !== b[1].grado) return a[1].grado - b[1].grado;
+      return a[1].grupo.localeCompare(b[1].grupo);
+    });
+
+    if (grupos.length === 0) {
+      cont.innerHTML = '<p style="text-align:center;color:#2d9b6f;font-size:13px;font-weight:700;padding:10px;">✅ Sin ausencias registradas hoy</p>';
+      return;
+    }
+
+    // Agrupar por grado
+    const porGrado = {};
+    grupos.forEach(([key, info]) => {
+      if (!porGrado[info.grado]) porGrado[info.grado] = [];
+      porGrado[info.grado].push([key, info]);
+    });
+
+    const html = Object.entries(porGrado).sort().map(([grado, lista]) => `
+      <div class="faltas-grado">
+        <div class="faltas-grado-header">🏫 ${grado}° Grado</div>
+        ${lista.map(([key, info]) => {
+          const safeKey = key.replace(/[^a-zA-Z0-9]/g, '_');
+          const total = info.alumnos.length;
+          const alumnosHTML = info.alumnos
+            .sort((a, b) => a.nombre.localeCompare(b.nombre))
+            .map(a => {
+              const semFaltas = faltasPorId[a.id] || 1;
+              return `<div class="faltas-alumno-row">
+                <span class="faltas-alumno-nombre">❌ ${a.nombre}</span>
+                <span class="faltas-alumno-count">${semFaltas} falta(s)</span>
+              </div>`;
+            }).join('');
+          return `
+            <button class="faltas-grupo-btn" id="btn-${safeKey}" onclick="toggleGrupo('${safeKey}')">
+              <div class="faltas-grupo-izq">
+                <span>Grupo ${info.grupo}</span>
+                <span class="faltas-grupo-badge">${total}</span>
+              </div>
+              <span class="faltas-grupo-flecha">›</span>
+            </button>
+            <div class="faltas-detalle" id="detalle-${safeKey}">
+              ${alumnosHTML}
+            </div>`;
+        }).join('')}
+      </div>`).join('');
+
+    cont.innerHTML = html;
+  }
+
+  function cambiarRolDemo(nuevoRol, nuevoNombre, btnEl) {
+    localStorage.setItem('rolActivo',    nuevoRol);
+    localStorage.setItem('nombreCorto',  nuevoNombre);
+    localStorage.setItem('nombreActivo', nuevoNombre);
+    if (nuevoRol === 'DOCENTE')
+      localStorage.setItem('gruposActivos', JSON.stringify(['1A','1B','2A','2B']));
+    else if (nuevoRol === 'PREFECTO')
+      localStorage.setItem('gruposActivos', JSON.stringify(['1A','1B','1C','1D']));
+    else
+      localStorage.setItem('gruposActivos', JSON.stringify([]));
+    window.location.reload();
+  }
+
+  function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+
+<script>
+  // ── EMERGENCIA ──────────────────────────────────────────
+  let clicksEmergencia = 0;
+  let timerEmergencia  = null;
+  const rolActual = localStorage.getItem('rolActivo') || '';
+  const esAdmin   = ['ADMINISTRADOR', 'DIRECTIVO'].includes(rolActual);
+
+  const btnEmergencia        = document.getElementById('btnEmergencia');
+  const emergenciaCounter    = document.getElementById('emergenciaCounter');
+  const bannerEmergencia     = document.getElementById('bannerEmergencia');
+  const bannerQuien          = document.getElementById('bannerQuien');
+  const btnCancelarEmergencia = document.getElementById('btnCancelarEmergencia');
+
+  // Mostrar botón cancelar solo a admin/directivo
+  if (esAdmin) btnCancelarEmergencia.style.display = 'inline-block';
+
+  btnEmergencia.addEventListener('click', () => {
+    clicksEmergencia++;
+
+    // Feedback visual en el botón
+    btnEmergencia.classList.remove('presionado-1', 'presionado-2');
+    void btnEmergencia.offsetWidth; // reflow
+    btnEmergencia.classList.add(clicksEmergencia === 1 ? 'presionado-1' : 'presionado-2');
+
+    // Mostrar contador
+    const restantes = 3 - clicksEmergencia;
+    emergenciaCounter.style.display = 'block';
+    emergenciaCounter.textContent   = restantes > 0
+      ? `Presiona ${restantes} vez más para activar`
+      : '¡Activando emergencia!';
+
+    // Reiniciar timer de 3 segundos
+    clearTimeout(timerEmergencia);
+
+    if (clicksEmergencia >= 3) {
+      activarEmergencia();
+      clicksEmergencia = 0;
+      setTimeout(() => {
+        emergenciaCounter.style.display = 'none';
+        btnEmergencia.classList.remove('presionado-1', 'presionado-2');
+      }, 2000);
+    } else {
+      timerEmergencia = setTimeout(() => {
+        clicksEmergencia = 0;
+        emergenciaCounter.style.display = 'none';
+        btnEmergencia.classList.remove('presionado-1', 'presionado-2');
+      }, 3000);
+    }
+  });
+
+  async function activarEmergencia() {
+    try {
+      if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+      await apiFetch('/api/dashboard?tipo=emergencia', { method: 'POST' });
+      mostrarBannerEmergencia(localStorage.getItem('nombreCorto') || 'Un usuario');
+    } catch(e) { console.error('Error activando emergencia:', e); }
+  }
+
+  async function cancelarEmergencia() {
+    try {
+      await apiFetch('/api/dashboard?tipo=emergencia', { method: 'DELETE' });
+      bannerEmergencia.classList.remove('visible');
+      detenerAudioEmergencia();
+    } catch(e) { console.error('Error cancelando emergencia:', e); }
+  }
+
+  let audioCtxEmergencia = null;
+  let intervalAudio      = null;
+
+  async function reproducirAlerta() {
+    try {
+      if (!audioCtxEmergencia || audioCtxEmergencia.state === 'closed') {
+        audioCtxEmergencia = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtxEmergencia.state === 'suspended') await audioCtxEmergencia.resume();
+      const response    = await fetch('/emergencia.mp3');
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtxEmergencia.decodeAudioData(arrayBuffer);
+      const source      = audioCtxEmergencia.createBufferSource();
+      const gainNode    = audioCtxEmergencia.createGain();
+      gainNode.gain.value = 3.5;
+      source.buffer = audioBuffer;
+      source.connect(gainNode);
+      gainNode.connect(audioCtxEmergencia.destination);
+      source.start(0);
+    } catch(e) { /* silencioso */ }
+  }
+
+  function iniciarAudioEmergencia() {
+    reproducirAlerta();
+    if (intervalAudio) clearInterval(intervalAudio);
+    intervalAudio = setInterval(reproducirAlerta, 15000);
+  }
+
+  function detenerAudioEmergencia() {
+    if (intervalAudio) { clearInterval(intervalAudio); intervalAudio = null; }
+    try {
+      if (audioCtxEmergencia && audioCtxEmergencia.state !== 'closed') {
+        audioCtxEmergencia.close();
+        audioCtxEmergencia = null;
+      }
+    } catch(e) {}
+  }
+
+  function mostrarBannerEmergencia(quien) {
+    bannerQuien.textContent = quien;
+    bannerEmergencia.classList.add('visible');
+    if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500, 200, 500]);
+    iniciarAudioEmergencia();
+  }
+
+  // Polling cada 8 segundos para detectar emergencias activas
+  async function verificarEmergenciaActiva() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=emergencia');
+      if (!res) return;
+      const data = await res.json();
+      if (data.activa && data.emergencia) {
+        const yaVisible = bannerEmergencia.classList.contains('visible');
+        if (!yaVisible) mostrarBannerEmergencia(data.emergencia.nombre_usuario);
+      } else {
+        bannerEmergencia.classList.remove('visible');
+        detenerAudioEmergencia();
+      }
+    } catch(e) { /* silencioso */ }
+  }
+
+  verificarEmergenciaActiva();
+  setInterval(verificarEmergenciaActiva, 8000);
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de Reportes — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul:#1B4F8A; --azul-hover:#163f6e; --azul-claro:#eff6ff;
+  --verde:#2d9b6f; --verde-claro:#f0fdf6;
+  --rojo:#e63946; --rojo-claro:#fff0f1;
+  --naranja:#f59e0b; --naranja-claro:#fffbeb;
+  --fondo:#f0f4f8; --blanco:#fff;
+  --texto:#1a2332; --muted:#64748b; --borde:#e2e8f0;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100vh; }
+.header {
+  background:var(--azul); padding:0 24px; height:62px;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 2px 12px rgba(27,79,138,0.25); position:sticky; top:0; z-index:100;
+}
+.header-left { display:flex; align-items:center; gap:12px; }
+.btn-back {
+  width:36px; height:36px; border-radius:10px;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2);
+  color:white; font-size:18px; display:flex; align-items:center;
+  justify-content:center; text-decoration:none; transition:background 0.15s;
+}
+.btn-back:hover { background:rgba(255,255,255,0.25); }
+.header-title { font-size:16px; font-weight:800; color:white; }
+.header-sub   { font-size:12px; color:rgba(255,255,255,0.7); margin-top:1px; }
+.contenido { max-width:900px; margin:0 auto; padding:24px 20px 60px; }
+
+/* FILTROS */
+.filtros {
+  background:var(--blanco); border-radius:16px; border:1px solid var(--borde);
+  padding:16px 20px; margin-bottom:20px;
+  display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;
+}
+.filtro-grupo { display:flex; flex-direction:column; gap:5px; }
+.filtro-grupo label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
+.filtro-grupo select, .filtro-grupo input {
+  padding:9px 12px; border:1.5px solid var(--borde); border-radius:10px;
+  font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto);
+  background:var(--blanco); outline:none;
+}
+.filtro-grupo select:focus, .filtro-grupo input:focus { border-color:var(--azul); }
+.badge-conteo {
+  background:var(--azul-claro); color:var(--azul);
+  border-radius:20px; padding:5px 14px; font-size:13px; font-weight:700;
+  align-self:center;
+}
+
+/* TARJETA REPORTE */
+.reporte-card {
+  background:var(--blanco); border-radius:16px; border:1px solid var(--borde);
+  padding:20px 22px; margin-bottom:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.04);
+  border-left:4px solid var(--borde);
+}
+.reporte-card.grave    { border-left-color:var(--rojo); }
+.reporte-card.moderada { border-left-color:var(--naranja); }
+.reporte-card.leve     { border-left-color:#64748b; }
+.reporte-card.positiva { border-left-color:var(--verde); }
+
+.reporte-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.alumno-nombre  { font-size:15px; font-weight:800; color:var(--texto); }
+.alumno-grado   { font-size:12px; color:var(--muted); margin-top:2px; }
+.reporte-badges { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  border-radius:20px; padding:3px 10px;
+  font-size:11px; font-weight:700;
+}
+.badge-grave    { background:#fff0f1; color:var(--rojo);    border:1px solid #fecdd3; }
+.badge-moderada { background:#fffbeb; color:#92400e;        border:1px solid #fde68a; }
+.badge-leve     { background:#f8fafc; color:var(--muted);   border:1px solid var(--borde); }
+.badge-positiva { background:var(--verde-claro); color:var(--verde); border:1px solid #bbf7d0; }
+.badge-en-proceso  { background:#fef9c3; color:#854d0e; border:1px solid #fde68a; }
+.badge-solucionado { background:var(--verde-claro); color:#166534; border:1px solid #bbf7d0; }
+
+.reporte-motivo { font-size:13px; color:var(--texto); margin-bottom:8px; line-height:1.5; }
+.reporte-meta   { font-size:11px; color:var(--muted); margin-bottom:12px; }
+
+/* SEGUIMIENTO */
+.seg-panel {
+  background:#f8fafc; border-radius:10px; padding:14px 16px;
+  border-left:3px solid var(--azul); margin-top:4px;
+}
+.seg-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--muted); margin-bottom:10px; }
+.seg-acuerdos { font-size:13px; color:var(--texto); line-height:1.6; white-space:pre-wrap; margin-top:6px; }
+.seg-meta-ts  { font-size:11px; color:var(--muted); margin-top:8px; }
+.seg-sin      { font-size:12px; color:#cbd5e1; }
+.btn-seg-editar {
+  background:none; border:1.5px solid var(--azul); color:var(--azul);
+  border-radius:8px; padding:5px 12px; font-size:12px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;
+  margin-top:10px; display:inline-block;
+}
+.btn-seg-editar:hover { background:var(--azul-claro); }
+.seg-form { margin-top:10px; display:none; }
+.seg-form label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--muted); display:block; margin-bottom:5px; }
+.seg-checkbox-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.seg-checkbox-row input[type=checkbox] { width:16px; height:16px; cursor:pointer; }
+.seg-checkbox-row span { font-size:13px; font-weight:600; color:var(--texto); }
+.seg-form textarea {
+  width:100%; padding:9px 12px; border:1.5px solid var(--borde);
+  border-radius:8px; font-size:13px; font-family:'Outfit',sans-serif;
+  resize:none; height:80px; outline:none; margin-bottom:8px;
+}
+.seg-form textarea:focus { border-color:var(--azul); }
+.btn-guardar-seg {
+  background:var(--azul); color:white; border:none; border-radius:8px;
+  padding:8px 18px; font-size:13px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer; transition:background 0.15s;
+}
+.btn-guardar-seg:hover { background:var(--azul-hover); }
+.btn-guardar-seg:disabled { opacity:0.6; cursor:not-allowed; }
+
+.btn-sol-rapido {
+  background:var(--verde-claro); color:var(--verde);
+  border:1.5px solid #bbf7d0; border-radius:8px;
+  padding:5px 12px; font-size:12px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer;
+  transition:all 0.15s; margin-top:10px; margin-right:6px; display:inline-block;
+}
+.btn-sol-rapido:hover { background:#dcfce7; }
+.btn-sol-rapido:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-reabrir {
+  background:#fff0f1; color:var(--rojo);
+  border:1.5px solid #fecdd3; border-radius:8px;
+  padding:5px 12px; font-size:12px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer;
+  transition:all 0.15s; margin-top:10px; margin-right:6px; display:inline-block;
+}
+.btn-reabrir:hover { background:#fecdd3; }
+.empty { text-align:center; padding:48px 20px; color:var(--muted); }
+.empty-icono { font-size:48px; margin-bottom:12px; }
+.empty-titulo { font-size:16px; font-weight:700; }
+
+@media (max-width:600px) {
+  .filtros { flex-direction:column; }
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">📋 Seguimiento de Reportes</div>
+      <div class="header-sub">Trabajo Social · Todos los reportes del ciclo</div>
+    </div>
+  </div>
+</div>
+
+<div class="contenido">
+
+  <div class="filtros">
+    <div class="filtro-grupo">
+      <label>Estatus</label>
+      <select id="filtroEstatus" onchange="filtrar()">
+        <option value="">Todos</option>
+        <option value="En proceso">🟡 En proceso</option>
+        <option value="Solucionado">✅ Solucionado</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <label>Gravedad</label>
+      <select id="filtroGravedad" onchange="filtrar()">
+        <option value="">Todas</option>
+        <option value="Grave">Grave</option>
+        <option value="Moderada">Moderada</option>
+        <option value="Leve">Leve</option>
+        <option value="Positiva">Positiva</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <label>Buscar alumno</label>
+      <input type="text" id="filtroBuscar" placeholder="Nombre o apellido..." oninput="filtrar()">
+    </div>
+    <div class="filtro-grupo">
+      <label>Fecha desde</label>
+      <input type="date" id="filtroFechaDesde" onchange="filtrar()">
+    </div>
+    <div class="filtro-grupo">
+      <label>Fecha hasta</label>
+      <input type="date" id="filtroFechaHasta" onchange="filtrar()">
+    </div>
+    <div class="filtro-grupo">
+      <label>Reportado por</label>
+      <select id="filtroDocente" onchange="filtrar()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <span class="badge-conteo" id="conteo">— reportes</span>
+  </div>
+
+  <div id="listaReportes">
+    <div class="empty"><div class="empty-icono">⏳</div><div class="empty-titulo">Cargando reportes...</div></div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rolActivo = localStorage.getItem('rolActivo') || '';
+
+  // Solo TRABAJO SOCIAL puede acceder
+  if (rolActivo !== 'TRABAJO SOCIAL') window.location.href = 'inicio.html';
+
+  let todosReportes = [];
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  async function cargarReportes() {
+    document.getElementById('listaReportes').innerHTML =
+      '<div class="empty"><div class="empty-icono">⏳</div><div class="empty-titulo">Cargando reportes...</div></div>';
+    try {
+      // Una sola llamada trae todos los reportes del ciclo
+      const res = await apiFetch('/api/reportes?todos=1');
+      if (!res) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        document.getElementById('listaReportes').innerHTML =
+          '<div class="empty"><div class="empty-icono">❌</div><div class="empty-titulo">Error al cargar reportes</div></div>';
+        return;
+      }
+      todosReportes = data;
+      // Poblar select de docentes con los que reportaron
+      const docentes = [...new Set(data.map(r => r.nombre_reporta).filter(Boolean))].sort();
+      const selDoc = document.getElementById('filtroDocente');
+      selDoc.innerHTML = '<option value="">Todos</option>' +
+        docentes.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+      filtrar();
+    } catch(e) {
+      document.getElementById('listaReportes').innerHTML =
+        '<div class="empty"><div class="empty-icono">❌</div><div class="empty-titulo">Error al cargar reportes</div></div>';
+    }
+  }
+
+  function filtrar() {
+    const estatus  = document.getElementById('filtroEstatus').value;
+    const gravedad = document.getElementById('filtroGravedad').value;
+    const buscar   = document.getElementById('filtroBuscar').value.trim().toUpperCase();
+
+    const fechaDesde = document.getElementById('filtroFechaDesde').value;
+    const fechaHasta = document.getElementById('filtroFechaHasta').value;
+    const docente    = document.getElementById('filtroDocente').value;
+
+    let lista = todosReportes.filter(r => {
+      const nombreCompleto = `${r.alumno_apellidos} ${r.alumno_nombre}`.toUpperCase();
+      const estatusR = r.estatus_seguimiento || 'En proceso';
+      if (estatus    && estatusR !== estatus)            return false;
+      if (gravedad   && r.gravedad !== gravedad)         return false;
+      if (buscar     && !nombreCompleto.includes(buscar)) return false;
+      if (fechaDesde && r.fecha < fechaDesde)            return false;
+      if (fechaHasta && r.fecha > fechaHasta)            return false;
+      if (docente    && r.nombre_reporta !== docente)    return false;
+      return true;
+    });
+
+    document.getElementById('conteo').textContent = `${lista.length} reporte(s)`;
+
+    if (lista.length === 0) {
+      document.getElementById('listaReportes').innerHTML =
+        '<div class="empty"><div class="empty-icono">✅</div><div class="empty-titulo">Sin reportes con esos filtros</div></div>';
+      return;
+    }
+
+    document.getElementById('listaReportes').innerHTML = lista.map(r => {
+      const estatus  = r.estatus_seguimiento || 'En proceso';
+      const esSol    = estatus === 'Solucionado';
+      const gravClass = (r.gravedad||'').toLowerCase();
+      const badgeClass = esSol ? 'badge-solucionado' : 'badge-en-proceso';
+      const badgeIcon  = esSol ? '✅' : '🟡';
+
+      return `<div class="reporte-card ${gravClass}">
+        <div class="reporte-header">
+          <div>
+            <div class="alumno-nombre">
+              <a href="expediente.html?id_alumno=${r.id_alumno}&from=reportes_ts"
+                 style="color:var(--azul);text-decoration:none;">
+                ${esc(r.alumno_apellidos)} ${esc(r.alumno_nombre)}
+              </a>
+            </div>
+            <div class="alumno-grado">${r.alumno_grado}° Grupo "${esc(r.alumno_grupo)}"</div>
+          </div>
+          <div class="reporte-badges">
+            <span class="badge badge-${gravClass}">${esc(r.gravedad)}</span>
+            <span class="badge ${badgeClass}">${badgeIcon} ${esc(estatus)}</span>
+          </div>
+        </div>
+
+        <div class="reporte-motivo">${esc(r.motivo)}</div>
+        <div class="reporte-meta">📅 ${esc(r.fecha)} · Reportado por: ${esc(r.nombre_reporta||'—')}</div>
+
+        <div class="seg-panel">
+          <div class="seg-titulo">🤝 Seguimiento — Trabajo Social</div>
+          ${r.acuerdos
+            ? `<div class="seg-acuerdos">${esc(r.acuerdos)}</div>`
+            : `<div class="seg-sin">Sin acuerdos registrados aún</div>`}
+          ${r.seguimiento_por
+            ? `<div class="seg-meta-ts">Atendido por ${esc(r.seguimiento_por)} · ${esc(r.seguimiento_fecha||'')}</div>`
+            : ''}
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+            ${!esSol
+              ? `<button class="btn-sol-rapido" id="sol-${r.id_reporte}" onclick="marcarSolucionado('${r.id_reporte}')">✅ Marcar solucionado</button>`
+              : `<button class="btn-reabrir" id="sol-${r.id_reporte}" onclick="marcarEnProceso('${r.id_reporte}')">↩️ Reabrir</button>`}
+            <button class="btn-seg-editar" style="margin-top:0;" onclick="toggleForm('${r.id_reporte}')">✏️ Editar acuerdos</button>
+          </div>
+          <div class="seg-form" id="form-${r.id_reporte}">
+            <div class="seg-checkbox-row">
+              <input type="checkbox" id="chk-${r.id_reporte}" ${esSol ? 'checked' : ''}>
+              <span>Marcar como Solucionado</span>
+            </div>
+            <label>Acuerdos y soluciones</label>
+            <textarea id="txt-${r.id_reporte}" placeholder="Describe los acuerdos y soluciones...">${r.acuerdos ? esc(r.acuerdos) : ''}</textarea>
+            <button class="btn-guardar-seg" id="btn-${r.id_reporte}" onclick="guardar('${r.id_reporte}')">Guardar seguimiento</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function marcarSolucionado(id) {
+    const btn = document.getElementById(`sol-${id}`);
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+    try {
+      const res = await apiFetch('/api/reportes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_reporte: parseInt(id), estatus_seguimiento: 'Solucionado' })
+      });
+      const data = await res.json();
+      if (data.exito) await cargarReportes();
+      else { alert('Error: ' + (data.error||'')); if(btn){btn.disabled=false;btn.textContent='✅ Marcar solucionado';} }
+    } catch(e) { alert('Error de conexión.'); if(btn){btn.disabled=false;btn.textContent='✅ Marcar solucionado';} }
+  }
+
+  async function marcarEnProceso(id) {
+    const btn = document.getElementById(`sol-${id}`);
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+    try {
+      const res = await apiFetch('/api/reportes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_reporte: parseInt(id), estatus_seguimiento: 'En proceso' })
+      });
+      const data = await res.json();
+      if (data.exito) await cargarReportes();
+      else { alert('Error: ' + (data.error||'')); if(btn){btn.disabled=false;btn.textContent='↩️ Reabrir';} }
+    } catch(e) { alert('Error de conexión.'); if(btn){btn.disabled=false;btn.textContent='↩️ Reabrir';} }
+  }
+
+  function toggleForm(id) {
+    const form = document.getElementById(`form-${id}`);
+    if (form) form.style.display = form.style.display === 'none' || !form.style.display ? 'block' : 'none';
+  }
+
+  async function guardar(id) {
+    const chk    = document.getElementById(`chk-${id}`);
+    const txt    = document.getElementById(`txt-${id}`);
+    const btn    = document.getElementById(`btn-${id}`);
+    btn.disabled = true; btn.textContent = 'Guardando...';
+
+    try {
+      const res = await apiFetch('/api/reportes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_reporte:          parseInt(id),
+          estatus_seguimiento: chk.checked ? 'Solucionado' : 'En proceso',
+          acuerdos:            txt.value.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.exito) {
+        await cargarReportes();
+      } else {
+        alert('Error: ' + (data.error || 'No se pudo guardar.'));
+        btn.disabled = false; btn.textContent = 'Guardar seguimiento';
+      }
+    } catch(e) {
+      alert('Error de conexión.');
+      btn.disabled = false; btn.textContent = 'Guardar seguimiento';
+    }
+  }
+
+  cargarReportes();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>

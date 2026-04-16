@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alumnos Ausentes — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-claro: #eff6ff;
+  --rojo: #e63946; --rojo-claro: #fff0f1;
+  --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
+
+.header {
+  background: var(--azul); padding: 0 24px; height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25); position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.btn-back {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  color: white; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; text-decoration: none;
+}
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-nombre { font-size: 13px; font-weight: 700; color: white; }
+
+.contenido { max-width: 680px; margin: 0 auto; padding: 24px 20px 60px; }
+
+.info-dia {
+  background: var(--rojo-claro); border: 1.5px solid #fecdd3;
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
+  font-size: 13px; font-weight: 700; color: var(--rojo);
+}
+
+.grupo-seccion {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.grupo-titulo {
+  font-size: 15px; font-weight: 800; color: var(--azul); margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.badge-ausentes {
+  background: var(--rojo-claro); color: var(--rojo);
+  border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800;
+}
+
+.alumno-ausente {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+}
+.alumno-ausente:last-child { border-bottom: none; }
+.ausente-icon { font-size: 20px; }
+.ausente-nombre { font-size: 14px; font-weight: 700; color: var(--texto); }
+
+.estado-vacio {
+  text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px;
+}
+.estado-ok {
+  text-align: center; padding: 40px 20px; color: var(--verde); font-size: 15px; font-weight: 700;
+}
+.cargando { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">🔔 Alumnos Ausentes</div>
+      <div class="header-sub">EST 84 · Asistencia de Hoy</div>
+    </div>
+  </div>
+  <div class="header-nombre" id="headerNombre">—</div>
+  <a href="reporte_asistencia.html?desde=ausentes" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:9px;padding:7px 14px;font-size:12px;font-weight:700;text-decoration:none;">📋 Reporte</a>
+</div>
+
+<div class="contenido">
+
+  <div class="info-dia" id="infoDia">📅 Cargando...</div>
+  <div id="contenidoAusentes"><div class="cargando">⏳ Cargando lista de ausentes...</div></div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rol    = localStorage.getItem('rolActivo') || '';
+  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  document.getElementById('headerNombre').textContent = nombre;
+
+  const hoy = new Date();
+  const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('infoDia').textContent =
+    `📅 ${diasSemana[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+
+  async function cargarAusentes() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=asistencia');
+      let data  = await res.json();
+      if (!Array.isArray(data)) throw new Error(data?.error || 'Respuesta inesperada del servidor');
+
+      // Filtrar por grupos asignados para DOCENTE/PREFECTO
+      if (rol === 'DOCENTE' || rol === 'PREFECTO') {
+        const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+        const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
+        if (grupos.length > 0) {
+          data = data.filter(a => {
+            const grado = String(a.alumnos?.grado || '');
+            const grupo = String(a.alumnos?.grupo || '').toUpperCase();
+            return grupos.some(gp => String(gp) === `${grado}${grupo}`);
+          });
+        }
+      }
+
+      const cont = document.getElementById('contenidoAusentes');
+
+      if (!data.length) {
+        cont.innerHTML = '<div class="estado-ok">✅ Sin ausencias registradas en tus grupos hoy</div>';
+        return;
+      }
+
+      // Agrupar por grado+grupo
+      const porGrupo = {};
+      data.forEach(a => {
+        const key = `${a.alumnos?.grado}°${a.alumnos?.grupo}`;
+        if (!porGrupo[key]) porGrupo[key] = [];
+        porGrupo[key].push(a);
+      });
+
+      cont.innerHTML = Object.entries(porGrupo).sort().map(([grupo, alumnos]) => `
+        <div class="grupo-seccion">
+          <div class="grupo-titulo">
+            Grupo ${grupo}
+            <span class="badge-ausentes">${alumnos.length} ausente(s)</span>
+          </div>
+          ${alumnos.map(a => `
+            <div class="alumno-ausente">
+              <div class="ausente-icon">❌</div>
+              <div class="ausente-nombre">${a.alumnos?.apellidos || ''} ${a.alumnos?.nombre || ''}</div>
+            </div>`).join('')}
+        </div>`).join('');
+
+    } catch(e) {
+      document.getElementById('contenidoAusentes').innerHTML =
+        '<div class="estado-vacio">Error al cargar. Intenta de nuevo.</div>';
+    }
+  }
+
+  cargarAusentes();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas Disciplinarias — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-claro: #eff6ff;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --naranja: #f59e0b; --naranja-claro: #fffbeb;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; color: var(--texto); }
+
+        .navbar {
+            background: var(--azul); padding: 0 24px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { color: white; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .btn-nav { text-decoration: none; color: rgba(255,255,255,0.85); font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s; }
+        .btn-nav:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        .contenedor { max-width: 680px; margin: 0 auto; padding: 28px 16px 60px; }
+
+        .banner-alerta {
+            background: linear-gradient(135deg, #92400e, #b45309);
+            border-radius: 16px; padding: 20px 24px;
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 24px; color: white;
+        }
+        .banner-icono { font-size: 36px; flex-shrink: 0; }
+        .banner-titulo { font-size: 18px; font-weight: 800; }
+        .banner-sub { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+
+        .filtros { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .filtro-btn {
+            padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--borde);
+            font-size: 13px; font-weight: 600; cursor: pointer; background: var(--blanco);
+            font-family: 'Outfit', sans-serif; color: var(--muted); transition: all 0.15s;
+        }
+        .filtro-btn:hover { border-color: #94a3b8; color: var(--texto); }
+        .filtro-btn.activo { background: var(--azul); border-color: var(--azul); color: white; }
+
+        .lista { display: flex; flex-direction: column; gap: 12px; }
+
+        .alumno-card {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 14px; padding: 16px 18px;
+            display: flex; align-items: center; gap: 14px;
+            transition: all 0.15s; text-decoration: none; color: inherit;
+        }
+        .alumno-card:hover { border-color: var(--azul); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,79,138,0.1); }
+        .alumno-card.grave { border-left: 4px solid var(--rojo); }
+        .chip-seguimiento  { background: #f0fdf6; color: #166534; border: 1px solid #bbf7d0; }
+        .chip-en-proceso   { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+        .chip-sin-seg      { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+        .alumno-card.moderado { border-left: 4px solid var(--naranja); }
+
+        .card-icono {
+            width: 46px; height: 46px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .card-icono.grave    { background: var(--rojo-claro); }
+        .card-icono.moderado { background: var(--naranja-claro); }
+
+        .card-info { flex: 1; min-width: 0; }
+        .card-nombre { font-weight: 800; font-size: 15px; }
+        .card-grado  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .card-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+        .chip {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .chip-grave    { background: var(--rojo-claro); color: var(--rojo); }
+        .chip-reportes { background: #fff7ed; color: #9a3412; }
+        .chip-multi    { background: var(--naranja-claro); color: #92400e; }
+
+        .card-flecha { font-size: 20px; color: #c0cfe0; flex-shrink: 0; }
+
+        .empty {
+            text-align: center; padding: 48px 24px;
+            background: var(--blanco); border-radius: 14px;
+            border: 1px solid var(--borde);
+        }
+        .empty-icono { font-size: 48px; margin-bottom: 12px; }
+        .empty-titulo { font-size: 16px; font-weight: 800; color: var(--verde); margin-bottom: 6px; }
+        .empty-sub { font-size: 13px; color: var(--muted); }
+
+        .conteo { font-size: 13px; color: var(--muted); margin-bottom: 12px; font-weight: 600; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">⚠️ Alertas Disciplinarias</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <button onclick="exportarAlertasPDF()" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;">🖨️ PDF</button>
+        <a href="inicio.html" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">← Volver al Inicio</a>
+    </div>
+</nav>
+
+<div class="contenedor">
+    <div class="banner-alerta" id="banner">
+        <div class="banner-icono">🚨</div>
+        <div>
+            <div class="banner-titulo" id="bannerTitulo">Cargando...</div>
+            <div class="banner-sub" id="bannerSub">Alumnos que requieren atención inmediata</div>
+        </div>
+    </div>
+
+    <!-- Búsqueda y selects -->
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+        <input type="text" id="busquedaNombre" placeholder="🔍 Buscar por nombre..." oninput="aplicarFiltros()"
+            style="flex:2; min-width:180px; padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px;
+                   font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto); outline:none; transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='var(--azul)'" onblur="this.style.borderColor='var(--borde)'">
+        <select id="filtroGrado" onchange="aplicarFiltros()"
+            style="flex:1; min-width:110px; padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px;
+                   font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); outline:none; appearance:none;">
+            <option value="">Todos los grados</option>
+            <option value="1">1° Grado</option>
+            <option value="2">2° Grado</option>
+            <option value="3">3° Grado</option>
+        </select>
+        <select id="filtroGrupo" onchange="aplicarFiltros()"
+            style="flex:1; min-width:110px; padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px;
+                   font-size:13px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); outline:none; appearance:none;">
+            <option value="">Todos los grupos</option>
+            <option value="A">Grupo A</option>
+            <option value="B">Grupo B</option>
+            <option value="C">Grupo C</option>
+            <option value="D">Grupo D</option>
+            <option value="E">Grupo E</option>
+            <option value="F">Grupo F</option>
+        </select>
+    </div>
+
+    <!-- Chips de nivel -->
+    <div class="filtros">
+        <button class="filtro-btn activo" onclick="seleccionarChip('todos', this)">Todos</button>
+        <button class="filtro-btn" onclick="seleccionarChip('grave', this)">🔴 Con falta grave</button>
+        <button class="filtro-btn" onclick="seleccionarChip('multiples', this)">🟡 3+ reportes</button>
+    </div>
+
+    <div class="conteo" id="conteo"></div>
+    <div class="lista" id="lista">
+        <div class="empty"><div class="empty-icono">⏳</div><div class="empty-titulo">Cargando...</div></div>
+    </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+    let todosAlumnos = [];
+
+    const _rawG = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_ACTIVOS = (() => { try { return JSON.parse(_rawG); } catch { return []; } })();
+    const ROL_ACTIVO = localStorage.getItem('rolActivo') || '';
+    const PUEDE_TODO = ['ADMINISTRADOR', 'DIRECTIVO'].includes(ROL_ACTIVO);
+
+    function filtrarPorGrupos(lista) {
+        if (PUEDE_TODO || GRUPOS_ACTIVOS.length === 0) return lista;
+        return lista.filter(a => GRUPOS_ACTIVOS.includes(`${a.grado}${a.grupo}`));
+    }
+
+    async function cargar() {
+        // Intentar desde sessionStorage primero (ya cargado en inicio.html)
+        const cached = sessionStorage.getItem('alertas_disciplinarias');
+        if (cached) {
+            todosAlumnos = filtrarPorGrupos(JSON.parse(cached));
+            renderizar(todosAlumnos);
+            return;
+        }
+        // Si no hay cache, consultar API
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=riesgo_disciplinario');
+            if (!res) return;
+            const data = await res.json();
+            todosAlumnos = filtrarPorGrupos(data);
+            renderizar(todosAlumnos);
+        } catch(e) {
+            document.getElementById('lista').innerHTML = `<div class="empty"><div class="empty-icono">❌</div><div class="empty-titulo">Error al cargar</div></div>`;
+        }
+    }
+
+    function renderizar(lista) {
+        const graves = lista.filter(a => a.reportes_graves > 0).length;
+        document.getElementById('bannerTitulo').textContent =
+            lista.length === 0
+                ? '✅ Sin alertas activas'
+                : `${lista.length} alumno(s) requieren atención`;
+        document.getElementById('bannerSub').textContent =
+            lista.length === 0
+                ? 'No hay alumnos en situación de riesgo disciplinario'
+                : `${graves} con falta grave · ${lista.length - graves} con 3 o más reportes`;
+
+        if (lista.length === 0) {
+            document.getElementById('conteo').textContent = '';
+            document.getElementById('lista').innerHTML = `
+                <div class="empty">
+                    <div class="empty-icono">✅</div>
+                    <div class="empty-titulo">Sin alertas activas</div>
+                    <div class="empty-sub">Ningún alumno tiene faltas graves ni 3 o más reportes en este ciclo.</div>
+                </div>`;
+            return;
+        }
+
+        aplicarFiltros();
+    }
+
+    let chipActivo = 'todos';
+
+    function seleccionarChip(tipo, btn) {
+        document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+        chipActivo = tipo;
+        aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+        const busqueda = (document.getElementById('busquedaNombre').value || '').toUpperCase().trim();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+
+        let lista = [...todosAlumnos];
+
+        // Chip de nivel
+        if (chipActivo === 'grave')     lista = lista.filter(a => a.reportes_graves > 0);
+        if (chipActivo === 'multiples') lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+
+        // Selects
+        if (grado)  lista = lista.filter(a => String(a.grado) === grado);
+        if (grupo)  lista = lista.filter(a => a.grupo === grupo);
+
+        // Búsqueda por nombre
+        if (busqueda) lista = lista.filter(a => `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda));
+
+        document.getElementById('conteo').textContent = `Mostrando ${lista.length} alumno(s)`;
+        document.getElementById('lista').innerHTML = lista.length === 0
+            ? `<div class="empty"><div class="empty-icono">✅</div><div class="empty-titulo">Sin alertas en esta categoría</div></div>`
+            : lista.map(a => {
+                const esGrave   = a.reportes_graves > 0;
+                const tipoClass = esGrave ? 'grave' : 'moderado';
+                const icono     = esGrave ? '🔴' : '🟡';
+                return `
+                <a href="expediente.html?id_alumno=${a.id_alumno}&from=alertas" class="alumno-card ${tipoClass}">
+                    <div class="card-icono ${tipoClass}">${icono}</div>
+                    <div class="card-info">
+                        <div class="card-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                        <div class="card-grado">${a.grado}° Grupo "${a.grupo}"</div>
+                        <div class="card-badges">
+                            ${a.reportes_graves > 0 ? `<span class="chip chip-grave">⚠️ ${a.reportes_graves} falta(s) grave(s)</span>` : ''}
+                            ${a.total_reportes >= 3  ? `<span class="chip chip-reportes">📋 ${a.total_reportes} reportes totales</span>` : ''}
+                            ${a.estatus_seguimiento === 'Solucionado'
+                                ? `<span class="chip chip-seguimiento">✅ Solucionado</span>`
+                                : a.estatus_seguimiento === 'En proceso'
+                                ? `<span class="chip chip-en-proceso">🟡 En proceso</span>`
+                                : `<span class="chip chip-sin-seg">⏳ Sin seguimiento</span>`}
+                        </div>
+                    </div>
+                    <div class="card-flecha">›</div>
+                </a>`;
+            }).join('');
+    }
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function getConfigInst() {
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+            if (res) return await res.json();
+        } catch(e) {}
+        return {};
+    }
+
+    function headerInstHTML(cfg) {
+        const nombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const clave     = cfg.clave_escuela     || '';
+        const direccion = cfg.direccion_escuela || '';
+        const ciclo     = cfg.ciclo_activo      || '';
+        const logoIzq   = cfg.logo_izquierdo    || '';
+        const logoDer   = cfg.logo_derecho      || '';
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+            <div style="width:90px;text-align:center;">
+                ${logoIzq ? `<img src="${logoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+            </div>
+            <div style="flex:1;text-align:center;padding:0 16px;">
+                <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${nombre}</div>
+                ${clave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div style="font-size:10px;color:#555;">${direccion}</div>` : ''}
+                ${ciclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${ciclo}</div>` : ''}
+            </div>
+            <div style="width:90px;text-align:center;">
+                ${logoDer ? `<img src="${logoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+            </div>
+        </div>`;
+    }
+
+    async function exportarAlertasPDF() {
+        const busqueda = (document.getElementById('busquedaNombre').value || '').toUpperCase().trim();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+
+        // Misma lógica que aplicarFiltros()
+        let lista = [...todosAlumnos];
+        if (chipActivo === 'grave')     lista = lista.filter(a => a.reportes_graves > 0);
+        if (chipActivo === 'multiples') lista = lista.filter(a => a.total_reportes >= 3 && a.reportes_graves === 0);
+        if (grado)   lista = lista.filter(a => String(a.grado) === grado);
+        if (grupo)   lista = lista.filter(a => a.grupo === grupo);
+        if (busqueda) lista = lista.filter(a => `${a.apellidos} ${a.nombre}`.toUpperCase().includes(busqueda));
+
+        lista.sort((a, b) => {
+            if (a.grado !== b.grado) return a.grado - b.grado;
+            if (a.grupo !== b.grupo) return String(a.grupo).localeCompare(String(b.grupo));
+            return (a.apellidos + a.nombre).localeCompare(b.apellidos + b.nombre);
+        });
+
+        // Etiqueta de filtros aplicados
+        const chipLabel = { todos: 'Todos', grave: 'Con falta grave', multiples: '3+ reportes' };
+        const filtrosDesc = [
+            chipLabel[chipActivo] || 'Todos',
+            grado  ? `${grado}° Grado` : '',
+            grupo  ? `Grupo ${grupo}` : '',
+            busqueda ? `Búsqueda: "${busqueda}"` : ''
+        ].filter(Boolean).join(' · ');
+
+        const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+        const cfg   = await getConfigInst();
+
+        let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 15mm 12mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+            table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+            th { background:#92400e; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+            td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:middle; font-size:10px; }
+            tr:nth-child(even) td { background:#fffbeb; }
+            .grave   { color:#e63946; font-weight:700; }
+            .moderado{ color:#f59e0b; font-weight:700; }
+            .mut     { color:#64748b; }
+            h3 { font-size:12px; color:#92400e; margin:0 0 2px; }
+            p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+        </style></head><body>
+        ${headerInstHTML(cfg)}
+        <h3>🚨 Alertas Disciplinarias</h3>
+        <p>${filtrosDesc} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+        <table><thead><tr>
+            <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Nivel</th><th>Faltas graves</th><th>Total reportes</th>
+        </tr></thead><tbody>`;
+
+        lista.forEach((a, i) => {
+            const esGrave = a.reportes_graves > 0;
+            html += `<tr>
+                <td class="mut">${i + 1}</td>
+                <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                <td>${a.grado}° Grupo "${a.grupo}"</td>
+                <td class="${esGrave ? 'grave' : 'moderado'}">${esGrave ? '🔴 GRAVE' : '🟡 MODERADO'}</td>
+                <td class="grave">${a.reportes_graves > 0 ? a.reportes_graves : '—'}</td>
+                <td style="font-weight:700;">${a.total_reportes}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>
+        <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Prefecto / T. Social</div>
+            </div>
+        </div>
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
+
+    window.onload = cargar;
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .catch(err => console.warn('SW no registrado:', err));
+        });
+    }
+</script>
+</body>
+</html>

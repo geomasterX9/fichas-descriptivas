@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expediente - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --rojo: #e63946;
+            --naranja: #f59e0b;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--azul); padding: 0 24px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-left { display: flex; align-items: center; gap: 8px; }
+        .navbar-right { display: flex; align-items: center; gap: 8px; }
+        .btn-nav {
+            text-decoration: none; color: rgba(255,255,255,0.85); font-weight: 600;
+            font-size: 13px; padding: 7px 14px; border-radius: 8px; transition: all 0.15s;
+            border: none; background: none; cursor: pointer; font-family: 'Outfit', sans-serif;
+        }
+        .btn-nav:hover { background: rgba(255,255,255,0.12); color: white; }
+        .btn-nav.salir { color: #fca5a5; }
+        .btn-nav.salir:hover { background: rgba(230,57,70,0.2); }
+        .btn-pdf {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 7px 14px; border-radius: 8px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .btn-pdf:hover { background: rgba(255,255,255,0.25); }
+        .btn-reporte-disc {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 7px 14px; border-radius: 8px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .btn-reporte-disc:hover { background: rgba(255,255,255,0.22); }
+
+        /* CONTENIDO */
+        .contenido { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
+
+        /* CABECERA ALUMNO */
+        .cabecera {
+            background: var(--azul); border-radius: 16px;
+            padding: 24px 20px; margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(27,79,138,0.3);
+        }
+        .perfil-header { display: flex; align-items: center; gap: 20px; }
+        .foto-wrapper { position: relative; flex-shrink: 0; }
+        .foto-alumno {
+            width: 80px; height: 80px; object-fit: cover;
+            border-radius: 50%; border: 3px solid rgba(255,255,255,0.8);
+            background: #e2e8f0; display: block;
+            pointer-events: none; user-select: none; -webkit-user-drag: none;
+        }
+        .foto-restringida {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.5);
+            background: #334155; color: white;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; text-align: center; line-height: 1.3;
+        }
+        .btn-foto {
+            position: absolute; bottom: 2px; right: 2px;
+            background: rgba(0,0,0,0.6); color: white; border: none;
+            border-radius: 50%; width: 28px; height: 28px;
+            font-size: 13px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .foto-cargando {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 20px;
+        }
+        .perfil-info { flex: 1; min-width: 0; }
+        .perfil-nombre {
+            font-size: clamp(18px, 5vw, 26px); font-weight: 800;
+            color: white; line-height: 1.2;
+            word-break: break-word; overflow-wrap: break-word;
+        }
+        .perfil-sub { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 6px; }
+
+        /* SECCIONES */
+        .seccion {
+            background: var(--blanco); border-radius: 14px;
+            border: 1px solid var(--borde); margin-bottom: 14px; overflow: hidden;
+        }
+        .seccion-header {
+            padding: 14px 18px; font-weight: 800; font-size: 14px;
+            border-left: 4px solid var(--azul); background: #fafbfc;
+        }
+        .seccion-header.naranja { border-left-color: var(--naranja); color: #92400e; }
+        .seccion-header.verde   { border-left-color: var(--verde);   color: #065f46; }
+        .seccion-body { padding: 16px; }
+
+        /* GRID SOCIOECONÓMICO */
+        .grid-socio { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .tarjeta-dato {
+            background: #f8fafc; padding: 12px 14px;
+            border-radius: 10px; border: 1px solid var(--borde);
+        }
+        .tarjeta-dato h4 {
+            font-size: 11px; color: var(--azul); text-transform: uppercase;
+            letter-spacing: 0.6px; font-weight: 700;
+            border-bottom: 1px solid var(--borde); padding-bottom: 6px; margin-bottom: 8px;
+        }
+        .fila-dato { display: flex; padding: 5px 0; border-bottom: 1px solid #f1f5f9; gap: 8px; }
+        .fila-dato:last-child { border-bottom: none; }
+        .fila-label { font-size: 12px; color: var(--muted); flex: 0 0 42%; }
+        .fila-valor { font-size: 13px; font-weight: 600; flex: 1; word-break: break-word; }
+
+        /* TABLA REPORTES */
+        .tabla-reportes { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .tabla-reportes th {
+            background: #f8fafc; padding: 10px 12px; text-align: left;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--muted); border-bottom: 2px solid var(--borde);
+        }
+        .tabla-reportes td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .tabla-reportes tr:last-child td { border-bottom: none; }
+        /* SEGUIMIENTO */
+        .seg-panel {
+          background: #f8fafc; border-radius: 10px; padding: 12px 14px;
+          margin-top: 8px; border-left: 3px solid #1B4F8A;
+        }
+        .seg-badge {
+          display: inline-flex; align-items: center; gap: 5px;
+          border-radius: 20px; padding: 4px 12px;
+          font-size: 11px; font-weight: 700; margin-bottom: 8px;
+        }
+        .seg-badge.en-proceso { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+        .seg-badge.solucionado { background: #f0fdf6; color: #166534; border: 1px solid #bbf7d0; }
+        .seg-acuerdos {
+          font-size: 12px; color: var(--texto); line-height: 1.6;
+          white-space: pre-wrap;
+        }
+        .seg-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+        .seg-sin { font-size: 12px; color: #cbd5e1; }
+        .btn-seg-editar {
+          background: none; border: 1.5px solid #1B4F8A; color: #1B4F8A;
+          border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
+          margin-top: 8px; display: block;
+        }
+        .btn-seg-editar:hover { background: #eff6ff; }
+        .seg-form { margin-top: 10px; display: none; }
+        .seg-form label {
+          font-size: 11px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.6px; color: var(--muted); display: block; margin-bottom: 5px;
+        }
+        .seg-checkbox-row {
+          display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+        }
+        .seg-checkbox-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+        .seg-checkbox-row span { font-size: 13px; font-weight: 600; color: var(--texto); }
+        .seg-form textarea {
+          width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0;
+          border-radius: 8px; font-size: 13px; font-family: 'Outfit', sans-serif;
+          resize: none; height: 80px; outline: none; margin-bottom: 8px;
+        }
+        .seg-form textarea:focus { border-color: #1B4F8A; }
+        .btn-guardar-seg {
+          background: #1B4F8A; color: white; border: none; border-radius: 8px;
+          padding: 7px 16px; font-size: 12px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-guardar-seg:hover { background: #163f6e; }
+        .btn-guardar-seg:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-reporte {
+            background: var(--azul); color: white; border: none;
+            padding: 10px 18px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; margin-bottom: 14px; transition: background 0.15s; display: block;
+        }
+        .btn-reporte:hover { background: var(--azul-hover); }
+
+        /* BOLETA */
+        .contenedor-boleta { overflow-x: auto; margin-top: 16px; border-radius: 10px; border: 1px solid var(--borde); -webkit-overflow-scrolling: touch; }
+        .tabla-boleta { min-width: 500px; width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
+        .tabla-boleta th {
+            background: #f8fafc; padding: 10px 8px;
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            border-bottom: 2px solid var(--borde); white-space: nowrap;
+        }
+        .tabla-boleta td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; }
+        .tabla-boleta tr:last-child td { border-bottom: none; }
+        .promedio-cell { font-weight: 800; background: var(--azul-claro); color: var(--azul); }
+
+        .motivos-card {
+            background: #fffbeb; border: 1px solid #fde68a;
+            border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+        }
+        .motivos-trimestre { font-size: 13px; font-weight: 800; color: #92400e; margin-bottom: 6px; }
+        .motivos-reprobadas { font-size: 12px; color: #b45309; margin-bottom: 10px; }
+        .motivos-textarea {
+            width: 100%; padding: 10px 12px;
+            border: 1.5px solid #fde68a; border-radius: 9px;
+            font-size: 13px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: white; resize: none;
+            height: 80px; transition: border-color 0.15s; outline: none;
+        }
+        .motivos-textarea:focus { border-color: var(--naranja); }
+        .btn-guardar-motivos {
+            margin-top: 8px; padding: 8px 18px;
+            background: var(--naranja); color: white;
+            border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-guardar-motivos:hover { background: #d97706; }
+        .motivos-ok { font-size: 12px; color: var(--verde); font-weight: 700; margin-left: 10px; display: none; }
+        .selector-grafica {
+            padding: 9px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 600;
+            color: var(--azul); background: var(--azul-claro); cursor: pointer; outline: none;
+            margin-bottom: 16px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .navbar { padding: 0 12px; }
+            .contenido { padding: 12px 10px 40px; }
+            .cabecera { padding: 16px 14px; border-radius: 12px; }
+            .foto-alumno, .foto-restringida { width: 64px; height: 64px; }
+            .perfil-header { gap: 14px; }
+            .grid-socio { grid-template-columns: 1fr; }
+            .tabla-reportes th:nth-child(4),
+            .tabla-reportes td:nth-child(4),
+            .tabla-reportes th:nth-child(5),
+            .tabla-reportes td:nth-child(5) { display: none; }
+            .seccion-body { padding: 12px 10px; }
+            .btn-nav { padding: 6px 10px; font-size: 12px; }
+        }
+
+        /* ASISTENCIA */
+        .asistencia-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .asist-chip {
+            background: #f8fafc; border: 1px solid var(--borde);
+            border-radius: 12px; padding: 14px 16px; text-align: center;
+        }
+        .asist-chip-num { font-size: 28px; font-weight: 900; color: var(--rojo); line-height: 1; }
+        .asist-chip-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-top: 4px; }
+        .asist-tabla { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+        .asist-tabla th { background: #f8fafc; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); border-bottom: 2px solid var(--borde); }
+        .asist-tabla td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+        .asist-tabla tr:last-child td { border-bottom: none; }
+        .asist-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+        .asist-tab {
+            padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--borde);
+            font-size: 12px; font-weight: 700; cursor: pointer; background: var(--blanco);
+            font-family: 'Outfit', sans-serif; color: var(--muted); transition: all 0.15s;
+        }
+        .asist-tab.activo { background: var(--rojo-claro); border-color: #fecdd3; color: var(--rojo); }
+        @media (max-width: 600px) { .asistencia-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        /* PRINT */
+        @media print {
+            .navbar, .btn-reporte, .btn-foto, .selector-grafica { display: none !important; }
+            body { background: white; }
+            .contenido { padding: 0; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-left">
+        <a href="buscador.html" id="btnRegresar" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">← Directorio</a>
+        <a href="buscador.html" class="btn-nav" id="btnBuscador" style="display:none">🔍 Buscador</a>
+    </div>
+    <div class="navbar-right">
+        <button class="btn-reporte-disc" id="btnReporteDisc" onclick="descargarReporteDisc()" style="display:none">📤 Compartir</button>
+        <button class="btn-pdf" onclick="descargarPDF()">🖨️ PDF</button>
+        <a href="#" onclick="cerrarSesion()" class="btn-nav salir">Salir 👋</a>
+    </div>
+</nav>
+
+<div class="contenido">
+
+    <!-- ENCABEZADO INSTITUCIONAL — oculto en pantalla, visible en PDF -->
+    <div id="encabezado-institucional" style="display:none; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:3px solid #1B4F8A; margin-bottom:6px;">
+            <img src="/logo_sege.png" style="height:52px; object-fit:contain;">
+            <div style="text-align:center; flex:1; padding:0 12px;">
+                <div style="font-size:11px; color:#555; font-weight:600;">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                <div style="font-size:14px; font-weight:800; color:#1B4F8A; margin:3px 0;">ESCUELA SECUNDARIA TÉCNICA No. 84</div>
+                <div style="font-size:11px; color:#555;">CLAVE: 24DST0092Z</div>
+                <div style="font-size:10px; color:#777;">Trojes del Valle No. 140, Fracc. Trojes del Sur, S.L.P.</div>
+            </div>
+            <img src="/logo_est84.png" style="height:52px; object-fit:contain;">
+        </div>
+    </div>
+
+    <div class="cabecera">
+        <div class="perfil-header" id="perfilDinamico">
+            <div style="color:rgba(255,255,255,0.7); padding:10px;">Cargando expediente...</div>
+        </div>
+    </div>
+
+    <div class="seccion" id="seccionSocio">
+        <div class="seccion-header">I. Datos Socioeconómicos</div>
+        <div class="seccion-body" id="contSocio">
+            <p style="text-align:center; color:var(--muted); padding:20px;">Cargando...</p>
+        </div>
+    </div>
+
+    <div class="seccion" id="seccionReportes">
+        <div class="seccion-header naranja">II. Historial de Reportes</div>
+        <div class="seccion-body">
+            <button class="btn-reporte" onclick="window.location.href='captura_reporte.html?id_alumno='+idAlumno">
+                + REGISTRAR REPORTE
+            </button>
+            <table class="tabla-reportes">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Gravedad</th>
+                        <th>Motivo / Acuerdo</th>
+                        <th>Reportado por</th>
+                        <th>Seguimiento</th>
+                    </tr>
+                </thead>
+                <tbody id="listaReportes">
+                    <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted);">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="seccion" id="seccionCalificaciones">
+        <div class="seccion-header verde">III. Rendimiento Académico</div>
+        <div class="seccion-body">
+            <select id="selectorGrafica" class="selector-grafica" onchange="actualizarGrafica()">
+                <option value="GENERAL">📊 Promedio General</option>
+                <option value="COMPARATIVO" id="optComparativo" style="display:none">🔀 Comparativo trimestres</option>
+            </select>
+            <canvas id="graficaPromedios" height="120"></canvas>
+            <div class="contenedor-boleta" id="contBoleta"></div>
+        </div>
+    </div>
+
+    <!-- Motivos de reprobación — visible solo si hay materias reprobadas -->
+    <div class="seccion" id="seccionMotivos" style="display:none;">
+        <div class="seccion-header naranja">IV. Motivos de Reprobación</div>
+        <div class="seccion-body" id="contMotivos"></div>
+    </div>
+
+    <!-- Sección Asistencia — visible para todos excepto ENFERMERIA -->
+    <div class="seccion" id="seccionAsistencia" style="display:none;">
+        <div class="seccion-header" style="border-left-color:#e63946; color:#991b1b;">VI. Registro de Asistencia</div>
+        <div class="seccion-body">
+            <div class="asistencia-grid" id="asistResumen">
+                <div class="asist-chip"><div class="asist-chip-num" id="asistTotal">—</div><div class="asist-chip-label">Total Faltas</div></div>
+                <div class="asist-chip"><div class="asist-chip-num" id="asistMesActual">—</div><div class="asist-chip-label">Este Mes</div></div>
+                <div class="asist-chip"><div class="asist-chip-num" id="asistSemanaActual">—</div><div class="asist-chip-label">Esta Semana</div></div>
+            </div>
+            <div class="asist-tabs">
+                <button class="asist-tab activo" onclick="cambiarTabAsist('semana', this)">Por Semana</button>
+                <button class="asist-tab" onclick="cambiarTabAsist('mes', this)">Por Mes</button>
+                <button class="asist-tab" onclick="cambiarTabAsist('trimestre', this)">Por Trimestre</button>
+            </div>
+            <div id="asistContenido">
+                <p style="text-align:center; color:var(--muted); padding:16px;">Cargando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección Médica — visible para ENFERMERÍA, ADMINISTRADOR y DIRECTIVO -->
+    <div class="seccion" id="seccionMedica" style="display:none;">
+        <div class="seccion-header" style="border-left-color:#2d9b6f; color:#065f46;">V. Expediente Médico</div>
+        <div class="seccion-body">
+            <div style="text-align:center; padding:16px 0 8px;">
+                <a href="enfermeria.html" id="linkEnfermeria"
+                   style="display:inline-flex; align-items:center; gap:8px; background:#f0fdf4; color:#2d9b6f; border:1.5px solid #bbf7d0; border-radius:10px; padding:10px 22px; font-size:13px; font-weight:700; text-decoration:none; transition:all 0.15s;">
+                    🏥 Abrir Módulo de Enfermería
+                </a>
+            </div>
+            <div id="contMedico" style="margin-top:16px;"></div>
+        </div>
+    </div>
+
+</div>
+
+<input type="file" id="inputFotoAlumno" accept="image/*" style="display:none" onchange="subirFotoAlumno(this)">
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+
+    const idAlumno  = new URLSearchParams(window.location.search).get('id_alumno');
+    const rolActivo = localStorage.getItem('rolActivo');
+    let chartInstance = null;
+    let datosAsistencia = null;
+    let tabAsist = 'semana';
+    let datosCalificacionesGlobal = [];
+    let fotoActualSrc = '';
+
+    window.onload = async () => {
+        if (!idAlumno || idAlumno === 'undefined' || idAlumno === 'null')
+            return window.location.href = 'buscador.html';
+
+        // Navegación contextual según rol y ?from=
+        const from = new URLSearchParams(window.location.search).get('from');
+        const btn  = document.getElementById('btnRegresar');
+        const DESTINOS = {
+            'dashboard':  { href: 'dashboard.html',              label: '← Dashboard' },
+            'buscador':   { href: 'buscador.html',               label: '← Directorio' },
+            'alertas':    { href: 'alertas_disciplinarias.html', label: '← Alertas' },
+            'fichas':     { href: 'tool_fichas.html',            label: '← Fichas' },
+            'reporte':    { href: 'inicio.html',                 label: '← Inicio' },
+        };
+        if (from && DESTINOS[from]) {
+            btn.href      = DESTINOS[from].href;
+            btn.innerText = DESTINOS[from].label;
+        } else if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
+            btn.href      = 'dashboard.html';
+            btn.innerText = '← Dashboard';
+        } else if (rolActivo === 'TRABAJO SOCIAL') {
+            btn.href      = 'inicio.html';
+            btn.innerText = '← Inicio';
+        } else if (rolActivo === 'ENFERMERIA') {
+            btn.href      = 'buscador.html?modo=ficha';
+            btn.innerText = '← Ficha';
+        } else if (rolActivo === 'DOCENTE' || rolActivo === 'PREFECTO') {
+            btn.href      = 'inicio.html';
+            btn.innerText = '← Inicio';
+        }
+        if (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO') {
+            document.getElementById('btnBuscador').style.display = '';
+        }
+        if (['ADMINISTRADOR','DIRECTIVO'].includes(rolActivo)) {
+            document.getElementById('btnReporteDisc').style.display = '';
+        }
+
+        // ENFERMERÍA: oculta reportes y calificaciones, solo ve ficha socioeconómica
+        if (rolActivo === 'ENFERMERIA') {
+            document.getElementById('seccionReportes').style.display     = 'none';
+            document.getElementById('seccionCalificaciones').style.display = 'none';
+            document.getElementById('seccionMotivos').style.display      = 'none';
+            document.querySelector('.btn-reporte')?.remove();
+        }
+
+        await cargarTodo();
+        registrarLog('VER_EXPEDIENTE', `Alumno ID: ${idAlumno}`);
+
+        // Si viene con ?tab=ficha hacer scroll a la sección socioeconómica
+        const tab = new URLSearchParams(window.location.search).get('tab');
+        if (tab === 'ficha') {
+            setTimeout(() => {
+                document.getElementById('seccionSocio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 600);
+        }
+    };
+
+    async function cargarTodo() {
+        try {
+            const resAlu = await apiFetch(`/api/alumnos?id=${idAlumno}`);
+            const a = await resAlu.json();
+
+            fotoActualSrc = a['fotos-alumnos'] || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            const puedeEditarFoto = (rolActivo === 'ADMINISTRADOR' || rolActivo === 'DIRECTIVO');
+            const btnFotoHTML = puedeEditarFoto
+                ? `<button class='btn-foto' onclick='document.getElementById("inputFotoAlumno").click()' title='Cambiar foto'>📷</button>`
+                : '';
+
+            document.getElementById('perfilDinamico').innerHTML = `
+                <div class="foto-wrapper">
+                    <img src='${fotoActualSrc}' class="foto-alumno" id="imgFotoAlumno">
+                    ${btnFotoHTML}
+                </div>
+                <div class="perfil-info">
+                    <div class="perfil-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                    <div class='perfil-sub'>Grado: <b>${a.grado}°</b> &nbsp;|&nbsp; Grupo: <b>&quot;${a.grupo}&quot;</b> &nbsp;|&nbsp; ID: <b>#${a.id_alumno}</b></div>
+                </div>`;
+
+            // Ficha socioeconómica
+            const resFicha = await apiFetch(`/api/expediente?tipo=ficha&id=${idAlumno}`);
+            const f = await resFicha.json();
+            const esRestringido = ['DOCENTE','PREFECTO'].includes(rolActivo);
+            const CAMPOS_PRIVADOS = ['domicilio_calle','telefono_casa','tutor_telefono','madre_telefono','padre_telefono'];
+
+            const dat = (v, campo = null) => {
+                if (campo && esRestringido && CAMPOS_PRIVADOS.includes(campo))
+                    return '<span style="color:#94a3b8; font-style:italic; font-size:12px;">🔒 Restringido</span>';
+                return esc(v || '—');
+            };
+            const fila = (label, val) => `
+                <div class="fila-dato">
+                    <span class="fila-label">${label}</span>
+                    <span class="fila-valor">${val}</span>
+                </div>`;
+
+            if (f && f.id_alumno) {
+                document.getElementById('contSocio').innerHTML = `
+                <div class="grid-socio">
+                    <div class="tarjeta-dato">
+                        <h4>👤 Tutor / Responsable</h4>
+                        ${fila('Nombre', dat(f.tutor_nombre))}
+                        ${fila('Parentesco', dat(f.tutor_parentesco))}
+                        ${fila('Teléfono', dat(f.tutor_telefono, 'tutor_telefono'))}
+                        ${fila('Ocupación', dat(f.tutor_ocupacion))}
+                    </div>
+                    <div class="tarjeta-dato">
+                        <h4>👨‍👩‍👧 Familia</h4>
+                        ${fila('Madre', dat(f.madre_nombre))}
+                        ${fila('Tel. Madre', dat(f.madre_telefono, 'madre_telefono'))}
+                        ${fila('Ocup. madre', dat(f.madre_ocupacion))}
+                        ${fila('Padre', dat(f.padre_nombre))}
+                        ${fila('Tel. Padre', dat(f.padre_telefono, 'padre_telefono'))}
+                        ${fila('Ocup. padre', dat(f.padre_ocupacion))}
+                        ${fila('Vive con', dat(f.con_quien_vive))}
+                        ${fila('Hermanos', dat(f.num_hermanos !== null ? String(f.num_hermanos) : null))}
+                    </div>
+                    <div class="tarjeta-dato">
+                        <h4>🏠 Domicilio y Vivienda</h4>
+                        ${fila('Domicilio', dat(f.domicilio_calle, 'domicilio_calle'))}
+                        ${fila('Tel. casa', dat(f.telefono_casa, 'telefono_casa'))}
+                        ${fila('Tipo vivienda', dat(f.vivienda_tipo))}
+                        ${fila('Servicios', dat(f.vivienda_servicios))}
+                    </div>
+                    <div class="tarjeta-dato">
+                        <h4>💰 Situación Económica</h4>
+                        ${fila('Ingreso mensual', dat(f.ingreso_mensual))}
+                        ${fila('Observaciones', dat(f.observaciones))}
+                    </div>
+                </div>
+                <!-- Situación de salud — tarjeta destacada -->
+                ${(f.condicion_salud || f.discapacidad) ? `
+                <div class='tarjeta-dato' style='margin-top:12px; border-left:4px solid #f59e0b; background:#fffbeb;'>
+                    <h4>🏥 Situación de Salud</h4>
+                    ${f.condicion_salud ? `
+                    <div class='fila-dato'>
+                        <span class='fila-label'>Condición médica</span>
+                        <span class='fila-valor' style='color:#92400e; font-weight:600;'>${esc(f.condicion_salud)}</span>
+                    </div>` : ''}
+                    ${f.discapacidad ? `
+                    <div class='fila-dato'>
+                        <span class='fila-label'>Discapacidad</span>
+                        <span class='fila-valor' style='color:#92400e; font-weight:600;'>${esc(f.discapacidad)}</span>
+                    </div>` : ''}
+                </div>` : `
+                <div style='margin-top:12px; background:#f0fdf6; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; font-size:13px; color:#166534;'>
+                    ✅ Sin condiciones de salud reportadas
+                </div>`}`;
+            } else {
+                document.getElementById('contSocio').innerHTML =
+                    '<p style="text-align:center; color:var(--muted); padding:20px;">Sin ficha socioeconómica capturada.</p>';
+            }
+
+            // Reportes
+            let cicloActivo = '';
+            try {
+                const resCiclo = await apiFetch('/api/dashboard?tipo=ciclo_config&clave=ciclo_activo', { silencioso: true });
+                if (resCiclo && resCiclo.ok) cicloActivo = (await resCiclo.json()).valor || '';
+            } catch(e) {}
+            const resRep = await apiFetch(`/api/reportes?id=${idAlumno}${cicloActivo ? '&ciclo=' + cicloActivo : ''}`);
+            const reportes = resRep ? await resRep.json() : [];
+            const PUEDE_VER_SEG    = ['TRABAJO SOCIAL','PREFECTO','DIRECTIVO','ADMINISTRADOR','DOCENTE'].includes(rolActivo);
+            const PUEDE_EDITAR_SEG = rolActivo === 'TRABAJO SOCIAL';
+
+            document.getElementById('listaReportes').innerHTML = reportes.length
+                ? reportes.map(r => {
+                    // ── Panel de seguimiento ──
+                    const estatus   = r.estatus_seguimiento || 'En proceso';
+                    const esSol     = estatus === 'Solucionado';
+                    const badgeClass = esSol ? 'solucionado' : 'en-proceso';
+                    const badgeIcon  = esSol ? '✅' : '🟡';
+
+                    const segVerHTML = PUEDE_VER_SEG ? `
+                      <div class="seg-panel">
+                        <span class="seg-badge ${badgeClass}">${badgeIcon} ${esc(estatus)}</span>
+                        ${r.acuerdos
+                          ? `<div class="seg-acuerdos">${esc(r.acuerdos)}</div>`
+                          : `<div class="seg-sin">Sin acuerdos registrados</div>`}
+                        ${r.seguimiento_por
+                          ? `<div class="seg-meta">Atendido por ${esc(r.seguimiento_por)} · ${esc(r.seguimiento_fecha||'')}</div>`
+                          : ''}
+                        ${PUEDE_EDITAR_SEG ? `
+                          <button class="btn-seg-editar" onclick="toggleFormSeg(${r.id_reporte})">✏️ Editar seguimiento</button>
+                          <div class="seg-form" id="form-seg-${r.id_reporte}">
+                            <div class="seg-checkbox-row">
+                              <input type="checkbox" id="chk-sol-${r.id_reporte}" ${esSol ? 'checked' : ''}
+                                onchange="actualizarBadge(${r.id_reporte})">
+                              <span>Marcar como Solucionado</span>
+                            </div>
+                            <label>Acuerdos y soluciones</label>
+                            <textarea id="txt-acuerdos-${r.id_reporte}" placeholder="Describe los acuerdos y soluciones...">${r.acuerdos ? esc(r.acuerdos) : ''}</textarea>
+                            <button class="btn-guardar-seg" onclick="guardarSeguimiento(${r.id_reporte})">Guardar seguimiento</button>
+                          </div>` : ''}
+                      </div>` : '<span style="color:#cbd5e1;font-size:12px;">—</span>';
+
+                    return `<tr>
+                        <td style="white-space:nowrap;font-size:12px;">${esc(r.fecha)}</td>
+                        <td style="font-weight:700;">${esc(r.gravedad)}</td>
+                        <td>${esc(r.motivo)}</td>
+                        <td style="font-size:12px;color:var(--muted);">${esc(r.nombre_reporta||'—')}</td>
+                        <td>${segVerHTML}</td>
+                      </tr>`;
+                  }).join('')
+                : '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">Historial limpio.</td></tr>';
+
+            // Calificaciones
+            const resCal = await apiFetch(`/api/expediente?tipo=calificaciones&id=${idAlumno}`);
+            datosCalificacionesGlobal = await resCal.json();
+            // Cargar recuperacion y mezclar con calificaciones
+            try {
+                const resRec = await apiFetch(`/api/expediente?tipo=recuperacion&id=${idAlumno}`);
+                const datosRec = resRec ? await resRec.json() : [];
+                datosCalificacionesGlobal = datosCalificacionesGlobal.map(c => {
+                    const recTrim = (datosRec || []).find(r => r.trimestre === c.trimestre);
+                    return { ...c, recuperacion: recTrim?.recuperacion || [] };
+                });
+            } catch(e) { console.warn('No se pudo cargar recuperacion:', e); }
+            if (datosCalificacionesGlobal.length > 0) {
+                const selector = document.getElementById('selectorGrafica');
+                datosCalificacionesGlobal[0].materias.forEach(m =>
+                    selector.innerHTML += `<option value='${m.sigla}'>📚 ${m.sigla}</option>`);
+                if (datosCalificacionesGlobal.length >= 2)
+                    document.getElementById('optComparativo').style.display = '';
+                renderBoleta();
+                renderMotivos();
+                actualizarGrafica();
+            } else {
+                document.getElementById('selectorGrafica').style.display = 'none';
+                document.getElementById('graficaPromedios').style.display = 'none';
+                document.getElementById('contBoleta').innerHTML = `
+                    <div style="text-align:center; padding:30px; color:var(--muted);">
+                        <div style="font-size:36px; margin-bottom:10px;">📭</div>
+                        <p style="font-weight:700; color:var(--texto);">Sin calificaciones registradas</p>
+                        <p style="font-size:13px; margin-top:4px;">Se cargarán con la herramienta de importación.</p>
+                    </div>`;
+            }
+        } catch(e) {
+            console.error('Error cargando expediente', e);
+            document.getElementById('perfilDinamico').innerHTML =
+                `<div style="color:#fca5a5; padding:10px;">❌ Error al cargar: ${e.message}</div>`;
+            document.getElementById('contSocio').innerHTML =
+                `<p style="text-align:center; color:var(--rojo); padding:20px; font-weight:600;">
+                    Error al cargar el expediente. Revisa la consola o intenta de nuevo.
+                 </p>`;
+        }
+
+        // Cargar sección asistencia — todos excepto ENFERMERIA
+        if (rolActivo !== 'ENFERMERIA') {
+            document.getElementById('seccionAsistencia').style.display = '';
+            cargarAsistencia();
+        }
+
+        // Cargar sección médica para roles autorizados
+        if (['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'].includes(rolActivo)) {
+            document.getElementById('seccionMedica').style.display = 'block';
+            document.getElementById('linkEnfermeria').href =
+                `enfermeria.html?id=${idAlumno}`;
+            try {
+                const resMed = await apiFetch(`/api/expediente?tipo=medico&id=${idAlumno}`);
+                const med    = await resMed.json();
+                const contMed = document.getElementById('contMedico');
+                if (med && med.id_alumno) {
+                    const fila = (label, val) => val ? `
+                        <div class="fila-dato">
+                            <span class="fila-label">${label}</span>
+                            <span class="fila-valor">${esc(val)}</span>
+                        </div>` : '';
+                    contMed.innerHTML = `
+                        <div class="grid-socio">
+                            <div class="tarjeta-dato">
+                                <h4>🩸 Datos Médicos</h4>
+                                ${fila('Tipo de sangre', med.tipo_sangre)}
+                                ${fila('Alergias', med.alergias)}
+                                ${fila('Padecimientos', med.padecimientos)}
+                                ${fila('Medicamentos', med.medicamentos)}
+                            </div>
+                            <div class="tarjeta-dato">
+                                <h4>📞 Contacto de Emergencia</h4>
+                                ${fila('Nombre', med.contacto_emergencia_nombre)}
+                                ${fila('Parentesco', med.contacto_emergencia_parentesco)}
+                                ${fila('Teléfono', med.contacto_emergencia_telefono)}
+                            </div>
+                        </div>`;
+                } else {
+                    contMed.innerHTML = '<p style="color:var(--muted); font-size:13px; padding:8px 0;">Sin expediente médico registrado.</p>';
+                }
+            } catch(e) {}
+        }
+    }
+
+    async function subirFotoAlumno(input) {
+        const archivo = input.files[0];
+        if (!archivo) return;
+        const wrapper = document.getElementById('imgFotoAlumno').parentElement;
+        const cargando = document.createElement('div');
+        cargando.className = 'foto-cargando'; cargando.innerHTML = '⏳';
+        wrapper.appendChild(cargando);
+        const formData = new FormData();
+        formData.append('foto', archivo);
+        formData.append('id_alumno', idAlumno);
+        try {
+            const res = await apiFetch('/api/fotos', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.url) {
+                document.getElementById('imgFotoAlumno').src = data.url + '?t=' + Date.now();
+                fotoActualSrc = data.url;
+                cargando.innerHTML = '✅';
+            } else { cargando.innerHTML = '❌'; }
+        } catch { cargando.innerHTML = '❌'; }
+        setTimeout(() => cargando.remove(), 1500);
+        input.value = '';
+    }
+
+    function renderMotivos() {
+        // Solo docentes pueden ver y llenar motivos de reprobación
+        if (!['DOCENTE'].includes(rolActivo)) return;
+
+        // Materias asignadas al docente en sesión
+        const _raw = localStorage.getItem('materiaActiva') || '[]';
+        const materiasDocente = (() => { try { return JSON.parse(_raw); } catch { return []; } })();
+
+        // Detectar trimestres con materias reprobadas (calif < 6, es decir solo 5)
+        // y que correspondan a las materias del docente
+        const conReprobadas = datosCalificacionesGlobal.map(c => {
+            const reprobadas = (c.materias || []).filter(m =>
+                parseFloat(m.calif) < 6 &&
+                (materiasDocente.length === 0 || materiasDocente.includes(m.sigla))
+            );
+            return { ...c, _reprobadas: reprobadas };
+        }).filter(c => c._reprobadas.length > 0);
+
+        if (conReprobadas.length === 0) return; // Sin reprobadas del docente — no mostrar
+
+        document.getElementById('seccionMotivos').style.display = '';
+        const cont = document.getElementById('contMotivos');
+        cont.innerHTML = conReprobadas.map(c => {
+            const reprobadas = c._reprobadas.map(m => `${m.sigla}: ${m.calif}`).join(', ');
+            return `
+            <div class="motivos-card">
+                <div class="motivos-trimestre">Trimestre ${c.trimestre}</div>
+                <div class="motivos-reprobadas">📚 Materias en riesgo: ${reprobadas}</div>
+                <textarea
+                    class="motivos-textarea"
+                    id='motivos-t${c.trimestre}'
+                    placeholder="Describe los motivos de reprobación en este trimestre..."
+                >${esc(c.motivos_reprobacion || '')}</textarea>
+                <div>
+                    <button class="btn-guardar-motivos" onclick='guardarMotivos(${c.trimestre})'>
+                        💾 Guardar
+                    </button>
+                    <span class="motivos-ok" id='ok-t${c.trimestre}'>✅ Guardado</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function guardarMotivos(trimestre) {
+        const motivos = document.getElementById(`motivos-t${trimestre}`).value;
+        const okSpan  = document.getElementById(`ok-t${trimestre}`);
+        try {
+            const res = await apiFetch('/api/expediente?tipo=motivos_reprobacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: idAlumno, trimestre, motivos_reprobacion: motivos })
+            });
+            if (res && res.ok) {
+                okSpan.style.display = 'inline';
+                setTimeout(() => { okSpan.style.display = 'none'; }, 2500);
+                // Actualizar datos locales
+                const idx = datosCalificacionesGlobal.findIndex(c => c.trimestre === trimestre);
+                if (idx >= 0) datosCalificacionesGlobal[idx].motivos_reprobacion = motivos;
+            }
+        } catch(e) { alert('Error al guardar. Intenta de nuevo.'); }
+    }
+
+    function renderBoleta() {
+        const materias = datosCalificacionesGlobal[0].materias;
+        let html = `<table class="tabla-boleta"><thead><tr><th>TRIMESTRE</th>`;
+        materias.forEach(m => html += `<th>${m.sigla}</th>`);
+        html += `<th class="promedio-cell">PROM</th></tr></thead><tbody>`;
+        datosCalificacionesGlobal.forEach(c => {
+            html += `<tr><td><b>T${c.trimestre}</b></td>`;
+            c.materias.forEach(m => {
+                const recObj = (c.recuperacion || []).find(r => r.sigla === m.sigla);
+                if (recObj) {
+                    const color = recObj.calif_recuperacion >= 6 ? '#166534' : '#92400e';
+                    const bg    = recObj.calif_recuperacion >= 6 ? '#f0fdf6' : '#fffbeb';
+                    html += `<td style="position:relative; padding-top:18px;">
+                        <span style="font-weight:800;">${recObj.calif_recuperacion}</span>
+                        <span style="position:absolute;top:4px;right:4px;background:${bg};color:${color};border-radius:4px;font-size:9px;font-weight:800;padding:1px 4px;">R</span>
+                    </td>`;
+                } else {
+                    const calif = parseFloat(m.calif);
+                    const color = calif < 6 ? 'var(--rojo)' : 'inherit';
+                    html += `<td style="color:${color};font-weight:${calif < 6 ? '800' : '400'};">${m.calif}</td>`;
+                }
+            });
+            html += `<td class="promedio-cell">${c.promedio_trimestral.toFixed(1)}</td></tr>`;
+        });
+        document.getElementById('contBoleta').innerHTML = html + `</tbody></table>`;
+    }
+
+    function actualizarGrafica() {
+        const filtro = document.getElementById('selectorGrafica').value;
+        if (chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('graficaPromedios').getContext('2d');
+        const COLORES = ['#E63946','#1B4F8A','#FF9800','#2d9b6f','#7B1FA2','#F50057','#43A047','#FF6D00','#1565C0','#C62828','#00838F'];
+
+        if (filtro === 'COMPARATIVO') {
+            const labels = datosCalificacionesGlobal.map(c => `T${c.trimestre}`);
+            const materias = datosCalificacionesGlobal[0].materias;
+            const datasets = materias.map((m, i) => ({
+                label: m.sigla,
+                data: datosCalificacionesGlobal.map(c => c.materias.find(x => x.sigla === m.sigla)?.calif || null),
+                backgroundColor: COLORES[i % COLORES.length] + 'cc',
+                borderColor: COLORES[i % COLORES.length],
+                borderWidth: 1, borderRadius: 4
+            }));
+            datasets.unshift({
+                label: 'PROMEDIO',
+                data: datosCalificacionesGlobal.map(c => c.promedio_trimestral),
+                backgroundColor: '#1a233222',
+                borderColor: '#1a2332',
+                borderWidth: 2, borderRadius: 4
+            });
+            chartInstance = new Chart(ctx, {
+                type: 'bar', data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, family: 'Outfit' } } } },
+                    scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f0f0f0' } } }
+                }
+            });
+        } else {
+            const labels = datosCalificacionesGlobal.map(c => `Trimestre ${c.trimestre}`);
+            const valores = datosCalificacionesGlobal.map(c =>
+                filtro === 'GENERAL' ? c.promedio_trimestral : (c.materias.find(m => m.sigla === filtro)?.calif || 0));
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{
+                    label: filtro === 'GENERAL' ? 'Promedio General' : filtro,
+                    data: valores, borderColor: '#1B4F8A',
+                    backgroundColor: 'rgba(27,79,138,0.1)',
+                    fill: true, tension: 0.3,
+                    pointBackgroundColor: valores.map(v => v < 6 ? '#e63946' : '#1B4F8A'),
+                    pointRadius: 6
+                }]},
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false },
+                        tooltip: { callbacks: { label: c => ` ${c.parsed.y.toFixed(1)}${c.parsed.y < 6 ? ' ⚠️' : ''}` } } },
+                    scales: { y: { min: 5, max: 10, ticks: { stepSize: 0.5 }, grid: { color: '#f0f0f0' } } }
+                }
+            });
+        }
+    }
+
+    async function imagenABase64(url) {
+        try {
+            const res = await apiFetch(url);
+            const blob = await res.blob();
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        } catch { return null; }
+    }
+
+    async function prepararPDF() {
+        const nav = document.querySelector('.navbar');
+        nav.style.display = 'none';
+        document.getElementById('encabezado-institucional').style.display = 'block';
+        const imgEl = document.getElementById('imgFotoAlumno');
+        const srcOriginal = imgEl ? imgEl.src : null;
+        if (imgEl && fotoActualSrc) {
+            const b64 = await imagenABase64(fotoActualSrc);
+            if (b64) imgEl.src = b64;
+        }
+        const btnFoto = document.querySelector('.btn-foto');
+        if (btnFoto) btnFoto.style.display = 'none';
+        return { nav, imgEl, srcOriginal, btnFoto };
+    }
+
+    function restaurarDespuesPDF({ nav, imgEl, srcOriginal, btnFoto }) {
+        nav.style.display = 'flex';
+        document.getElementById('encabezado-institucional').style.display = 'none';
+        if (imgEl && srcOriginal) imgEl.src = srcOriginal;
+        if (btnFoto) btnFoto.style.display = 'flex';
+    }
+
+    async function descargarPDF() {
+        // Obtener datos del alumno
+        const nombre    = document.querySelector('.perfil-nombre')?.innerText || '';
+        const gradoGrup = document.querySelector('.perfil-sub')?.innerText || '';
+        const fecha     = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+        // Cargar configuración institucional
+        let cfg = {};
+        try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg = await r.json(); } catch(e) {}
+        const cfgNombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const cfgClave     = cfg.clave_escuela     || '';
+        const cfgDireccion = cfg.direccion_escuela || '';
+        const cfgCiclo     = cfg.ciclo_activo      || '';
+        const cfgLogoIzq   = cfg.logo_izquierdo    || '';
+        const cfgLogoDer   = cfg.logo_derecho      || '';
+
+        // Foto en base64
+        let fotoB64 = '';
+        if (fotoActualSrc) {
+            try { fotoB64 = await imagenABase64(fotoActualSrc) || ''; } catch {}
+        }
+
+        // Datos socioeconómicos
+        const socioEl = document.getElementById('contSocio');
+        const socioHTML = socioEl ? socioEl.innerHTML : '';
+
+        // Historial de reportes
+        const reportesEl = document.getElementById('listaReportes');
+        const reportesHTML = reportesEl ? reportesEl.innerHTML : '';
+
+        // Boleta de calificaciones
+        const boletaEl = document.getElementById('contBoleta');
+        const boletaHTML = boletaEl ? boletaEl.innerHTML : '';
+
+        // Motivos de reprobación (si los hay)
+        const motivosEl = document.getElementById('contMotivos');
+        const motivosHTML = motivosEl ? motivosEl.innerHTML : '';
+        const secMotivos = document.getElementById('seccionMotivos');
+        const hayMotivos = secMotivos && secMotivos.style.display !== 'none' && motivosHTML.trim() !== '';
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 14mm 12mm; }
+            * { box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; margin: 0; }
+            /* HEADER */
+            .header-inst { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1B4F8A; padding-bottom:10px; margin-bottom:14px; }
+            .header-center { text-align:center; flex:1; padding:0 10px; }
+            .header-sep   { font-size:9px; color:#555; font-weight:600; }
+            .header-title { font-size:14px; font-weight:800; color:#1B4F8A; margin:3px 0; }
+            .header-sub   { font-size:10px; color:#555; }
+            /* PERFIL */
+            .perfil { display:flex; align-items:center; gap:16px; background:#1B4F8A; color:white; border-radius:10px; padding:14px 18px; margin-bottom:14px; }
+            .perfil img { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.3); }
+            .perfil-ico { width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:28px; }
+            .perfil-nombre { font-size:16px; font-weight:800; }
+            .perfil-sub    { font-size:12px; opacity:0.8; margin-top:3px; }
+            /* SECCIONES */
+            .seccion { border:1px solid #e2e8f0; border-radius:8px; margin-bottom:12px; overflow:hidden; page-break-inside:avoid; }
+            .seccion-header { background:#1B4F8A; color:white; padding:8px 14px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; }
+            .seccion-header.naranja { background:#f59e0b; }
+            .seccion-header.verde   { background:#2d9b6f; }
+            .seccion-body  { padding:12px 14px; }
+            /* TABLAS */
+            table { width:100%; border-collapse:collapse; font-size:10px; }
+            th { background:#f8fafc; padding:7px 8px; text-align:left; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; border-bottom:2px solid #e2e8f0; }
+            td { padding:7px 8px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+            tr:last-child td { border-bottom:none; }
+            .badge-rojo  { color:#e63946; font-weight:800; }
+            .badge-verde { color:#2d9b6f; font-weight:800; }
+            .badge-rec   { background:#f5f3ff; color:#7c3aed; border-radius:4px; font-size:9px; font-weight:800; padding:1px 5px; }
+            /* DATOS SOCIO */
+            .grid-socio { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+            .tarjeta-dato { background:#f8fafc; border-radius:6px; padding:10px 12px; }
+            .tarjeta-dato h4 { font-size:10px; font-weight:700; color:#1B4F8A; margin-bottom:6px; }
+            .fila-dato { display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #f1f5f9; font-size:10px; }
+            .fila-label { color:#64748b; min-width:100px; font-weight:600; }
+            .fila-valor { color:#1a2332; }
+            /* MOTIVOS */
+            .motivos-card { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+            .motivos-trim { font-size:10px; font-weight:800; color:#92400e; margin-bottom:4px; }
+            .motivos-mat  { font-size:9px; color:#b45309; margin-bottom:6px; }
+            .motivos-txt  { font-size:10px; color:#1a2332; line-height:1.5; }
+            .no-print { display:none !important; }
+        </style></head><body>
+
+        <!-- HEADER INSTITUCIONAL -->
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+            <div style="width:90px;text-align:center;">
+                ${cfgLogoIzq ? `<img src="${cfgLogoIzq}" style="height:70px;width:auto;max-width:90px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+            </div>
+            <div style="flex:1;text-align:center;padding:0 16px;">
+                <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${cfgNombre}</div>
+                ${cfgClave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${cfgClave}</div>` : ''}
+                ${cfgDireccion ? `<div style="font-size:10px;color:#555;">${cfgDireccion}</div>` : ''}
+                ${cfgCiclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${cfgCiclo}</div>` : ''}
+            </div>
+            <div style="width:90px;text-align:center;">
+                ${cfgLogoDer ? `<img src="${cfgLogoDer}" style="height:70px;width:auto;max-width:90px;object-fit:contain;">` : `<div style="font-size:9px;color:#64748b;line-height:1.6;">Generado<br><b>${fecha}</b></div>`}
+            </div>
+        </div>
+
+        <!-- PERFIL ALUMNO -->
+        <div class="perfil">
+            ${fotoB64 ? `<img src="${fotoB64}" alt="foto">` : '<div class="perfil-ico">🎓</div>'}
+            <div>
+                <div class="perfil-nombre">${nombre}</div>
+                <div class="perfil-sub">${gradoGrup}</div>
+            </div>
+        </div>
+
+        <!-- I. DATOS SOCIOECONÓMICOS -->
+        <div class="seccion">
+            <div class="seccion-header">I. Datos Socioeconómicos</div>
+            <div class="seccion-body">${socioHTML}</div>
+        </div>
+
+        <!-- II. HISTORIAL DE REPORTES -->
+        <div class="seccion">
+            <div class="seccion-header naranja">II. Historial de Reportes</div>
+            <div class="seccion-body">
+                <table>
+                    <thead><tr>
+                        <th>Fecha</th><th>Gravedad</th><th>Motivo</th><th>Acuerdo</th><th>Reportado por</th>
+                    </tr></thead>
+                    <tbody>${reportesHTML}</tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- III. RENDIMIENTO ACADÉMICO -->
+        <div class="seccion">
+            <div class="seccion-header verde">III. Rendimiento Académico</div>
+            <div class="seccion-body">${boletaHTML}</div>
+        </div>
+
+        ${hayMotivos ? `
+        <!-- IV. MOTIVOS DE REPROBACIÓN -->
+        <div class="seccion">
+            <div class="seccion-header naranja">IV. Motivos de Reprobación</div>
+            <div class="seccion-body">${motivosHTML}</div>
+        </div>` : ''}
+
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 600);
+    }
+
+    async function descargarReporteDisc() {
+        // Construir HTML del reporte disciplinario
+        const alumnoNombre = document.querySelector('.perfil-nombre')?.innerText || '';
+        const alumnoSub    = document.querySelector('.perfil-sub')?.innerText || '';
+        // Cargar configuración institucional
+        let cfgR = {};
+        try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfgR = await r.json(); } catch(e) {}
+        const reportesHTML = document.getElementById('listaReportes')?.innerHTML || '';
+        const fecha = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+
+        const html = `
+        <div style="font-family:'Outfit',sans-serif; padding:0; color:#1a2332;">
+            <!-- Encabezado institucional -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:3px solid #1B4F8A; margin-bottom:16px;">
+                ${cfgR.logo_izquierdo ? `<img src="${cfgR.logo_izquierdo}" style="height:70px;width:auto;max-width:90px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+                <div style="text-align:center; flex:1; padding:0 12px;">
+                    <div style="font-size:9px; color:#555; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                    <div style="font-size:15px; font-weight:800; color:#1B4F8A; margin:4px 0;">${cfgR.nombre_escuela || 'ESCUELA SECUNDARIA'}</div>
+                    ${cfgR.clave_escuela ? `<div style="font-size:11px; color:#555;">CLAVE: ${cfgR.clave_escuela}</div>` : ''}
+                    ${cfgR.direccion_escuela ? `<div style="font-size:10px; color:#777;">${cfgR.direccion_escuela}</div>` : ''}
+                </div>
+                ${cfgR.logo_derecho ? `<img src="${cfgR.logo_derecho}" style="height:70px;width:auto;max-width:90px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+            </div>
+            <!-- Título -->
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#1B4F8A;">Reporte Disciplinario Individual</div>
+                <div style="font-size:11px; color:#64748b; margin-top:3px;">Emitido el ${fecha}</div>
+            </div>
+            <!-- Datos del alumno -->
+            <div style="background:#eff6ff; border-radius:10px; padding:12px 16px; margin-bottom:16px; border-left:4px solid #1B4F8A;">
+                <div style="font-size:16px; font-weight:800;">&#x1F393; ${alumnoNombre}</div>
+                <div style="font-size:13px; color:#64748b; margin-top:4px;">${alumnoSub}</div>
+            </div>
+            <!-- Historial -->
+            <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#64748b; margin-bottom:8px; border-left:4px solid #f59e0b; padding-left:8px;">Historial de Reportes</div>
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Fecha</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Gravedad</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Motivo</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Acuerdo</th>
+                        <th style="padding:8px 10px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:10px; color:#64748b; text-transform:uppercase;">Reportado por</th>
+                    </tr>
+                </thead>
+                <tbody>${reportesHTML}</tbody>
+            </table>
+            <!-- Pie de página -->
+            <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; color:#64748b;">
+                <div style="text-align:center; width:45%;">
+                    <div style="border-top:1px solid #94a3b8; padding-top:6px; margin-top:40px;">Firma del Director(a)</div>
+                </div>
+                <div style="text-align:center; width:45%;">
+                    <div style="border-top:1px solid #94a3b8; padding-top:6px; margin-top:40px;">Firma del Responsable</div>
+                </div>
+            </div>
+        </div>`;
+
+        const nombreArchivo = `Reporte_Disciplinario_${alumnoNombre.replace(/\s+/g,'_')}.pdf`;
+
+        const blob = await html2pdf().set({
+            margin: 14,
+            filename: nombreArchivo,
+            html2canvas: { scale: 2, useCORS: true, allowTaint: false },
+            jsPDF: { format: 'letter' },
+        }).from(html).outputPdf('blob');
+
+        // Web Share API en móvil, descarga directa en PC
+        if (navigator.share && navigator.canShare) {
+            const file = new File([blob], nombreArchivo, { type: 'application/pdf' });
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Reporte Disciplinario', text: alumnoNombre });
+                return;
+            }
+        }
+        // Fallback: descarga directa
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nombreArchivo; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    document.addEventListener('contextmenu', e => {
+        if (e.target && e.target.id === 'imgFotoAlumno') e.preventDefault();
+    });
+
+    async function cargarAsistencia() {
+        try {
+            const res = await apiFetch(`/api/dashboard?tipo=faltas_alumno&id=${idAlumno}`, { silencioso: true });
+            if (!res) return;
+            datosAsistencia = await res.json();
+
+            // Chips resumen
+            document.getElementById('asistTotal').textContent = datosAsistencia.total || 0;
+
+            // Mes actual
+            const hoy = new Date();
+            const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            const mesLabel = `${MESES[hoy.getMonth()]} ${hoy.getFullYear()}`;
+            const mesActual = (datosAsistencia.porMes || []).find(m => m.mes === mesLabel);
+            document.getElementById('asistMesActual').textContent = mesActual ? mesActual.faltas : 0;
+
+            // Semana actual — lunes de esta semana
+            const dia = hoy.getDay();
+            const lunes = new Date(hoy);
+            lunes.setDate(hoy.getDate() - (dia === 0 ? 6 : dia - 1));
+            const lunesLabel = lunes.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+            const semActual = (datosAsistencia.porSemana || []).find(s => s.semana === lunesLabel);
+            document.getElementById('asistSemanaActual').textContent = semActual ? semActual.faltas : 0;
+
+            renderTabAsist();
+        } catch(e) { console.warn('No se pudo cargar asistencia:', e); }
+    }
+
+    function cambiarTabAsist(tab, btn) {
+        tabAsist = tab;
+        document.querySelectorAll('.asist-tab').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+        renderTabAsist();
+    }
+
+    function renderTabAsist() {
+        const cont = document.getElementById('asistContenido');
+        if (!datosAsistencia) return;
+
+        let filas = [];
+        if (tabAsist === 'trimestre') {
+            filas = (datosAsistencia.porTrimestre || []).map(r =>
+                `<tr><td><b>${r.trimestre}</b></td><td style="color:var(--rojo);font-weight:800;">${r.faltas}</td></tr>`);
+        } else if (tabAsist === 'mes') {
+            filas = (datosAsistencia.porMes || []).slice().reverse().map(r =>
+                `<tr><td>${r.mes}</td><td style="color:var(--rojo);font-weight:800;">${r.faltas}</td></tr>`);
+        } else {
+            filas = (datosAsistencia.porSemana || []).slice().reverse().map(r =>
+                `<tr><td>Sem. ${r.semana}</td><td style="color:var(--rojo);font-weight:800;">${r.faltas}</td></tr>`);
+        }
+
+        if (filas.length === 0) {
+            cont.innerHTML = '<p style="text-align:center;color:var(--verde);padding:16px;font-weight:700;">✅ Sin faltas registradas</p>';
+            return;
+        }
+
+        cont.innerHTML = `
+            <table class="asist-tabla">
+                <thead><tr><th>Período</th><th>Faltas</th></tr></thead>
+                <tbody>${filas.join('')}</tbody>
+            </table>`;
+    }
+
+    function toggleFormSeg(idReporte) {
+        const form = document.getElementById(`form-seg-${idReporte}`);
+        if (form) form.style.display = form.style.display === 'none' || !form.style.display ? 'block' : 'none';
+    }
+
+    function actualizarBadge(idReporte) {
+        // Feedback visual inmediato al marcar/desmarcar el checkbox
+        const chk = document.getElementById(`chk-sol-${idReporte}`);
+        // Solo feedback visual, el cambio real se guarda al presionar "Guardar"
+    }
+
+    async function guardarSeguimiento(idReporte) {
+        const chk      = document.getElementById(`chk-sol-${idReporte}`);
+        const txtArea  = document.getElementById(`txt-acuerdos-${idReporte}`);
+        const btn      = txtArea ? txtArea.nextElementSibling : null;
+        if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
+        const estatus  = chk && chk.checked ? 'Solucionado' : 'En proceso';
+        const acuerdos = txtArea ? txtArea.value.trim() : '';
+
+        try {
+            const res = await apiFetch('/api/reportes', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_reporte: idReporte, estatus_seguimiento: estatus, acuerdos })
+            });
+            const data = await res.json();
+            if (data.exito) {
+                document.getElementById(`form-seg-${idReporte}`).style.display = 'none';
+                await cargarExpediente();
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo guardar.'));
+                if (btn) { btn.disabled = false; btn.textContent = 'Guardar seguimiento'; }
+            }
+        } catch(e) {
+            alert('Error de conexión.');
+            if (btn) { btn.disabled = false; btn.textContent = 'Guardar seguimiento'; }
+        }
+    }
+
+    function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>

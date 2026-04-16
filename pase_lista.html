@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pase de Lista — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --rojo: #e63946; --rojo-claro: #fff0f1;
+  --amarillo: #f59e0b; --amarillo-claro: #fef9c3;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
+
+.header {
+  background: var(--azul); padding: 0 24px; height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25); position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.btn-back {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  color: white; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; text-decoration: none;
+}
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-nombre { font-size: 13px; font-weight: 700; color: white; }
+
+.contenido { max-width: 680px; margin: 0 auto; padding: 24px 20px 80px; }
+
+/* Selector de grupo */
+.selector-box {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.selector-titulo {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted); margin-bottom: 12px;
+}
+.selector-fila { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.selector-fila select {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--borde);
+  border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif;
+  color: var(--texto); background: var(--blanco); outline: none;
+}
+.selector-fila select:focus { border-color: var(--azul); }
+.btn-cargar {
+  padding: 11px 20px; background: var(--azul); color: white;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; white-space: nowrap;
+}
+.btn-cargar:hover { background: var(--azul-hover); }
+
+/* Info del día */
+.info-dia {
+  background: var(--amarillo-claro); border: 1.5px solid #fde68a;
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
+  font-size: 13px; font-weight: 700; color: #92400e;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* Lista de alumnos */
+.lista-box {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: none;
+}
+.lista-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.lista-titulo { font-size: 16px; font-weight: 800; color: var(--texto); }
+.lista-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.acciones-rapidas { display: flex; gap: 8px; }
+.btn-todos, .btn-ninguno {
+  padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; border: 1.5px solid;
+}
+.btn-todos   { background: var(--verde-claro); color: var(--verde); border-color: #bbf7d0; }
+.btn-ninguno { background: var(--rojo-claro);  color: var(--rojo);  border-color: #fecdd3; }
+
+.alumno-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+}
+.alumno-row:last-child { border-bottom: none; }
+.alumno-num   { font-size: 12px; color: var(--muted); font-weight: 700; min-width: 24px; }
+.alumno-info  { flex: 1; }
+.alumno-nombre { font-size: 14px; font-weight: 700; color: var(--texto); }
+
+/* Toggle presente/ausente */
+.toggle-asistencia {
+  display: flex; gap: 6px;
+}
+.btn-presente, .btn-ausente {
+  padding: 7px 16px; border-radius: 8px; border: 1.5px solid;
+  font-size: 12px; font-weight: 800; font-family: 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.15s; opacity: 0.4;
+}
+.btn-presente { background: var(--verde-claro); color: var(--verde); border-color: #bbf7d0; }
+.btn-ausente  { background: var(--rojo-claro);  color: var(--rojo);  border-color: #fecdd3; }
+.btn-presente.activo { opacity: 1; transform: scale(1.05); }
+.btn-ausente.activo  { opacity: 1; transform: scale(1.05); }
+
+/* Resumen */
+.resumen {
+  display: flex; gap: 10px; margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid var(--borde);
+}
+.resumen-chip {
+  flex: 1; text-align: center; padding: 10px; border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+}
+.chip-presentes { background: var(--verde-claro); color: var(--verde); }
+.chip-ausentes  { background: var(--rojo-claro);  color: var(--rojo); }
+.chip-sin-marcar{ background: var(--amarillo-claro); color: #92400e; }
+
+/* Botones de acción */
+.acciones-guardar {
+  display: flex; gap: 12px; flex-direction: column;
+}
+.btn-guardar-grupo {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: var(--azul); color: white; font-size: 15px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+}
+.btn-guardar-grupo:hover    { background: var(--azul-hover); }
+.btn-guardar-grupo:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-finalizar {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: var(--verde); color: white; font-size: 15px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+  display: none;
+}
+.btn-finalizar:hover { background: #1e7a57; }
+
+.msg-ok    { color: var(--verde); font-size: 13px; font-weight: 700; text-align: center; display: none; padding: 8px; }
+.msg-error { color: var(--rojo);  font-size: 13px; font-weight: 700; text-align: center; display: none; padding: 8px; }
+
+/* Grupos completados */
+.grupos-completados {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.completado-titulo {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted); margin-bottom: 12px;
+}
+.chip-grupo {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--verde-claro); color: var(--verde); border: 1.5px solid #bbf7d0;
+  border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  margin: 4px;
+}
+
+.estado-vacio { text-align: center; padding: 24px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 480px) {
+  .selector-fila { grid-template-columns: 1fr 1fr; }
+  .selector-fila .btn-cargar { grid-column: 1 / -1; }
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">📝 Pase de Lista</div>
+      <div class="header-sub">EST 84 · Registro de Asistencia</div>
+    </div>
+  </div>
+  <div class="header-nombre" id="headerNombre">—</div>
+  <a href="reporte_asistencia.html?desde=pase" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:9px;padding:7px 14px;font-size:12px;font-weight:700;text-decoration:none;">📋 Reporte</a>
+</div>
+
+<div class="contenido">
+
+  <div class="info-dia">
+    <span>📅 <span id="fechaHoy">—</span></span>
+    <span id="resumenDia" style="font-size:12px;"></span>
+  </div>
+
+  <!-- Selector de grupo -->
+  <div class="selector-box">
+    <div class="selector-titulo">Seleccionar Grupo</div>
+    <div class="selector-fila">
+      <select id="selGrado">
+        <option value="">— Grado —</option>
+        <option value="1">1° Grado</option>
+        <option value="2">2° Grado</option>
+        <option value="3">3° Grado</option>
+      </select>
+      <select id="selGrupo">
+        <option value="">— Grupo —</option>
+        <option value="A">Grupo A</option>
+        <option value="B">Grupo B</option>
+        <option value="C">Grupo C</option>
+        <option value="D">Grupo D</option>
+        <option value="E">Grupo E</option>
+        <option value="F">Grupo F</option>
+      </select>
+      <button class="btn-cargar" onclick="cargarGrupo()">Cargar Lista</button>
+    </div>
+  </div>
+
+  <!-- Grupos ya completados hoy -->
+  <div class="grupos-completados" id="seccionCompletados" style="display:none;">
+    <div class="completado-titulo">✅ Grupos registrados hoy</div>
+    <div id="listaCompletados"></div>
+  </div>
+
+  <!-- Lista de alumnos -->
+  <div class="lista-box" id="listaBox">
+    <div class="lista-header">
+      <div>
+        <div class="lista-titulo" id="titulolista">—</div>
+        <div class="lista-sub" id="subtituloLista">—</div>
+      </div>
+      <div class="acciones-rapidas">
+        <button class="btn-todos"   onclick="marcarTodos(true)">✅ Todos</button>
+        <button class="btn-ninguno" onclick="marcarTodos(false)">❌ Ninguno</button>
+      </div>
+    </div>
+
+    <div id="listaAlumnos"></div>
+
+    <div class="resumen">
+      <div class="resumen-chip chip-presentes">✅ <span id="cntPresentes">0</span> presentes</div>
+      <div class="resumen-chip chip-ausentes">❌ <span id="cntAusentes">0</span> ausentes</div>
+      <div class="resumen-chip chip-sin-marcar">⏳ <span id="cntSinMarcar">0</span> sin marcar</div>
+    </div>
+
+    <div style="margin-top:20px;" class="acciones-guardar">
+      <button class="btn-guardar-grupo" id="btnGuardar" onclick="guardarGrupo()">
+        💾 Guardar Lista de este Grupo
+      </button>
+      <div class="msg-ok"    id="msgOk">✅ Lista guardada correctamente</div>
+      <div class="msg-error" id="msgError"></div>
+      <button class="btn-finalizar" id="btnFinalizar" onclick="finalizarDia()">
+        🔔 Finalizar día y notificar a docentes
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rol = localStorage.getItem('rolActivo') || '';
+  if (rol !== 'TRABAJO SOCIAL' && rol !== 'ADMINISTRADOR') {
+    window.location.href = 'inicio.html';
+  }
+  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  document.getElementById('headerNombre').textContent = nombre;
+
+  // Mostrar fecha de hoy
+  const hoy = new Date();
+  const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('fechaHoy').textContent =
+    `${diasSemana[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+
+  let alumnosActuales = []; // [{id_alumno, apellidos, nombre, presente}]
+  let gruposCompletados = new Set(); // "1A", "2B"...
+
+  // Cargar grupos ya registrados hoy
+  async function cargarGruposCompletados() {
+    try {
+      const res  = await apiFetch('/api/dashboard?tipo=asistencia');
+      const data = await res.json();
+      if (!data || !data.length) return;
+      // Extraer grupos únicos de los registros de hoy
+      data.forEach(a => {
+        if (a.alumnos?.grado && a.alumnos?.grupo)
+          gruposCompletados.add(`${a.alumnos.grado}${a.alumnos.grupo}`);
+      });
+      actualizarCompletados();
+    } catch(e) {}
+  }
+
+  function actualizarCompletados() {
+    const sec  = document.getElementById('seccionCompletados');
+    const cont = document.getElementById('listaCompletados');
+    if (gruposCompletados.size === 0) { sec.style.display = 'none'; return; }
+    sec.style.display = 'block';
+    cont.innerHTML = [...gruposCompletados].sort().map(g =>
+      `<span class="chip-grupo">✅ ${g[0]}°${g.slice(1)}</span>`
+    ).join('');
+    document.getElementById('resumenDia').textContent =
+      `${gruposCompletados.size} grupo(s) completado(s)`;
+    // Mostrar botón finalizar si hay grupos completados
+    document.getElementById('btnFinalizar').style.display = 'block';
+  }
+
+  async function cargarGrupo() {
+    const grado = document.getElementById('selGrado').value;
+    const grupo = document.getElementById('selGrupo').value;
+    if (!grado || !grupo) {
+      alert('Selecciona grado y grupo.'); return;
+    }
+
+    document.getElementById('titulolista').textContent = `${grado}° Grupo "${grupo}"`;
+    document.getElementById('subtituloLista').textContent = 'Cargando...';
+    document.getElementById('listaBox').style.display = 'block';
+
+    try {
+      const res  = await apiFetch(`/api/dashboard?tipo=asistencia&grado=${grado}&grupo=${grupo}`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error(data?.error || 'Respuesta inesperada del servidor');
+      alumnosActuales = data.map(a => ({ ...a, presente: a.presente !== false }));
+
+      document.getElementById('subtituloLista').textContent =
+        `${alumnosActuales.length} alumno(s) · Marca los ausentes`;
+
+      renderLista();
+    } catch(e) {
+      document.getElementById('subtituloLista').textContent = 'Error al cargar';
+    }
+  }
+
+  function renderLista() {
+    const cont = document.getElementById('listaAlumnos');
+    cont.innerHTML = alumnosActuales.map((a, i) => `
+      <div class="alumno-row" id="row-${a.id_alumno}">
+        <div class="alumno-num">${i + 1}</div>
+        <div class="alumno-info">
+          <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
+        </div>
+        <div class="toggle-asistencia">
+          <button class="btn-presente ${a.presente !== false ? 'activo' : ''}"
+            onclick="toggleAsistencia(${a.id_alumno}, true)">✅ P</button>
+          <button class="btn-ausente ${a.presente === false ? 'activo' : ''}"
+            onclick="toggleAsistencia(${a.id_alumno}, false)">❌ F</button>
+        </div>
+      </div>`).join('');
+    actualizarResumen();
+  }
+
+  function toggleAsistencia(idAlumno, presente) {
+    const idx = alumnosActuales.findIndex(a => a.id_alumno === idAlumno);
+    if (idx < 0) return;
+    alumnosActuales[idx].presente = presente;
+    // Actualizar botones
+    const row = document.getElementById(`row-${idAlumno}`);
+    row.querySelector('.btn-presente').classList.toggle('activo',  presente);
+    row.querySelector('.btn-ausente').classList.toggle('activo',  !presente);
+    actualizarResumen();
+  }
+
+  function marcarTodos(presente) {
+    alumnosActuales.forEach(a => a.presente = presente);
+    renderLista();
+  }
+
+  function actualizarResumen() {
+    const presentes   = alumnosActuales.filter(a => a.presente === true).length;
+    const ausentes    = alumnosActuales.filter(a => a.presente === false).length;
+    const sinMarcar   = alumnosActuales.filter(a => a.presente === null).length;
+    document.getElementById('cntPresentes').textContent  = presentes;
+    document.getElementById('cntAusentes').textContent   = ausentes;
+    document.getElementById('cntSinMarcar').textContent  = sinMarcar;
+  }
+
+  async function guardarGrupo() {
+    const grado = document.getElementById('selGrado').value;
+    const grupo = document.getElementById('selGrupo').value;
+    const btn   = document.getElementById('btnGuardar');
+    const msgOk = document.getElementById('msgOk');
+    const msgErr= document.getElementById('msgError');
+
+    // Marcar sin marcar como presentes antes de guardar
+    alumnosActuales.forEach(a => { if (a.presente === null) a.presente = true; });
+    renderLista();
+
+    btn.disabled = true; btn.textContent = '💾 Guardando...';
+    msgOk.style.display = 'none'; msgErr.style.display = 'none';
+
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=asistencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grado, grupo,
+          alumnos: alumnosActuales.map(a => ({ id_alumno: a.id_alumno, presente: a.presente }))
+        })
+      });
+      const data = await res.json();
+      if (data.exito) {
+        msgOk.style.display = 'block';
+        setTimeout(() => msgOk.style.display = 'none', 3000);
+        gruposCompletados.add(`${grado}${grupo}`);
+        actualizarCompletados();
+        actualizarBadgeAusentes();
+      } else {
+        msgErr.textContent = data.error; msgErr.style.display = 'block';
+      }
+    } catch(e) {
+      msgErr.textContent = 'Error de conexión.'; msgErr.style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = '💾 Guardar Lista de este Grupo';
+  }
+
+  async function finalizarDia() {
+    const btn = document.getElementById('btnFinalizar');
+    const ausentes = gruposCompletados.size;
+    if (!confirm(`¿Finalizar el pase de lista del día y notificar a los docentes?\n(${ausentes} grupo(s) registrado(s))`)) return;
+
+    btn.disabled = true; btn.textContent = '📤 Enviando notificación...';
+    try {
+      // Marcar todos los registros de hoy como finalizados
+      const res = await apiFetch('/api/dashboard?tipo=asistencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ finalizado: true, grado: 0, grupo: 'X', alumnos: [] })
+      });
+      const data = res ? await res.json() : null;
+      if (data && data.exito) {
+        btn.textContent = '✅ Notificación enviada a docentes';
+        setTimeout(() => { window.location.href = 'inicio.html'; }, 1500);
+      } else {
+        btn.textContent = '🔔 Finalizar día y notificar a docentes';
+        btn.disabled = false;
+        const msgErr = document.getElementById('msgError');
+        msgErr.textContent = (data && data.error) ? data.error : 'Error al finalizar. Intenta de nuevo.';
+        msgErr.style.display = 'block';
+      }
+    } catch(e) {
+      btn.textContent = '🔔 Finalizar día y notificar a docentes';
+      btn.disabled = false;
+    }
+  }
+
+  async function actualizarBadgeAusentes() {
+    try {
+      const res = await apiFetch('/api/dashboard?tipo=asistencia');
+      if (!res) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const ausentes = data.filter(a => a.presente === false).length;
+      // Actualizar badge en header si existe
+      const badge = document.getElementById('badgeAusentes');
+      if (badge) badge.textContent = ausentes > 0 ? ausentes : '';
+      // Actualizar resumen del día
+      const resumen = document.getElementById('resumenDia');
+      if (resumen && gruposCompletados.size > 0) {
+        resumen.textContent = `${gruposCompletados.size} grupo(s) · ${ausentes} ausente(s)`;
+      }
+    } catch(e) {}
+  }
+
+  cargarGruposCompletados();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>

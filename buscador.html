@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Expedientes — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+
+        /* HEADER */
+        .header {
+            background: var(--azul); height: 62px; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 10px; color: white; font-weight: 800; font-size: 16px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .header-usuario {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 5px 12px;
+            color: white; font-size: 12px; font-weight: 600;
+        }
+        .header-rol {
+            background: rgba(255,255,255,0.08); border-radius: 6px;
+            padding: 3px 8px; font-size: 10px; font-weight: 700;
+            color: rgba(255,255,255,0.8); text-transform: uppercase;
+        }
+        .btn-salir {
+            background: rgba(230,57,70,0.15); color: #fca5a5;
+            border: 1px solid rgba(230,57,70,0.3);
+            padding: 6px 12px; border-radius: 8px;
+            font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: 0.2s;
+        }
+        .btn-salir:hover { background: rgba(230,57,70,0.3); }
+
+        /* CONTENIDO */
+        .contenedor { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
+
+        /* REGRESO + CONTADOR */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 10px; padding: 9px 16px;
+            text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 600;
+            transition: background 0.15s;
+        }
+        .btn-back:hover { background: var(--borde); }
+        .info-contador { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+        /* BANNER MODO REPORTE */
+        .banner-reporte {
+            background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+            border-radius: 12px; padding: 12px 16px;
+            font-size: 13px; font-weight: 600; text-align: center;
+            margin-bottom: 16px; display: none;
+        }
+
+        /* BARRA SUPERIOR */
+        .barra-acciones { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .btn-alta {
+            display: none; align-items: center; gap: 8px;
+            background: var(--verde); color: white; border: none;
+            padding: 10px 18px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s;
+            box-shadow: 0 2px 8px rgba(45,155,111,0.25);
+        }
+        .btn-alta:hover { background: #1e7a57; transform: translateY(-1px); }
+
+        /* FILTROS */
+        .panel-filtros {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 16px; padding: 18px 20px;
+            display: flex; gap: 12px; flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .campo-filtro { flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 5px; }
+        .campo-filtro.busqueda { flex: 2; min-width: 200px; }
+        .campo-filtro label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted);
+        }
+        .campo-filtro input,
+        .campo-filtro select {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 14px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: var(--blanco);
+            outline: none; transition: border-color 0.15s; appearance: none;
+        }
+        .campo-filtro input:focus,
+        .campo-filtro select:focus { border-color: var(--azul); }
+
+        /* LISTA DE RESULTADOS */
+        #resultados { display: flex; flex-direction: column; gap: 10px; }
+
+        .tarjeta-alumno {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 14px; padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: box-shadow 0.15s; gap: 12px;
+        }
+        .tarjeta-alumno:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .tarjeta-baja { background: #f8fafc; opacity: 0.85; }
+
+        .alumno-nombre { font-size: 16px; font-weight: 700; color: var(--texto); margin-bottom: 6px; }
+        .alumno-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .badge-activo  { background: var(--verde-claro); color: var(--verde); }
+        .badge-baja    { background: #f1f5f9; color: #475569; }
+        .badge-grado   { background: var(--azul-claro); color: var(--azul); }
+
+        .acciones-tarjeta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .btn-abrir {
+            background: var(--azul); color: white; text-decoration: none;
+            padding: 9px 18px; border-radius: 10px;
+            font-size: 13px; font-weight: 700;
+            transition: background 0.15s;
+        }
+        .btn-abrir:hover { background: var(--azul-hover); }
+        .btn-baja-directa {
+            background: var(--rojo-claro); color: var(--rojo);
+            border: 1px solid #fecdd3; padding: 8px 14px;
+            border-radius: 9px; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-reactivar-directa {
+            background: var(--verde-claro); color: var(--verde);
+            border: 1px solid #bbf7d0; padding: 8px 14px;
+            border-radius: 9px; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-cambiar-grupo {
+            background: #fffbeb; color: #92400e;
+            border: 1px solid #fde68a; padding: 8px 14px;
+            border-radius: 9px; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.5); display: none;
+            align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(4px); padding: 16px;
+        }
+        .modal-content {
+            background: var(--blanco); border-radius: 20px;
+            width: 100%; max-width: 420px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.2); padding: 28px;
+        }
+        .modal-header-row {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;
+        }
+        .modal-titulo { font-size: 18px; font-weight: 800; }
+        .modal-cerrar {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1.5px solid var(--borde); background: var(--blanco);
+            font-size: 16px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .modal-grid { display: flex; flex-direction: column; gap: 14px; }
+        .modal-campo label {
+            display: block; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 5px;
+        }
+        .modal-campo input,
+        .modal-campo select {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 14px; font-family: 'Outfit', sans-serif;
+            text-transform: uppercase; outline: none; transition: border-color 0.15s;
+        }
+        .modal-campo input:focus,
+        .modal-campo select:focus { border-color: var(--azul); }
+        .modal-campo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-cancelar {
+            flex: 1; padding: 11px; border: 1.5px solid var(--borde);
+            border-radius: 10px; background: var(--blanco);
+            font-size: 14px; font-weight: 600; font-family: 'Outfit', sans-serif;
+            color: var(--muted); cursor: pointer; transition: background 0.15s;
+        }
+        .btn-cancelar:hover { background: var(--fondo); }
+        .btn-guardar-alumno {
+            flex: 2; padding: 11px; border: none;
+            border-radius: 10px; background: var(--azul);
+            color: white; font-size: 14px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-guardar-alumno:hover { background: var(--azul-hover); }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .header-rol, .header-usuario { display: none; }
+            .contenedor { padding: 16px 12px 40px; }
+            .alumno-nombre { font-size: 14px; }
+            .acciones-tarjeta { flex-direction: column; align-items: flex-end; }
+        }
+    </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">🎓 Buscador de Expedientes</div>
+    <div class="header-right">
+        <span class="header-usuario" id="lblUsuario">—</span>
+        <span class="header-rol" id="lblRol">—</span>
+        <button class="btn-salir" onclick="cerrarSesion()" style="background:rgba(230,57,70,0.25); color:white; border:1.5px solid rgba(230,57,70,0.5); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">Salir</button>
+    </div>
+</div>
+
+<div class="contenedor">
+
+    <!-- Botón regresar (según rol) -->
+    <div class="top-bar">
+        <div>
+            <a href="inicio.html" class="btn-back" id="btnRegreso" style="display:none">← Volver al Inicio</a>
+            <a href="dashboard.html" class="btn-back" id="btnRegresoAdmin" style="display:none">← Volver al Dashboard</a>
+        </div>
+        <div class="info-contador" id="info-contador">Cargando...</div>
+    </div>
+
+    <!-- Banner modo reporte -->
+    <div class="banner-reporte" id="bannerReporte">
+        📋 Selecciona el alumno al que deseas registrarle un reporte
+    </div>
+
+    <!-- Botón nuevo alumno + PDF -->
+    <div class="barra-acciones">
+        <button onclick="exportarBuscadorPDF()" style="display:inline-flex; align-items:center; gap:8px; background:var(--azul-claro); color:var(--azul); border:1.5px solid #bfdbfe; padding:10px 18px; border-radius:10px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='var(--azul-claro)'">🖨️ Exportar PDF</button>
+        <button class="btn-alta" id="btnNuevoAlumno" onclick="abrirModal()">+ Nuevo Alumno</button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="panel-filtros">
+        <div class="campo-filtro busqueda">
+            <label>Buscar por nombre</label>
+            <input type="text" id="inputBusqueda" oninput="buscarAlumno()" placeholder="Escribe apellido o nombre...">
+        </div>
+        <div class="campo-filtro">
+            <label>Grado</label>
+            <select id="filtroGrado" onchange="buscarAlumno()">
+                <option value="">Todos</option>
+                <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+            </select>
+        </div>
+        <div class="campo-filtro">
+            <label>Grupo</label>
+            <select id="filtroGrupo" onchange="buscarAlumno()">
+                <option value="">Todos</option>
+                <option>A</option><option>B</option><option>C</option><option>D</option>
+            </select>
+        </div>
+        <div class="campo-filtro">
+            <label>Estatus</label>
+            <select id="filtroEstatus" onchange="buscarAlumno()">
+                <option value="">Ver Todos</option>
+                <option value="ACTIVO">Activos</option>
+                <option value="BAJA">Bajas</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="resultados"></div>
+</div>
+
+<!-- MODAL NUEVO ALUMNO -->
+<div class="modal-overlay" id="modalNuevoAlumno">
+    <div class="modal-content">
+        <div class="modal-header-row">
+            <div class="modal-titulo">➕ Nuevo Alumno</div>
+            <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+        </div>
+        <div class="modal-grid">
+            <div class="modal-campo">
+                <label>Apellidos <span style="color:var(--rojo)">*</span></label>
+                <input type="text" id="na_apellidos" placeholder="Apellido paterno y materno">
+            </div>
+            <div class="modal-campo">
+                <label>Nombre(s) <span style="color:var(--rojo)">*</span></label>
+                <input type="text" id="na_nombre" placeholder="Nombre o nombres">
+            </div>
+            <div class="modal-campo-row">
+                <div class="modal-campo">
+                    <label>Grado <span style="color:var(--rojo)">*</span></label>
+                    <select id="na_grado" style="text-transform:none">
+                        <option value="">Selecciona...</option>
+                        <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+                    </select>
+                </div>
+                <div class="modal-campo">
+                    <label>Grupo <span style="color:var(--rojo)">*</span></label>
+                    <select id="na_grupo" style="text-transform:none">
+                        <option value="">Selecciona...</option>
+                        <option>A</option><option>B</option><option>C</option>
+                        <option>D</option><option>E</option><option>F</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn-guardar-alumno" onclick="guardarNuevoAlumno()" id="btnGuardarAlumno">Guardar Alumno</button>
+        </div>
+    </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+    let todosLosAlumnos = [];
+    let rolUsuario = '';
+    const modoReporte = new URLSearchParams(window.location.search).get('modo') === 'reporte';
+    const _rawG2 = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_DOCENTE_BUS = (() => { try { return JSON.parse(_rawG2); } catch { return []; } })();
+
+    window.onload = async () => {
+        const nombre = localStorage.getItem('nombreActivo');
+        rolUsuario   = localStorage.getItem('rolActivo');
+        if (!nombre || !rolUsuario) return window.location.href = 'index.html';
+
+        document.getElementById('lblUsuario').innerText = nombre;
+        document.getElementById('lblRol').innerText     = rolUsuario;
+
+        if (rolUsuario === 'ADMINISTRADOR') {
+            document.getElementById('btnNuevoAlumno').style.display  = 'inline-flex';
+            document.getElementById('btnRegresoAdmin').style.display = 'block';
+        }
+        if (rolUsuario === 'DIRECTIVO') document.getElementById('btnRegresoAdmin').style.display = 'block';
+        if (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL') document.getElementById('btnRegreso').style.display = 'block';
+        if (rolUsuario === 'ENFERMERIA') document.getElementById('btnRegreso').style.display = 'block';
+        if (modoReporte) document.getElementById('bannerReporte').style.display = 'block';
+
+        await cargarDatos();
+    };
+
+    async function cargarDatos() {
+        try {
+            const res = await apiFetch('/api/alumnos');
+            todosLosAlumnos = await res.json();
+            todosLosAlumnos.sort((a, b) => a.apellidos.localeCompare(b.apellidos));
+            buscarAlumno();
+        } catch(e) { console.error('Error al cargar alumnos'); }
+    }
+
+    function buscarAlumno() {
+        const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+        const estatus  = document.getElementById('filtroEstatus').value;
+
+        const filtrados = todosLosAlumnos.filter(a => {
+            const nm = `${a.apellidos} ${a.nombre}`.toUpperCase();
+            // Docentes y prefectos solo ven sus grupos asignados (en cualquier modo)
+            const esDocente = rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO';
+            if (esDocente && GRUPOS_DOCENTE_BUS.length > 0) {
+                if (!GRUPOS_DOCENTE_BUS.includes(`${a.grado}${a.grupo}`)) return false;
+            }
+            return nm.includes(busqueda)
+                && (grado   === '' || a.grado.toString() === grado)
+                && (grupo   === '' || a.grupo === grupo)
+                && (estatus === '' || (a.status || 'ACTIVO') === estatus);
+        });
+
+        document.getElementById('info-contador').innerText = `${filtrados.length} alumno${filtrados.length !== 1 ? 's' : ''} encontrado${filtrados.length !== 1 ? 's' : ''}`;
+        const cont = document.getElementById('resultados');
+        cont.innerHTML = '';
+
+        if (filtrados.length === 0) {
+            cont.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); background:var(--blanco); border-radius:14px; border:1px solid var(--borde);">
+                <div style="font-size:36px; margin-bottom:10px;">🔍</div>
+                <p style="font-weight:700;">Sin resultados</p>
+                <p style="font-size:13px; margin-top:4px;">Intenta con otros filtros</p>
+            </div>`;
+            return;
+        }
+
+        filtrados.forEach(a => {
+            const esBaja = a.status === 'BAJA';
+            let accionAdmin = '';
+            if (rolUsuario === 'ADMINISTRADOR') {
+                accionAdmin = esBaja
+                    ? `<button class="btn-reactivar-directa" onclick="actualizarEstatus('${a.id_alumno}','ACTIVO')">Reactivar</button>`
+                    : `<button class="btn-cambiar-grupo" onclick="abrirCambioGrupo('${a.id_alumno}')">🔀 Cambiar grupo</button>
+                       <button class="btn-baja-directa" onclick="actualizarEstatus('${a.id_alumno}','BAJA')">Dar Baja</button>`;
+            }
+            cont.innerHTML += `
+                <div class="tarjeta-alumno ${esBaja ? 'tarjeta-baja' : ''}">
+                    <div>
+                        <div class="alumno-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                        <div class="alumno-badges">
+                            <span class="badge ${esBaja ? 'badge-baja' : 'badge-activo'}">${esBaja ? 'BAJA' : 'ACTIVO'}</span>
+                            <span class="badge badge-grado">${a.grado}° "${a.grupo}"</span>
+                        </div>
+                    </div>
+                    <div class="acciones-tarjeta">
+                        ${accionAdmin}
+                        ${(esBaja && (rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO' || rolUsuario === 'TRABAJO SOCIAL' || rolUsuario === 'ENFERMERIA'))
+                            ? `<span style="background:#fff0f1;color:#e63946;border:1px solid #fecdd3;border-radius:9px;padding:8px 16px;font-size:12px;font-weight:800;">BAJA</span>`
+                            : `<a href="${modoReporte ? 'captura_reporte' : 'expediente'}.html?id_alumno=${a.id_alumno}${rolUsuario === 'ENFERMERIA' ? '&tab=ficha' : ''}&from=buscador" class="btn-abrir">
+                                ${modoReporte ? 'Reporte' : 'Expediente'}
+                               </a>`
+                        }
+                    </div>
+                </div>`;
+        });
+    }
+
+    function abrirModal() {
+        ['na_apellidos','na_nombre'].forEach(id => document.getElementById(id).value = '');
+        ['na_grado','na_grupo'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('modalNuevoAlumno').style.display = 'flex';
+    }
+    function cerrarModal() { document.getElementById('modalNuevoAlumno').style.display = 'none'; }
+
+    async function guardarNuevoAlumno() {
+        const apellidos = document.getElementById('na_apellidos').value.trim().toUpperCase();
+        const nombre    = document.getElementById('na_nombre').value.trim().toUpperCase();
+        const grado     = document.getElementById('na_grado').value;
+        const grupo     = document.getElementById('na_grupo').value;
+        if (!apellidos || !nombre || !grado || !grupo) return alert('Por favor completa todos los campos.');
+
+        const btn = document.getElementById('btnGuardarAlumno');
+        btn.textContent = 'Guardando...'; btn.disabled = true;
+        try {
+            const res = await apiFetch('/api/alumnos', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apellidos, nombre, grado: parseInt(grado), grupo, status: 'ACTIVO' })
+            });
+            const data = await res.json();
+            if (res.ok) { cerrarModal(); await cargarDatos(); alert(`✅ Alumno dado de alta correctamente.`); }
+            else alert('Error: ' + (data.error || 'No se pudo guardar.'));
+        } catch { alert('Error de conexión.'); }
+        btn.textContent = 'Guardar Alumno'; btn.disabled = false;
+    }
+
+    async function actualizarEstatus(idAlumno, nuevoEstatus) {
+        const alumno = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumno));
+        const nombre = alumno ? `${alumno.apellidos} ${alumno.nombre}` : `#${idAlumno}`;
+        const accion = nuevoEstatus === 'BAJA' ? 'dar de baja' : 'reactivar';
+        if (!confirm(`¿Confirmas ${accion} a ${nombre}?`)) return;
+        try {
+            const res = await apiFetch('/api/alumnos', {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: parseInt(idAlumno), status: nuevoEstatus })
+            });
+            if (res && res.ok) {
+                const idx = todosLosAlumnos.findIndex(a => String(a.id_alumno) === String(idAlumno));
+                if (idx !== -1) todosLosAlumnos[idx].status = nuevoEstatus;
+                buscarAlumno();
+            } else { const err = await res.json(); alert('Error: ' + err.error); }
+        } catch { alert('Error de conexión.'); }
+    }
+
+
+    let idAlumnoCambio = null;
+
+    function abrirCambioGrupo(idAlumno) {
+        const alumno = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumno));
+        if (!alumno) return;
+        idAlumnoCambio = idAlumno;
+        document.getElementById('lblAlumnoCambio').textContent =
+            `${alumno.apellidos} ${alumno.nombre} — Actual: ${alumno.grado}° Grupo "${alumno.grupo}"`;
+        document.getElementById('ng_grado').value = String(alumno.grado);
+        document.getElementById('ng_grupo').value = alumno.grupo;
+        document.getElementById('modalCambioGrupo').style.display = 'flex';
+    }
+
+    function cerrarCambioGrupo() {
+        document.getElementById('modalCambioGrupo').style.display = 'none';
+        idAlumnoCambio = null;
+    }
+
+    async function confirmarCambioGrupo() {
+        if (!idAlumnoCambio) return;
+        const alumno  = todosLosAlumnos.find(a => String(a.id_alumno) === String(idAlumnoCambio));
+        const nuevoGrado = document.getElementById('ng_grado').value;
+        const nuevoGrupo = document.getElementById('ng_grupo').value;
+        if (String(alumno.grado) === nuevoGrado && alumno.grupo === nuevoGrupo) {
+            alert('El alumno ya está en ese grado y grupo.'); return;
+        }
+        if (!confirm(`¿Mover a ${alumno.apellidos} ${alumno.nombre} al ${nuevoGrado}° Grupo "${nuevoGrupo}"?`)) return;
+        try {
+            const res = await apiFetch('/api/alumnos', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: parseInt(idAlumnoCambio), grado: parseInt(nuevoGrado), grupo: nuevoGrupo, status: 'ACTIVO' })
+            });
+            if (res && res.ok) {
+                const idx = todosLosAlumnos.findIndex(a => String(a.id_alumno) === String(idAlumnoCambio));
+                if (idx !== -1) { todosLosAlumnos[idx].grado = parseInt(nuevoGrado); todosLosAlumnos[idx].grupo = nuevoGrupo; todosLosAlumnos[idx].status = 'ACTIVO'; }
+                cerrarCambioGrupo();
+                buscarAlumno();
+                alert(`✅ ${alumno.apellidos} ${alumno.nombre} movido al ${nuevoGrado}° Grupo "${nuevoGrupo}" correctamente.`);
+            } else { const err = await res.json(); alert('Error: ' + err.error); }
+        } catch { alert('Error de conexión.'); }
+    }
+
+    function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+
+    async function getConfigInst() {
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+            if (res) return await res.json();
+        } catch(e) {}
+        return {};
+    }
+
+    function headerInstHTML(cfg) {
+        const nombre    = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const clave     = cfg.clave_escuela     || '';
+        const direccion = cfg.direccion_escuela || '';
+        const ciclo     = cfg.ciclo_activo      || '';
+        const logoIzq   = cfg.logo_izquierdo    || '';
+        const logoDer   = cfg.logo_derecho      || '';
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:12px;margin-bottom:16px;">
+            <div style="width:90px;text-align:center;">
+                ${logoIzq ? `<img src="${logoIzq}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🎓</div>'}
+            </div>
+            <div style="flex:1;text-align:center;padding:0 16px;">
+                <div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+                <div style="font-size:14px;font-weight:800;color:#1B4F8A;margin:4px 0;">${nombre}</div>
+                ${clave     ? `<div style="font-size:10px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div style="font-size:10px;color:#555;">${direccion}</div>` : ''}
+                ${ciclo     ? `<div style="font-size:10px;color:#555;margin-top:2px;">Ciclo Escolar ${ciclo}</div>` : ''}
+            </div>
+            <div style="width:90px;text-align:center;">
+                ${logoDer ? `<img src="${logoDer}" style="max-height:70px;max-width:85px;object-fit:contain;">` : '<div style="font-size:36px;">🏫</div>'}
+            </div>
+        </div>`;
+    }
+
+    async function exportarBuscadorPDF() {
+        const busqueda = document.getElementById('inputBusqueda').value.toUpperCase();
+        const grado    = document.getElementById('filtroGrado').value;
+        const grupo    = document.getElementById('filtroGrupo').value;
+        const estatus  = document.getElementById('filtroEstatus').value;
+
+        // Aplicar los mismos filtros que buscarAlumno()
+        const lista = todosLosAlumnos.filter(a => {
+            const nm = `${a.apellidos} ${a.nombre}`.toUpperCase();
+            const esDocente = rolUsuario === 'DOCENTE' || rolUsuario === 'PREFECTO';
+            if (esDocente && GRUPOS_DOCENTE_BUS.length > 0) {
+                if (!GRUPOS_DOCENTE_BUS.includes(`${a.grado}${a.grupo}`)) return false;
+            }
+            return nm.includes(busqueda)
+                && (grado   === '' || a.grado.toString() === grado)
+                && (grupo   === '' || a.grupo === grupo)
+                && (estatus === '' || (a.status || 'ACTIVO') === estatus);
+        });
+
+        const filtrosDesc = [
+            busqueda ? `Búsqueda: "${busqueda}"` : '',
+            grado  ? `${grado}° Grado` : '',
+            grupo  ? `Grupo ${grupo}` : '',
+            estatus ? estatus : ''
+        ].filter(Boolean).join(' · ') || 'Todos los alumnos';
+
+        const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+        const cfg   = await getConfigInst();
+
+        let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 15mm 12mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+            table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+            th { background:#1B4F8A; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+            td { padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:middle; font-size:10px; }
+            tr:nth-child(even) td { background:#f8fafc; }
+            .activo { color:#2d9b6f; font-weight:700; }
+            .baja   { color:#94a3b8; font-weight:700; }
+            .mut    { color:#64748b; }
+            h3 { font-size:12px; color:#1B4F8A; margin:0 0 2px; }
+            p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+        </style></head><body>
+        ${headerInstHTML(cfg)}
+        <h3>🎓 Lista de Alumnos</h3>
+        <p>${filtrosDesc} &nbsp;|&nbsp; Generada el ${fecha} &nbsp;|&nbsp; ${lista.length} alumno(s)</p>
+        <table><thead><tr>
+            <th>#</th><th>Alumno</th><th>Grado / Grupo</th><th>Estatus</th>
+        </tr></thead><tbody>`;
+
+        lista.forEach((a, i) => {
+            const esBaja = a.status === 'BAJA';
+            html += `<tr>
+                <td class="mut">${i + 1}</td>
+                <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
+                <td>${a.grado}° Grupo "${a.grupo}"</td>
+                <td class="${esBaja ? 'baja' : 'activo'}">${esBaja ? 'BAJA' : 'ACTIVO'}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>
+        <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:16px; display:flex; gap:40px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Director(a)</div>
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <div style="border-bottom:1px solid #000; height:40px; margin-bottom:6px;"></div>
+                <div style="font-size:10px; text-align:center; color:#374151;">Nombre y firma del Responsable</div>
+            </div>
+        </div>
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
+</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+
+<!-- MODAL CAMBIAR GRUPO -->
+<div class="modal-overlay" id="modalCambioGrupo" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-content">
+        <div class="modal-header-row">
+            <div class="modal-titulo">🔀 Cambiar Grupo</div>
+            <button class="modal-cerrar" onclick="cerrarCambioGrupo()">✕</button>
+        </div>
+        <div id="lblAlumnoCambio" style="font-size:14px; font-weight:700; color:var(--azul); margin-bottom:16px; background:var(--azul-claro); padding:10px 14px; border-radius:10px;"></div>
+        <div class="modal-grid">
+            <div class="modal-campo">
+                <label>Nuevo Grado</label>
+                <select id="ng_grado">
+                    <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+                </select>
+            </div>
+            <div class="modal-campo">
+                <label>Nuevo Grupo</label>
+                <select id="ng_grupo">
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-btns" style="margin-top:22px;">
+            <button class="btn-cancelar" onclick="cerrarCambioGrupo()">Cancelar</button>
+            <button class="btn-guardar-alumno" onclick="confirmarCambioGrupo()">Confirmar Cambio</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

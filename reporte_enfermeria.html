@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Enfermería — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-claro: #eff6ff;
+  --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --rojo: #e63946;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
+
+/* ── HEADER ── */
+.header {
+  background: var(--azul); padding: 0 24px; height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25); position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.btn-back {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  color: white; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; text-decoration: none; transition: background 0.15s;
+}
+.btn-back:hover { background: rgba(255,255,255,0.25); }
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+
+/* ── CONTROLES ── */
+.controles {
+  max-width: 800px; margin: 24px auto; padding: 0 20px;
+  display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+}
+.control-grupo { display: flex; flex-direction: column; gap: 6px; }
+.control-grupo label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted);
+}
+.control-grupo select, .control-grupo input {
+  padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
+  font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--texto);
+  background: var(--blanco); outline: none; cursor: pointer;
+}
+.control-grupo select:focus { border-color: var(--azul); }
+.btn-generar {
+  padding: 11px 24px; background: var(--azul); color: white;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+}
+.btn-generar:hover { background: #163f6e; }
+.btn-imprimir {
+  padding: 11px 24px; background: var(--verde); color: white;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+  display: none;
+}
+.btn-imprimir:hover { background: #1e7a57; }
+
+/* ── REPORTE ── */
+#reporte {
+  max-width: 800px; margin: 0 auto 60px; padding: 0 20px;
+  display: none;
+}
+.reporte-encabezado {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 24px 28px; margin-bottom: 24px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.reporte-titulo { font-size: 20px; font-weight: 800; color: var(--azul); }
+.reporte-sub    { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.reporte-meta   { text-align: right; font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+.seccion-reporte {
+  background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
+  padding: 24px; margin-bottom: 20px;
+}
+.seccion-titulo {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--azul); margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 2px solid var(--azul-claro);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.badge-count {
+  background: var(--azul-claro); color: var(--azul);
+  border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800;
+}
+
+/* ── TABLAS ── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--azul-claro); color: var(--azul);
+  padding: 8px 12px; text-align: left; font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfc; }
+.estado-vacio { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+
+/* ── RESUMEN KPI ── */
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.kpi {
+  background: var(--blanco); border-radius: 12px; border: 1px solid var(--borde);
+  padding: 16px; text-align: center;
+}
+.kpi-num  { font-size: 32px; font-weight: 800; color: var(--azul); }
+.kpi-label{ font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+/* ── PRINT ── */
+@media print {
+  body { background: white; font-size: 11px; }
+  .header, .controles, .btn-imprimir { display: none !important; }
+  #encabezadoInst { display: flex !important; }
+  #reporte { display: block !important; padding: 0; margin: 0; max-width: 100%; }
+  .reporte-encabezado, .seccion-reporte, .kpi {
+    border: 1px solid #ccc; border-radius: 0; box-shadow: none;
+  }
+  .seccion-reporte { margin-bottom: 12px; break-inside: avoid; }
+  table { font-size: 10px; }
+  th, td { padding: 5px 8px; }
+  .kpis { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .kpi-num { font-size: 22px; }
+  a { display: none; }
+}
+
+@media (max-width: 600px) {
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .controles { flex-direction: column; }
+  .reporte-encabezado { flex-direction: column; gap: 8px; }
+  .reporte-meta { text-align: left; }
+  table { font-size: 11px; }
+  th, td { padding: 6px 8px; }
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">📊 Reporte de Enfermería</div>
+      <div class="header-sub">EST 84 · Informe de Actividades</div>
+    </div>
+  </div>
+</div>
+
+<div class="controles">
+  <div class="control-grupo">
+    <label>Mes</label>
+    <select id="selMes">
+      <option value="1">Enero</option><option value="2">Febrero</option>
+      <option value="3">Marzo</option><option value="4">Abril</option>
+      <option value="5">Mayo</option><option value="6">Junio</option>
+      <option value="7">Julio</option><option value="8">Agosto</option>
+      <option value="9">Septiembre</option><option value="10">Octubre</option>
+      <option value="11">Noviembre</option><option value="12">Diciembre</option>
+    </select>
+  </div>
+  <div class="control-grupo">
+    <label>Año</label>
+    <select id="selAnio"></select>
+  </div>
+  <button class="btn-generar" onclick="generarReporte()">📊 Generar Reporte</button>
+  <button class="btn-imprimir" id="btnImprimir" onclick="window.print()">🖨️ Imprimir / PDF</button>
+</div>
+
+
+  <!-- Encabezado institucional dinámico -->
+  <div id="encabezadoInst" style="background:var(--blanco);border-radius:16px;border:1px solid var(--borde);padding:20px 28px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+    <img id="logoIzq" src="" style="height:56px;object-fit:contain;display:none;" alt="">
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:10px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Secretaría de Educación del Gobierno del Estado</div>
+      <div style="font-size:16px;font-weight:800;color:var(--azul);margin:3px 0;" id="instNombre">—</div>
+      <div style="font-size:11px;color:var(--muted);" id="instDetalle"></div>
+    </div>
+    <img id="logoDer" src="" style="height:56px;object-fit:contain;display:none;" alt="">
+  </div>
+<div id="reporte">
+
+
+  <div class="reporte-encabezado">
+    <div>
+      <div class="reporte-titulo">Reporte de Enfermería</div>
+      <div class="reporte-sub" id="subtituloReporte">—</div>
+    </div>
+    <div class="reporte-meta" id="metaReporte">—</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-num" id="kpiVisitas">0</div>
+      <div class="kpi-label">Visitas a Enfermería</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" id="kpiJustificantes">0</div>
+      <div class="kpi-label">Justificantes Emitidos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" id="kpiExpedientes">0</div>
+      <div class="kpi-label">Expedientes Actualizados</div>
+    </div>
+  </div>
+
+  <!-- Visitas -->
+  <div class="seccion-reporte">
+    <div class="seccion-titulo">
+      🏥 Visitas a Enfermería
+      <span class="badge-count" id="badgeVisitas">0</span>
+    </div>
+    <div id="tablaVisitas">
+      <div class="estado-vacio">Sin registros en este período</div>
+    </div>
+  </div>
+
+  <!-- Justificantes -->
+  <div class="seccion-reporte">
+    <div class="seccion-titulo">
+      📄 Justificantes Emitidos
+      <span class="badge-count" id="badgeJust">0</span>
+    </div>
+    <div id="tablaJust">
+      <div class="estado-vacio">Sin justificantes en este período</div>
+    </div>
+  </div>
+
+  <!-- Expedientes -->
+  <div class="seccion-reporte">
+    <div class="seccion-titulo">
+      📋 Expedientes Médicos Actualizados
+      <span class="badge-count" id="badgeExp">0</span>
+    </div>
+    <div id="tablaExp">
+      <div class="estado-vacio">Sin actualizaciones en este período</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+
+  // Inicializar selectores de mes y año
+  const hoy  = new Date();
+  const selM = document.getElementById('selMes');
+  const selA = document.getElementById('selAnio');
+
+  selM.value = hoy.getMonth() + 1;
+  for (let y = hoy.getFullYear(); y >= 2023; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    selA.appendChild(opt);
+  }
+
+  const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  function padFecha(d) { return String(d).padStart(2,'0'); }
+
+  function rangoMes(mes, anio) {
+    const inicio = `${anio}-${padFecha(mes)}-01`;
+    const fin    = `${anio}-${padFecha(mes)}-${new Date(anio, mes, 0).getDate()}`;
+    return { inicio, fin };
+  }
+
+  async function generarReporte() {
+    const mes    = parseInt(selM.value);
+    const anio   = parseInt(selA.value);
+    const { inicio, fin } = rangoMes(mes, anio);
+    const elaboro = localStorage.getItem('nombreActivo') || '—';
+
+    // Cargar configuración institucional
+    try {
+      const resCfg = await apiFetch('/api/dashboard?tipo=config_institucional', { silencioso: true });
+      if (resCfg) {
+        const cfg = await resCfg.json();
+        document.getElementById('instNombre').textContent = cfg.nombre_escuela || '—';
+        let detalle = '';
+        if (cfg.clave_escuela)    detalle += `CLAVE: ${cfg.clave_escuela}`;
+        if (cfg.direccion_escuela) detalle += (detalle ? ' · ' : '') + cfg.direccion_escuela;
+        if (cfg.ciclo_activo)      detalle += (detalle ? ' · ' : '') + `Ciclo ${cfg.ciclo_activo}`;
+        document.getElementById('instDetalle').textContent = detalle;
+        const logoIzqEl = document.getElementById('logoIzq');
+        const logoDerEl = document.getElementById('logoDer');
+        if (cfg.logo_izquierdo) { logoIzqEl.src = cfg.logo_izquierdo; logoIzqEl.style.display = 'block'; }
+        if (cfg.logo_derecho)   { logoDerEl.src = cfg.logo_derecho;   logoDerEl.style.display = 'block'; }
+      }
+    } catch(e) {}
+
+    document.getElementById('subtituloReporte').textContent = `${MESES[mes]} ${anio}`;
+    document.getElementById('metaReporte').innerHTML =
+      `Período: ${inicio} al ${fin}<br>Generado: ${hoy.toLocaleDateString('es-MX')}<br>Elaboró: ${elaboro}`;
+
+    // Cargar los 3 endpoints en paralelo
+    const [resVisitas, resJust, resExp] = await Promise.all([
+      apiFetch(`/api/expediente?tipo=visitas_reporte&mes=${mes}&anio=${anio}`),
+      apiFetch(`/api/expediente?tipo=justificantes_reporte&mes=${mes}&anio=${anio}`),
+      apiFetch(`/api/expediente?tipo=medico_historial`),
+    ]);
+
+    const visitas      = resVisitas  ? await resVisitas.json()  : [];
+    const justificantes= resJust     ? await resJust.json()     : [];
+    const expedientes  = resExp      ? await resExp.json()      : [];
+
+    // Filtrar expedientes por mes de actualización
+    const expFiltrados = expedientes.filter(e => {
+      if (!e.fecha_actualizacion) return false;
+      const d = new Date(e.fecha_actualizacion);
+      return d.getMonth() + 1 === mes && d.getFullYear() === anio;
+    });
+
+    // KPIs
+    document.getElementById('kpiVisitas').textContent      = visitas.length;
+    document.getElementById('kpiJustificantes').textContent= justificantes.length;
+    document.getElementById('kpiExpedientes').textContent  = expFiltrados.length;
+    document.getElementById('badgeVisitas').textContent    = visitas.length;
+    document.getElementById('badgeJust').textContent       = justificantes.length;
+    document.getElementById('badgeExp').textContent        = expFiltrados.length;
+
+    // Tabla visitas
+    document.getElementById('tablaVisitas').innerHTML = visitas.length ? `
+      <table>
+        <thead><tr>
+          <th>Fecha</th><th>Alumno</th><th>Grado/Grupo</th><th>Motivo</th><th>Tratamiento</th><th>Registrado por</th>
+        </tr></thead>
+        <tbody>${visitas.map(v => `
+          <tr>
+            <td>${v.fecha}</td>
+            <td>${v.alumnos?.apellidos || ''} ${v.alumnos?.nombre || ''}</td>
+            <td>${v.alumnos?.grado || ''}° "${v.alumnos?.grupo || ''}"</td>
+            <td>${v.motivo || '—'}</td>
+            <td>${v.tratamiento || '—'}</td>
+            <td>${v.registrado_por || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="estado-vacio">Sin visitas en este período</div>';
+
+    // Tabla justificantes
+    document.getElementById('tablaJust').innerHTML = justificantes.length ? `
+      <table>
+        <thead><tr>
+          <th>Alumno</th><th>Grado/Grupo</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Motivo</th><th>Registrado por</th>
+        </tr></thead>
+        <tbody>${justificantes.map(j => `
+          <tr>
+            <td>${j.alumnos?.apellidos || ''} ${j.alumnos?.nombre || ''}</td>
+            <td>${j.alumnos?.grado || ''}° "${j.alumnos?.grupo || ''}"</td>
+            <td>${j.fecha_inicio}</td>
+            <td>${j.fecha_fin}</td>
+            <td>${j.motivo || '—'}</td>
+            <td>${j.registrado_por || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="estado-vacio">Sin justificantes en este período</div>';
+
+    // Tabla expedientes
+    document.getElementById('tablaExp').innerHTML = expFiltrados.length ? `
+      <table>
+        <thead><tr>
+          <th>Alumno</th><th>Grado/Grupo</th><th>Tipo Sangre</th><th>Alergias</th><th>Padecimientos</th><th>Actualizado por</th>
+        </tr></thead>
+        <tbody>${expFiltrados.map(e => `
+          <tr>
+            <td>${e.alumnos?.apellidos || ''} ${e.alumnos?.nombre || ''}</td>
+            <td>${e.alumnos?.grado || ''}° "${e.alumnos?.grupo || ''}"</td>
+            <td>${e.tipo_sangre || '—'}</td>
+            <td>${e.alergias || '—'}</td>
+            <td>${e.padecimientos || '—'}</td>
+            <td>${e.actualizado_por || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="estado-vacio">Sin actualizaciones en este período</div>';
+
+    document.getElementById('reporte').style.display = 'block';
+    document.getElementById('btnImprimir').style.display = 'inline-block';
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>

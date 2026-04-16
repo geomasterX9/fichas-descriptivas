@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluaciones Parciales — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --naranja: #f59e0b; --naranja-claro: #fffbeb;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; color: var(--texto); }
+
+        .navbar {
+            background: var(--azul); padding: 0 20px; height: 62px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 12px rgba(27,79,138,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { color: white; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .btn-nav { text-decoration: none; color: rgba(255,255,255,0.85); font-weight: 600; font-size: 13px; padding: 7px 12px; border-radius: 8px; transition: all 0.15s; border: none; background: none; cursor: pointer; font-family: 'Outfit', sans-serif; }
+        .btn-nav:hover { background: rgba(255,255,255,0.12); color: white; }
+        .btn-nav.salir { color: #fca5a5; }
+
+        .contenedor { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+
+        /* FILTROS */
+        .filtros-card {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+            display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end;
+        }
+        .filtro-grupo { display: flex; flex-direction: column; gap: 5px; }
+        .filtro-grupo label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+        select { padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--texto); background: var(--blanco); appearance: none; outline: none; }
+        select:focus { border-color: var(--azul); }
+        .btn-cargar {
+            padding: 10px 22px; background: var(--azul); color: white;
+            border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-cargar:hover { background: var(--azul-hover); }
+
+        /* AVISO */
+        .aviso-info {
+            background: var(--azul-claro); border: 1px solid #bfdbfe;
+            border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
+            font-size: 13px; color: var(--azul); display: flex; gap: 8px; align-items: flex-start;
+        }
+
+        /* LISTA DE ALUMNOS */
+        .alumno-card {
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 16px; padding: 18px;
+            margin-bottom: 14px; transition: box-shadow 0.15s;
+        }
+        .alumno-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+        .alumno-header {
+            display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+        }
+        .alumno-foto {
+            width: 54px; height: 54px; border-radius: 12px;
+            object-fit: cover; border: 2px solid var(--borde); flex-shrink: 0;
+            background: var(--azul-claro);
+        }
+        .alumno-foto-placeholder {
+            width: 54px; height: 54px; border-radius: 12px;
+            background: var(--azul-claro); display: flex; align-items: center;
+            justify-content: center; font-size: 24px; flex-shrink: 0;
+            border: 2px solid var(--borde);
+        }
+        .alumno-nombre { font-weight: 800; font-size: 15px; }
+        .alumno-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .alumno-status { margin-left: auto; }
+
+        /* MATERIAS GRID */
+        .materias-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px; margin-bottom: 12px;
+        }
+        .materia-item { display: flex; flex-direction: column; gap: 4px; }
+        .materia-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.6px; color: var(--muted); text-align: center;
+        }
+        .materia-input {
+            width: 100%; padding: 8px 10px; text-align: center;
+            border: 1.5px solid var(--borde); border-radius: 9px;
+            font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: var(--blanco); outline: none;
+            transition: border-color 0.15s;
+        }
+        .materia-input:focus { border-color: var(--azul); }
+        .materia-input.riesgo { border-color: var(--rojo); background: var(--rojo-claro); color: var(--rojo); }
+        .materia-input.ok     { border-color: var(--verde); background: var(--verde-claro); }
+
+        .alumno-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+        .btn-guardar-alumno {
+            padding: 9px 20px; background: var(--azul); color: white;
+            border: none; border-radius: 9px; font-size: 13px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-guardar-alumno:hover { background: var(--azul-hover); }
+        .chip-guardado { font-size: 12px; color: var(--verde); font-weight: 700; display: none; }
+        .chip-riesgo {
+            background: var(--rojo-claro); color: var(--rojo);
+            border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+            display: none;
+        }
+
+        .btn-excel {
+            padding: 10px 18px; border: none; border-radius: 10px;
+            font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif;
+            cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-excel-gen  { background: #f0fdf6; color: #166534; border: 1.5px solid #bbf7d0; }
+        .btn-excel-gen:hover  { background: #dcfce7; border-color: #86efac; }
+        .btn-excel-imp  { background: #eff6ff; color: #1e40af; border: 1.5px solid #bfdbfe; }
+        .btn-excel-imp:hover  { background: #dbeafe; border-color: #93c5fd; }
+        .excel-bar {
+            display: none; gap: 10px; margin-bottom: 16px;
+            background: var(--blanco); border: 1px solid var(--borde);
+            border-radius: 12px; padding: 14px 16px; align-items: center; flex-wrap: wrap;
+        }
+        .excel-bar.visible { display: flex; }
+        .excel-nota { font-size: 12px; color: var(--muted); flex: 1; min-width: 200px; }
+
+        .materia-input.pendiente { border-color: #fca5a5; background: #fff5f5; color: #fca5a5; font-weight: 800; font-size: 16px; }
+        .materia-input.bloqueado { border-color: #e2e8f0; background: #f8fafc; color: #cbd5e1; cursor: not-allowed; }
+        .materia-input:disabled { cursor: not-allowed; }
+
+        .btn-guardar-todos {
+            width: 100%; padding: 13px; margin-bottom: 16px;
+            background: var(--verde); color: white; border: none;
+            border-radius: 12px; font-size: 15px; font-weight: 800;
+            font-family: 'Outfit', sans-serif; cursor: pointer;
+            transition: background 0.15s; display: none;
+        }
+        .btn-guardar-todos:hover { background: #237a58; }
+        .btn-guardar-todos.visible { display: block; }
+            text-align: center; padding: 48px; background: var(--blanco);
+            border-radius: 16px; border: 1px solid var(--borde); color: var(--muted);
+        }
+        .empty-state .icono { font-size: 40px; margin-bottom: 10px; }
+
+        @media (max-width: 500px) {
+            .materias-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">📝 Evaluaciones Parciales</div>
+    <div>
+        <button onclick="exportarEvaluacionesPDF()" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s;" id="btnPDFEval">🖨️ PDF</button>
+        <a href="inicio.html" style="background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:9px; padding:7px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all 0.15s;">← Volver al Inicio</a>
+        <button onclick="cerrarSesion()" class="btn-nav salir">Salir 👋</button>
+    </div>
+</nav>
+
+<div class="contenedor">
+
+    <div class="filtros-card">
+        <div class="filtro-grupo">
+            <label>Grado</label>
+            <select id="selGrado">
+                <option value="1">1°</option>
+                <option value="2">2°</option>
+                <option value="3">3°</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Grupo</label>
+            <select id="selGrupo">
+                <option value="A">A</option><option value="B">B</option>
+                <option value="C">C</option><option value="D">D</option>
+                <option value="E">E</option><option value="F">F</option>
+            </select>
+        </div>
+        <div class="filtro-grupo">
+            <label>Trimestre</label>
+            <select id="selTrimestre" onchange="recargaSiGrupoActivo()">
+                <option value="1">Trimestre 1</option>
+                <option value="2">Trimestre 2</option>
+                <option value="3">Trimestre 3</option>
+            </select>
+        </div>
+        <button class="btn-cargar" onclick="cargarGrupo()">Cargar grupo →</button>
+    </div>
+
+    <div class="aviso-info">
+        <span>ℹ️</span>
+        <span>Captura las calificaciones parciales a mitad del trimestre. Las celdas se colorean en <strong>rojo</strong> si la calificación es ≤6. Estos datos se usan para generar la lista de riesgo académico.</span>
+    </div>
+
+    <div class="excel-bar" id="excelBar">
+        <button class="btn-excel btn-excel-gen" onclick="generarExcel()">📥 Descargar plantilla Excel</button>
+        <label class="btn-excel btn-excel-imp" style="cursor:pointer;">
+            📤 Importar Excel llenado
+            <input type="file" accept=".xlsx,.xls" id="inputExcel" style="display:none" onchange="importarExcel(this)">
+        </label>
+        <span class="excel-nota">Descarga la plantilla, llénala y vuelve a subirla para cargar las calificaciones automáticamente.</span>
+    </div>
+
+    <button class="btn-guardar-todos" id="btnGuardarTodos" onclick="guardarTodos()">
+        💾 Guardar evaluaciones de todo el grupo
+    </button>
+
+    <div id="listaAlumnos">
+        <div class="empty-state">
+            <div class="icono">📋</div>
+            <p>Selecciona un grado, grupo y trimestre para comenzar.</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+
+    // Rol y materia del usuario activo
+    const ROL_ACTIVO     = localStorage.getItem('rolActivo') || '';
+    const _materiaRaw = localStorage.getItem('materiaActiva') || '[]';
+    const MATERIAS_ACTIVAS = (() => { try { return JSON.parse(_materiaRaw); } catch { return []; } })();
+    const _gruposRaw = localStorage.getItem('gruposActivos') || '[]';
+    const GRUPOS_ACTIVOS = (() => { try { return JSON.parse(_gruposRaw); } catch { return []; } })();
+    // Solo ADMINISTRADOR y DIRECTIVO pueden editar todas las materias
+    const PUEDE_TODO   = ROL_ACTIVO === 'ADMINISTRADOR';
+    const SOLO_LECTURA = ['PREFECTO', 'DIRECTIVO', 'TRABAJO SOCIAL'].includes(ROL_ACTIVO);
+
+    // Ocultar controles de edición para prefecto
+    if (SOLO_LECTURA) {
+        document.getElementById('excelBar').style.display = 'none';
+        document.getElementById('btnGuardarTodos').style.display = 'none';
+    }
+
+    // Parsear grupos asignados: ["1A","2B"] → [{grado:"1", grupo:"A"}, ...]
+    // Soporta grados de 1 dígito + grupo de 1 letra (formato estándar secundaria)
+    const GRUPOS_PARSED = GRUPOS_ACTIVOS.map(g => ({
+        grado: g.slice(0, -1),   // todo excepto el último char
+        grupo: g.slice(-1)       // último char
+    }));
+
+    // Poblar selectores de grado y grupo según grupos asignados al docente
+    function inicializarSelectores() {
+        if (PUEDE_TODO || GRUPOS_PARSED.length === 0) return; // Admin/Directivo ven todo
+        const selGrado = document.getElementById('selGrado');
+        const selGrupo = document.getElementById('selGrupo');
+
+        const grados = [...new Set(GRUPOS_PARSED.map(g => g.grado))].sort();
+
+        // Filtrar opciones de grado
+        Array.from(selGrado.options).forEach(opt => {
+            opt.style.display = grados.includes(opt.value) ? '' : 'none';
+        });
+        selGrado.value = grados[0] || '1';
+
+        // Función para actualizar grupos según grado seleccionado
+        function actualizarGrupos() {
+            const gradoSel = selGrado.value;
+            const gruposDelGrado = GRUPOS_PARSED
+                .filter(g => g.grado === gradoSel)
+                .map(g => g.grupo);
+            Array.from(selGrupo.options).forEach(opt => {
+                opt.style.display = gruposDelGrado.includes(opt.value) ? '' : 'none';
+            });
+            // Seleccionar primer grupo válido
+            const primerValido = Array.from(selGrupo.options).find(o => o.style.display !== 'none');
+            if (primerValido) selGrupo.value = primerValido.value;
+        }
+
+        actualizarGrupos();
+        selGrado.addEventListener('change', actualizarGrupos);
+    }
+    inicializarSelectores();
+
+    // Materias por grado
+    const MATERIAS = {
+        1: ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'],
+        2: ['ESP','MAT','SLI','CIE','HIS','FCE','ETE','EFI','ART','ESO'],
+        3: ['ESP','MAT','SLI','CIE','HIS','FCE','ETE','EFI','ART','ESO']
+    };
+
+    let alumnosActuales = [];
+    let evaluacionesActuales = {}; // id_alumno → {materias}
+    let grupoYaCargado = false;
+
+    function recargaSiGrupoActivo() {
+        if (grupoYaCargado) cargarGrupo();
+    }
+
+    async function cargarGrupo() {
+        const grado     = document.getElementById('selGrado').value;
+        const grupo     = document.getElementById('selGrupo').value;
+        const trimestre = document.getElementById('selTrimestre').value;
+        const lista     = document.getElementById('listaAlumnos');
+
+        // Validar que el docente solo cargue sus grupos asignados
+        if (!PUEDE_TODO && GRUPOS_PARSED.length > 0) {
+            const permitido = GRUPOS_PARSED.some(g => g.grado === grado && g.grupo === grupo);
+            if (!permitido) {
+                lista.innerHTML = '<div class="empty-state"><div class="icono">🔒</div><p>No tienes acceso a este grupo.</p></div>';
+                return;
+            }
+        }
+
+        lista.innerHTML = '<div class="empty-state"><div class="icono">⏳</div><p>Cargando alumnos...</p></div>';
+
+        try {
+            // Cargar alumnos del grupo
+            const resAlu = await apiFetch(`/api/alumnos?grado=${grado}&grupo=${grupo}`);
+            if (!resAlu) return;
+            const todosAlumnos = await resAlu.json();
+            alumnosActuales = todosAlumnos.filter(a => String(a.grado) === grado && a.grupo === grupo && a.status?.toUpperCase() === 'ACTIVO');
+
+            if (alumnosActuales.length === 0) {
+                lista.innerHTML = '<div class="empty-state"><div class="icono">🔍</div><p>No hay alumnos activos en este grupo.</p></div>';
+                return;
+            }
+
+            // Cargar evaluaciones parciales ya guardadas para este grupo/trimestre
+            evaluacionesActuales = {};
+            await Promise.all(alumnosActuales.map(async a => {
+                const res = await apiFetch(`/api/expediente?tipo=evaluaciones_parciales&id=${a.id_alumno}`);
+                if (res) {
+                    const evals = await res.json();
+                    const evalTrim = evals.find(e => e.trimestre === parseInt(trimestre));
+                    if (evalTrim) evaluacionesActuales[a.id_alumno] = evalTrim.materias || [];
+                }
+            }));
+
+            grupoYaCargado = true;
+            renderAlumnos(parseInt(grado), parseInt(trimestre));
+        document.getElementById('excelBar').classList.add('visible');
+        document.getElementById('btnGuardarTodos').classList.add('visible');
+        } catch(e) {
+            lista.innerHTML = '<div class="empty-state"><div class="icono">❌</div><p>Error al cargar el grupo.</p></div>';
+        }
+    }
+
+    function renderAlumnos(grado, trimestre) {
+        const materias = MATERIAS[grado] || MATERIAS[1];
+        const lista = document.getElementById('listaAlumnos');
+
+        lista.innerHTML = alumnosActuales.map(a => {
+            const evMaterias = evaluacionesActuales[a.id_alumno] || [];
+            const tieneRiesgo = evMaterias.length > 0 && evMaterias.some(m => m.calif !== null && m.calif !== '' && parseFloat(m.calif) <= 6);
+            const fotoSrc = a['fotos-alumnos'] || a.foto_url;
+            const foto = fotoSrc
+                ? `<img src="${fotoSrc}" class="alumno-foto" onerror="this.outerHTML='<div class=alumno-foto-placeholder>🎓</div>'">`
+                : `<div class="alumno-foto-placeholder">🎓</div>`;
+
+            const inputs = materias.map(sig => {
+                const m = evMaterias.find(x => x.sigla === sig);
+                const val = m ? m.calif : '';
+                const esMia = !SOLO_LECTURA && (PUEDE_TODO || MATERIAS_ACTIVAS.includes(sig));
+                const cls = (!esMia || SOLO_LECTURA) ? 'bloqueado' : (val ? (parseFloat(val) <= 6 ? 'riesgo' : 'ok') : 'pendiente');
+                return `
+                <div class="materia-item">
+                    <div class="materia-label" style="${esMia ? '' : 'color:#cbd5e1;'}">${sig}</div>
+                    <input type="number" min="5" max="10" step="1"
+                        class="materia-input ${cls}"
+                        id="cal-${a.id_alumno}-${sig}"
+                        value="${val}"
+                        placeholder="${esMia ? '?' : '—'}"
+                        ${(esMia && !SOLO_LECTURA) ? 'oninput="colorearInput(this)" onblur="validarInput(this)"' : 'disabled'}
+                        >
+                </div>`;
+            }).join('');
+
+            return `
+            <div class="alumno-card" id="card-${a.id_alumno}">
+                <div class="alumno-header">
+                    ${foto}
+                    <div>
+                        <div class="alumno-nombre">${esc(a.apellidos)} ${esc(a.nombre)}</div>
+                        <div class="alumno-sub">${grado}° Grupo "${a.grupo}" · ID: ${a.id_alumno}</div>
+                    </div>
+                    <div class="alumno-status">
+                        <span class="chip-riesgo" id="riesgo-${a.id_alumno}" ${tieneRiesgo ? 'style="display:inline-block"' : ''}>⚠️ En riesgo</span>
+                    </div>
+                </div>
+                <div class="materias-grid">${inputs}</div>
+                <div class="alumno-footer">
+                    <span class="chip-guardado" id="ok-${a.id_alumno}">✅ Guardado</span>
+                    ${SOLO_LECTURA ? '' : `<button class="btn-guardar-alumno" onclick="guardarAlumno(${a.id_alumno}, ${grado}, ${trimestre})">
+                        💾 Guardar
+                    </button>`}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function colorearInput(input) {
+        const val = parseFloat(input.value);
+        input.classList.remove('riesgo', 'ok', 'pendiente');
+        if (!input.value) return;
+        input.classList.add(isNaN(val) ? '' : val <= 6 ? 'riesgo' : 'ok');
+    }
+
+    function validarInput(input) {
+        if (!input.value) return;
+        let val = Math.round(parseFloat(input.value));
+        if (val < 5) val = 5;
+        if (val > 10) val = 10;
+        input.value = val;
+        colorearInput(input);
+    }
+
+    async function guardarAlumno(idAlumno, grado, trimestre, silencioso = false) {
+        const materias = MATERIAS[grado] || MATERIAS[1];
+        const payload  = materias
+            .map(sig => ({ sigla: sig, calif: document.getElementById(`cal-${idAlumno}-${sig}`)?.value || '' }))
+            .filter(m => m.calif !== '');
+
+        const res = await apiFetch('/api/expediente?tipo=evaluaciones_parciales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_alumno: idAlumno, trimestre, materias: payload })
+        });
+        if (res && res.ok) {
+            if (!silencioso) {
+                const ok = document.getElementById(`ok-${idAlumno}`);
+                ok.style.display = 'inline';
+                setTimeout(() => { ok.style.display = 'none'; }, 2500);
+            }
+            const tieneRiesgo = payload.length > 0 && payload.some(m => m.calif !== null && m.calif !== '' && parseFloat(m.calif) <= 6);
+            const chip = document.getElementById(`riesgo-${idAlumno}`);
+            if (chip) chip.style.display = tieneRiesgo ? 'inline-block' : 'none';
+            evaluacionesActuales[idAlumno] = payload;
+        }
+    }
+
+    async function guardarTodos() {
+        const grado     = parseInt(document.getElementById('selGrado').value);
+        const trimestre = parseInt(document.getElementById('selTrimestre').value);
+        const btn       = document.getElementById('btnGuardarTodos');
+        btn.disabled    = true;
+        btn.textContent = '⏳ Guardando grupo...';
+
+        let guardados = 0, errores = 0;
+        for (const a of alumnosActuales) {
+            try {
+                await guardarAlumno(a.id_alumno, grado, trimestre, true);
+                guardados++;
+            } catch(e) { errores++; }
+        }
+
+        btn.disabled    = false;
+        btn.textContent = '💾 Guardar evaluaciones de todo el grupo';
+        // Mostrar ✅ en todos los alumnos brevemente
+        alumnosActuales.forEach(a => {
+            const ok = document.getElementById(`ok-${a.id_alumno}`);
+            if (ok) { ok.style.display = 'inline'; setTimeout(() => { ok.style.display = 'none'; }, 3000); }
+        });
+        alert(`✅ ${guardados} alumnos guardados.${errores > 0 ? `\n⚠️ ${errores} con error, intenta de nuevo.` : ''}`);
+    }
+
+    function generarExcel() {
+        const grado     = parseInt(document.getElementById('selGrado').value);
+        const grupo     = document.getElementById('selGrupo').value;
+        const trimestre = document.getElementById('selTrimestre').value;
+        const materias  = MATERIAS[grado] || MATERIAS[1];
+        const wb        = XLSX.utils.book_new();
+        const ws        = {};
+        const cols      = [];
+
+        // ── Fila 1: Header institucional ──
+        ws['A1'] = { v: 'ESCUELA SECUNDARIA TÉCNICA No. 84', t: 's' };
+        ws['A2'] = { v: `Evaluaciones Parciales — ${grado}° Grupo "${grupo}" — Trimestre ${trimestre}`, t: 's' };
+        ws['A3'] = { v: `Ciclo Escolar 2025-2026`, t: 's' };
+        ws['A4'] = { v: '', t: 's' };
+
+        // ── Fila 5: Encabezados de columna ──
+        const headerRow = 5;
+        const headers = ['#', 'ALUMNO', ...materias];
+        headers.forEach((h, i) => {
+            const cell = XLSX.utils.encode_cell({ r: headerRow - 1, c: i });
+            ws[cell] = { v: h, t: 's' };
+            cols.push({ wch: i < 2 ? (i === 0 ? 5 : 36) : 8 });
+        });
+
+        // ── Filas de alumnos ──
+        alumnosActuales.forEach((a, rowIdx) => {
+            const row = headerRow + rowIdx;
+            ws[XLSX.utils.encode_cell({ r: row, c: 0 })] = { v: rowIdx + 1, t: 'n' };  // número progresivo
+            ws[XLSX.utils.encode_cell({ r: row, c: 1 })] = { v: `${a.apellidos} ${a.nombre}`, t: 's' };
+            // Columnas de materias — vacías para llenar
+            materias.forEach((_, mi) => {
+                const ev = (evaluacionesActuales[a.id_alumno] || []).find(m => m.sigla === materias[mi]);
+                ws[XLSX.utils.encode_cell({ r: row, c: 2 + mi })] = { v: ev ? parseFloat(ev.calif) : '', t: ev ? 'n' : 's' };
+            });
+        });
+
+        ws['!ref'] = XLSX.utils.encode_range({ r: 0, c: 0 }, { r: headerRow + alumnosActuales.length, c: headers.length - 1 });
+        ws['!cols'] = cols;
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: headers.length - 1 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: headers.length - 1 } },
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Parciales');
+        XLSX.writeFile(wb, `Parciales_${grado}${grupo}_T${trimestre}.xlsx`);
+    }
+
+    function importarExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const grado    = parseInt(document.getElementById('selGrado').value);
+        const materias = MATERIAS[grado] || MATERIAS[1];
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const wb   = XLSX.read(e.target.result, { type: 'array' });
+                const ws   = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+                // Buscar la fila de encabezados (contiene '#' o 'ALUMNO')
+                const headerIdx = rows.findIndex(r => r[0] === '#' || r[0] === 'ID' || r[0] === 'id_alumno');
+                if (headerIdx < 0) { alert('No se encontró la fila de encabezados en el archivo.'); return; }
+
+                const headers = rows[headerIdx].map(h => String(h).trim().toUpperCase());
+
+                let importados = 0, errores = 0;
+                for (let i = headerIdx + 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const numProgresivo = parseInt(row[0]);
+                    if (!numProgresivo || numProgresivo < 1) continue;
+
+                    // Identificar alumno por posición (número progresivo - 1)
+                    const alumno = alumnosActuales[numProgresivo - 1];
+                    if (!alumno) continue;
+                    const idAlumno = alumno.id_alumno;
+
+                    materias.forEach((sig, mi) => {
+                        const colIdx = headers.indexOf(sig.toUpperCase());
+                        if (colIdx < 0) return;
+                        const val = row[colIdx];
+                        const input = document.getElementById(`cal-${idAlumno}-${sig}`);
+                        if (!input) return;
+                        if (val !== '' && val !== null && val !== undefined) {
+                            const num = Math.round(parseFloat(val));
+                            if (!isNaN(num) && num >= 5 && num <= 10) {
+                                input.value = num;
+                                colorearInput(input);
+                                importados++;
+                            } else { errores++; }
+                        }
+                    });
+                }
+                alert(`✅ Importación completa.\n${importados} calificaciones cargadas.${errores > 0 ? `\n⚠️ ${errores} valores ignorados (fuera de rango 5-10).` : ''}\n\nLas casillas en rojo indican evaluaciones faltantes.\nPresiona "Guardar todo el grupo" cuando termines.`);
+
+                // Marcar casillas vacías como pendientes
+                const gradoActual = parseInt(document.getElementById('selGrado').value);
+                const materiasActuales = MATERIAS[gradoActual] || MATERIAS[1];
+                alumnosActuales.forEach(a => {
+                    materiasActuales.forEach(sig => {
+                        const inp = document.getElementById(`cal-${a.id_alumno}-${sig}`);
+                        if (inp && !inp.value) inp.classList.add('pendiente');
+                    });
+                });
+            } catch(err) {
+                alert('Error al leer el archivo. Asegúrate de usar la plantilla descargada.');
+            }
+            input.value = '';
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    async function exportarEvaluacionesPDF() {
+        if (alumnosActuales.length === 0) { alert('Carga un grupo primero.'); return; }
+        const grado     = document.getElementById('selGrado').value;
+        const grupo     = document.getElementById('selGrupo').value;
+        const trimestre = document.getElementById('selTrimestre').value;
+        const elaboro   = localStorage.getItem('nombreActivo') || '—';
+        const fecha     = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+
+        let cfg = {};
+        try {
+            const r = await apiFetch('/api/dashboard?tipo=config_institucional', { silencioso: true });
+            if (r) cfg = await r.json();
+        } catch(e) {}
+
+        const logoIzq   = cfg.logo_izquierdo  || '';
+        const logoDer   = cfg.logo_derecho    || '';
+        const nombre    = cfg.nombre_escuela  || 'ESCUELA SECUNDARIA';
+        const clave     = cfg.clave_escuela   || '';
+        const direccion = cfg.direccion_escuela || '';
+        const ciclo     = cfg.ciclo_activo    || '';
+
+        const SIGLAS = ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'];
+
+        const filas = alumnosActuales.map((a, i) => {
+            const cals = SIGLAS.map(s => {
+                const input = document.getElementById(`cal-${a.id_alumno}-${s}`);
+                const val   = input ? input.value : '—';
+                const num   = parseFloat(val);
+                const color = !isNaN(num) && num <= 6 ? 'color:#e63946;font-weight:800;' : '';
+                return `<td style="${color}">${val || '—'}</td>`;
+            }).join('');
+            return `<tr><td>${i+1}</td><td><b>${a.apellidos} ${a.nombre}</b></td>${cals}</tr>`;
+        }).join('');
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter landscape; margin: 10mm; }
+            body { font-family: Arial, sans-serif; font-size: 9px; color: #1a2332; }
+            .header-inst { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1B4F8A; padding-bottom:8px; margin-bottom:10px; }
+            .header-center { text-align:center; flex:1; padding:0 10px; }
+            img { height:50px; object-fit:contain; }
+            h3  { font-size:11px; color:#1B4F8A; margin:0 0 2px; }
+            p   { font-size:9px; color:#64748b; margin:0 0 8px; }
+            table { width:100%; border-collapse:collapse; }
+            th { background:#1B4F8A; color:white; padding:5px 4px; text-align:center; font-size:8px; }
+            td { padding:4px 4px; border-bottom:1px solid #e2e8f0; text-align:center; font-size:8px; }
+            td:nth-child(2) { text-align:left; }
+            tr:nth-child(even) td { background:#f8fafc; }
+        </style></head><body>
+        <div class="header-inst">
+            ${logoIzq ? `<img src="${logoIzq}">` : '<div style="width:50px;"></div>'}
+            <div class="header-center">
+                <div style="font-size:8px;color:#555;font-weight:600;">SECRETARÍA DE EDUCACIÓN DEL GOBIERNO DEL ESTADO</div>
+                <div style="font-size:13px;font-weight:800;color:#1B4F8A;">${nombre}</div>
+                ${clave ? `<div style="font-size:9px;color:#555;">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div style="font-size:9px;color:#555;">${direccion}</div>` : ''}
+            </div>
+            ${logoDer ? `<img src="${logoDer}">` : '<div style="width:50px;"></div>'}
+        </div>
+        <h3>📝 Evaluaciones Parciales — ${grado}° Grupo "${grupo}" — Trimestre ${trimestre}</h3>
+        <p>Ciclo: ${ciclo} &nbsp;|&nbsp; Generado: ${fecha} &nbsp;|&nbsp; Elaboró: ${elaboro} &nbsp;|&nbsp; ${alumnosActuales.length} alumnos</p>
+        <table>
+            <thead><tr>
+                <th>#</th><th style="text-align:left;">Alumno</th>
+                ${SIGLAS.map(s => `<th>${s}</th>`).join('')}
+            </tr></thead>
+            <tbody>${filas}</tbody>
+        </table>
+        </body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
+
+    function cerrarSesion() { localStorage.clear(); window.location.href = 'index.html'; }
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .catch(err => console.warn('SW no registrado:', err));
+        });
+    }
+</script>
+</body>
+</html>

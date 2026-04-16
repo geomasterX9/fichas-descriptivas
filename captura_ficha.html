@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha Socioeconómica — EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6; --verde-borde: #bbf7d0;
+            --rojo: #e63946; --rojo-claro: #fff0f1;
+            --naranja-claro: #fffbeb;
+            --fondo: #f0f4f8; --blanco: #fff;
+            --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--fondo);
+            color: var(--texto);
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .page-header {
+            background: linear-gradient(160deg, var(--azul) 0%, #163f6e 100%);
+            color: white;
+            padding: 32px 20px 56px;
+            text-align: center;
+            position: relative;
+        }
+        .page-header .escudo { font-size: 38px; margin-bottom: 10px; display: block; }
+        .page-header h1 { font-size: 21px; font-weight: 800; margin-bottom: 5px; }
+        .page-header p  { font-size: 13px; opacity: 0.8; }
+        .header-wave {
+            position: absolute; bottom: -1px; left: 0; right: 0; height: 32px;
+            background: var(--fondo);
+            clip-path: ellipse(55% 100% at 50% 100%);
+        }
+
+        /* ── ESTADOS PANTALLA COMPLETA ── */
+        .estado {
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 100vh; padding: 40px 24px;
+            text-align: center;
+        }
+        .estado-icono {
+            font-size: 72px; margin-bottom: 20px;
+            animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .estado h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+        .estado p  { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 300px; }
+        .estado-card {
+            background: var(--blanco); border-radius: 20px;
+            border: 1px solid var(--borde); padding: 36px 32px;
+            max-width: 380px; width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        }
+
+        /* Estado éxito especial */
+        .exito-card {
+            background: linear-gradient(135deg, #f0fdf6 0%, #dcfce7 100%);
+            border-color: var(--verde-borde);
+        }
+        .btn-imprimir {
+            margin-top: 20px; padding: 12px 28px;
+            background: var(--verde); color: white; border: none;
+            border-radius: 10px; font-size: 14px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-imprimir:hover { background: #1e7a57; }
+
+        /* ── CONTENEDOR ── */
+        .contenedor { max-width: 600px; margin: 0 auto; padding: 0 16px 60px; }
+
+        /* ── BUSCADOR CARD (flota sobre header) ── */
+        .buscar-card {
+            background: var(--blanco); border-radius: 18px;
+            padding: 24px; margin-top: -32px; margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border: 1px solid var(--borde);
+        }
+        .buscar-card h2 { font-size: 16px; font-weight: 800; color: var(--azul); margin-bottom: 4px; }
+        .buscar-card .subtxt { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+        .search-wrap { position: relative; }
+        .search-wrap input {
+            width: 100%; padding: 13px 46px 13px 16px;
+            border: 2px solid var(--borde); border-radius: 12px;
+            font-size: 15px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: #f8fafc;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .search-wrap input:focus { outline: none; border-color: var(--azul); background: var(--blanco); }
+        .search-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; }
+
+        .resultados { margin-top: 10px; }
+        .res-item {
+            padding: 13px 16px; border: 1.5px solid var(--borde); border-radius: 12px;
+            margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+        }
+        .res-item:hover { border-color: var(--azul); background: var(--azul-claro); }
+        .res-nombre { font-weight: 700; font-size: 14px; }
+        .res-grado  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .res-badge  {
+            background: var(--azul); color: white; border-radius: 8px;
+            padding: 5px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+        }
+        .res-badge.ok {
+            background: var(--verde-claro); color: var(--verde);
+            border: 1px solid var(--verde-borde);
+        }
+        .res-item.completada { opacity: 0.6; cursor: default; }
+        .res-item.completada:hover { border-color: var(--borde); background: var(--blanco); }
+        .res-vacio { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+        /* ── CHIP ALUMNO SELECCIONADO ── */
+        .chip-alumno {
+            background: var(--azul); color: white;
+            border-radius: 14px; padding: 16px 18px;
+            display: flex; align-items: center; gap: 14px;
+            margin: 16px 0 20px;
+        }
+        .chip-avatar {
+            width: 46px; height: 46px; border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            border: 2px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .chip-nombre { font-weight: 800; font-size: 15px; }
+        .chip-sub    { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+        .btn-cambiar {
+            margin-left: auto; background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25); border-radius: 8px;
+            padding: 6px 12px; font-size: 12px; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer; color: white;
+            flex-shrink: 0; transition: background 0.15s;
+        }
+        .btn-cambiar:hover { background: rgba(255,255,255,0.25); }
+
+        /* ── SECCIONES DEL FORMULARIO ── */
+        .seccion {
+            background: var(--blanco); border-radius: 16px;
+            border: 1px solid var(--borde); margin-bottom: 14px; overflow: hidden;
+        }
+        .seccion-header {
+            padding: 14px 18px; background: #f8fafc;
+            border-bottom: 1px solid var(--borde);
+            display: flex; align-items: center; gap: 10px;
+            border-left: 4px solid var(--azul);
+        }
+        .seccion-header .icono { font-size: 18px; }
+        .seccion-header h2 { font-size: 14px; font-weight: 800; color: var(--azul); }
+        .seccion-body { padding: 18px; }
+
+        /* CAMPOS */
+        .campo { margin-bottom: 16px; }
+        .campo:last-child { margin-bottom: 0; }
+        label {
+            display: block; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--muted); margin-bottom: 6px;
+        }
+        .req { color: var(--rojo); }
+        input[type="text"],
+        input[type="tel"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%; padding: 11px 14px;
+            border: 1.5px solid var(--borde); border-radius: 10px;
+            font-size: 14px; font-family: 'Outfit', sans-serif;
+            color: var(--texto); background: var(--blanco);
+            transition: border-color 0.15s, box-shadow 0.15s;
+            appearance: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--azul);
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.08);
+        }
+        textarea { resize: none; height: 80px; }
+        input[type="text"], textarea { text-transform: uppercase; }
+        .fila-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* CAMPO CONDICIONAL */
+        .campo-extra { display: none; margin-top: 10px; }
+        .campo-extra.visible { display: block; }
+
+        /* CHECKBOXES SERVICIOS */
+        .servicios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+        .check-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; border: 1.5px solid var(--borde);
+            border-radius: 10px; cursor: pointer;
+            transition: all 0.15s; user-select: none; background: var(--blanco);
+        }
+        .check-item:hover { border-color: var(--azul); background: var(--azul-claro); }
+        .check-item.marcado { border-color: var(--azul); background: var(--azul-claro); }
+        .check-box {
+            width: 20px; height: 20px; border: 2px solid var(--borde);
+            border-radius: 5px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; background: white; transition: all 0.15s;
+        }
+        .check-item.marcado .check-box { background: var(--azul); border-color: var(--azul); color: white; }
+        .check-label { font-size: 13px; font-weight: 500; }
+
+        /* BOTÓN GUARDAR */
+        .btn-guardar {
+            width: 100%; padding: 15px; border: none; border-radius: 12px;
+            background: var(--azul); color: white;
+            font-size: 15px; font-weight: 800;
+            font-family: 'Outfit', sans-serif; cursor: pointer;
+            margin-top: 8px; transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+        .btn-guardar:hover { background: var(--azul-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(27,79,138,0.3); }
+        .btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* PIE */
+        .aviso-pie { text-align: center; margin-top: 20px; }
+        .aviso-pie a { font-size: 12px; color: var(--muted); text-decoration: underline; }
+
+        /* RESPONSIVE */
+        @media (max-width: 480px) {
+            .fila-dos { grid-template-columns: 1fr; gap: 0; }
+            .servicios-grid { grid-template-columns: 1fr; }
+            .buscar-card { padding: 20px; }
+            .page-header { padding: 28px 16px 52px; }
+        }
+    </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<!-- ── ESTADO: CARGANDO ── -->
+<div class="estado" id="estCargando" style="display:flex;">
+    <div class="estado-card">
+        <div class="estado-icono">⏳</div>
+        <h2>Cargando...</h2>
+        <p>Por favor espera un momento.</p>
+    </div>
+</div>
+
+<!-- ── ESTADO: ENLACE INVÁLIDO ── -->
+<div class="estado" id="estInvalido">
+    <div class="estado-card">
+        <div class="estado-icono">❌</div>
+        <h2>Enlace inválido</h2>
+        <p>Este enlace no es válido o no corresponde a ningún grupo. Solicita el enlace correcto a la escuela.</p>
+    </div>
+</div>
+
+<!-- ── ESTADO: FICHA YA COMPLETADA ── -->
+<div class="estado" id="estCompletada">
+    <div class="estado-card">
+        <div class="estado-icono">✅</div>
+        <h2>Ficha ya registrada</h2>
+        <p>La ficha de tu hijo(a) ya fue completada anteriormente. Si necesitas hacer una corrección, comunícate con Trabajo Social.</p>
+    </div>
+</div>
+
+<!-- ── ESTADO: ÉXITO ── -->
+<div class="estado" id="estExito">
+    <div class="estado-card exito-card">
+        <div class="estado-icono">🎉</div>
+        <h2 id="msgExito">¡Ficha guardada!</h2>
+        <p>La información fue registrada correctamente. Gracias por tu apoyo a la escuela.</p>
+        <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir comprobante</button>
+    </div>
+</div>
+
+<!-- ── PANTALLA: BUSCADOR ── -->
+<div id="pantallaBuscar" style="display:none;">
+    <div class="page-header">
+        <span class="escudo">🎓</span>
+        <h1>Ficha Socioeconómica</h1>
+        <p>Escuela Secundaria Técnica No. 84 · San Luis Potosí</p>
+        <div class="header-wave"></div>
+    </div>
+
+    <div class="contenedor">
+        <div class="buscar-card">
+            <h2>🔍 Busca a tu hijo(a)</h2>
+            <p class="subtxt">Escribe el apellido o nombre para encontrarlo en la lista del grupo.</p>
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="inputBuscar"
+                    placeholder="Ej. García López..."
+                    oninput="buscarAlumno(this.value)"
+                    autocomplete="off">
+            </div>
+            <div class="resultados" id="resultados"></div>
+        </div>
+        <div class="aviso-pie">
+            <a href="aviso-privacidad.html" target="_blank">📄 Aviso de Privacidad · EST 84</a>
+        </div>
+    </div>
+</div>
+
+<!-- ── PANTALLA: FORMULARIO ── -->
+<div id="pantallaForm" style="display:none;">
+    <div class="page-header">
+        <span class="escudo">🎓</span>
+        <h1>Ficha Socioeconómica</h1>
+        <p>Escuela Secundaria Técnica No. 84 · San Luis Potosí</p>
+        <div class="header-wave"></div>
+    </div>
+
+    <div class="contenedor">
+
+        <!-- CHIP ALUMNO -->
+        <div class="chip-alumno">
+            <div class="chip-avatar">👤</div>
+            <div>
+                <div class="chip-nombre" id="lblAlumno">—</div>
+                <div class="chip-sub"    id="lblGrado">—</div>
+            </div>
+            <button class="btn-cambiar" onclick="volverBuscar()">✏️ Cambiar</button>
+        </div>
+
+        <form id="formFicha">
+
+            <!-- I. TUTOR -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">👤</span>
+                    <h2>I. Tutor o Responsable Principal</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Apellido Paterno <span class="req">*</span></label>
+                            <input type="text" id="tutor_ap_paterno" placeholder="Apellido paterno" required>
+                        </div>
+                        <div class="campo">
+                            <label>Apellido Materno</label>
+                            <input type="text" id="tutor_ap_materno" placeholder="Apellido materno">
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Nombre(s) <span class="req">*</span></label>
+                        <input type="text" id="tutor_nombre" placeholder="Nombre o nombres" required>
+                    </div>
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Parentesco <span class="req">*</span></label>
+                            <select id="tutor_parentesco" required>
+                                <option value="">Selecciona...</option>
+                                <option>Madre</option><option>Padre</option><option>Abuelo/a</option>
+                                <option>Tío/a</option><option>Hermano/a mayor</option><option>Otro familiar</option>
+                            </select>
+                        </div>
+                        <div class="campo">
+                            <label>Teléfono celular <span class="req">*</span></label>
+                            <input type="tel" id="tutor_telefono" placeholder="10 dígitos" maxlength="10" required>
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Ocupación</label>
+                        <select id="tutor_ocupacion">
+                            <option value="">Selecciona...</option>
+                            <option>Empleado/a</option><option>Comerciante</option><option>Obrero/a</option>
+                            <option>Profesionista</option><option>Ama de casa</option>
+                            <option>Trabajo informal</option><option>Desempleado/a</option><option>Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- II. MADRE -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">👩</span>
+                    <h2>II. Datos de la Madre</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Apellido Paterno</label>
+                            <input type="text" id="madre_ap_paterno" placeholder="Apellido paterno">
+                        </div>
+                        <div class="campo">
+                            <label>Apellido Materno</label>
+                            <input type="text" id="madre_ap_materno" placeholder="Apellido materno">
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Nombre(s)</label>
+                        <input type="text" id="madre_nombre" placeholder="Nombre o nombres">
+                    </div>
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Teléfono</label>
+                            <input type="tel" id="madre_telefono" placeholder="10 dígitos" maxlength="10">
+                        </div>
+                        <div class="campo">
+                            <label>Ocupación</label>
+                            <select id="madre_ocupacion">
+                                <option value="">Selecciona...</option>
+                                <option>Empleada</option><option>Comerciante</option><option>Obrera</option>
+                                <option>Profesionista</option><option>Ama de casa</option>
+                                <option>Trabajo informal</option><option>Desempleada</option>
+                                <option>Fallecida</option><option>Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- III. PADRE -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">👨</span>
+                    <h2>III. Datos del Padre</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Apellido Paterno</label>
+                            <input type="text" id="padre_ap_paterno" placeholder="Apellido paterno">
+                        </div>
+                        <div class="campo">
+                            <label>Apellido Materno</label>
+                            <input type="text" id="padre_ap_materno" placeholder="Apellido materno">
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Nombre(s)</label>
+                        <input type="text" id="padre_nombre" placeholder="Nombre o nombres">
+                    </div>
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Teléfono</label>
+                            <input type="tel" id="padre_telefono" placeholder="10 dígitos" maxlength="10">
+                        </div>
+                        <div class="campo">
+                            <label>Ocupación</label>
+                            <select id="padre_ocupacion">
+                                <option value="">Selecciona...</option>
+                                <option>Empleado</option><option>Comerciante</option><option>Obrero</option>
+                                <option>Profesionista</option><option>Trabajo informal</option>
+                                <option>Desempleado</option><option>Fallecido</option><option>Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IV. SITUACIÓN FAMILIAR -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">👨‍👩‍👧</span>
+                    <h2>IV. Situación Familiar</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>El alumno vive con <span class="req">*</span></label>
+                            <select id="con_quien_vive" required>
+                                <option value="">Selecciona...</option>
+                                <option>Ambos padres</option><option>Solo con la madre</option>
+                                <option>Solo con el padre</option><option>Con abuelos</option>
+                                <option>Con otros familiares</option>
+                            </select>
+                        </div>
+                        <div class="campo">
+                            <label>Número de hermanos</label>
+                            <select id="num_hermanos">
+                                <option value="0">Ninguno (hijo único)</option>
+                                <option value="1">1</option><option value="2">2</option>
+                                <option value="3">3</option><option value="4">4</option>
+                                <option value="5">5 o más</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- V. SITUACIÓN ECONÓMICA -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">💰</span>
+                    <h2>V. Situación Económica</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Ingreso mensual familiar</label>
+                            <select id="ingreso_mensual">
+                                <option value="">Selecciona...</option>
+                                <option>Menos de $3,000</option>
+                                <option>$3,000 - $6,000</option>
+                                <option>$6,000 - $10,000</option>
+                                <option>$10,000 - $15,000</option>
+                                <option>Más de $15,000</option>
+                            </select>
+                        </div>
+                        <div class="campo">
+                            <label>Tipo de vivienda</label>
+                            <select id="vivienda_tipo">
+                                <option value="">Selecciona...</option>
+                                <option>Propia pagada</option><option>Propia pagando</option>
+                                <option>Rentada</option><option>Prestada</option><option>Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VI. DOMICILIO -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">🏠</span>
+                    <h2>VI. Domicilio y Servicios</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="campo">
+                        <label>Colonia <span class="req">*</span></label>
+                        <select id="colonia" onchange="toggleOtraColonia(this)" required>
+                            <option value="">Selecciona la colonia...</option>
+                            <option>Arbolitos</option>
+                            <option>Col. Progreso</option>
+                            <option>Dalias del Llano</option>
+                            <option>El Aguaje</option>
+                            <option>El Aguaje 2000</option>
+                            <option>El Palmar</option>
+                            <option>El Palmar Chico</option>
+                            <option>Fraccionamiento el Llano</option>
+                            <option>Fraccionamiento Industrias</option>
+                            <option>Jardines de Oriente</option>
+                            <option>Jardines del Sur</option>
+                            <option>Juan Sarabia</option>
+                            <option>Laureles del Sur</option>
+                            <option>Prados de San Vicente 2da Sección</option>
+                            <option>Prados de San Vicente 3ra Sección</option>
+                            <option>Providencia</option>
+                            <option>Simón Díaz</option>
+                            <option>Unidad Ponciano Arriaga</option>
+                            <option>Valle de Dalias</option>
+                            <option>Valle Dorado</option>
+                            <option>Villa de Pozos</option>
+                            <option>Viveros la Libertad</option>
+                            <option value="Otra">Otra colonia...</option>
+                        </select>
+                        <div class="campo-extra" id="campoOtraColonia">
+                            <input type="text" id="otra_colonia" placeholder="Escribe el nombre de la colonia">
+                        </div>
+                    </div>
+                    <div class="fila-dos">
+                        <div class="campo">
+                            <label>Calle <span class="req">*</span></label>
+                            <input type="text" id="domicilio_calle" placeholder="Nombre de la calle" required>
+                        </div>
+                        <div class="campo">
+                            <label>Número exterior <span class="req">*</span></label>
+                            <input type="text" id="domicilio_numero" placeholder="Ej. 123 o S/N" required>
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Teléfono de casa</label>
+                        <input type="tel" id="telefono_casa" placeholder="Teléfono fijo (opcional)" maxlength="10">
+                    </div>
+                    <div class="campo">
+                        <label>¿Con qué servicios cuenta la vivienda?</label>
+                        <div class="servicios-grid" id="serviciosGrid">
+                            <div class="check-item" onclick="toggleServicio(this)" data-valor="Agua potable">
+                                <div class="check-box">✓</div>
+                                <span class="check-label">💧 Agua potable</span>
+                            </div>
+                            <div class="check-item" onclick="toggleServicio(this)" data-valor="Electricidad">
+                                <div class="check-box">✓</div>
+                                <span class="check-label">💡 Electricidad</span>
+                            </div>
+                            <div class="check-item" onclick="toggleServicio(this)" data-valor="Drenaje">
+                                <div class="check-box">✓</div>
+                                <span class="check-label">🚿 Drenaje</span>
+                            </div>
+                            <div class="check-item" onclick="toggleServicio(this)" data-valor="Gas">
+                                <div class="check-box">✓</div>
+                                <span class="check-label">🔥 Gas</span>
+                            </div>
+                            <div class="check-item" onclick="toggleServicio(this)" data-valor="Internet">
+                                <div class="check-box">✓</div>
+                                <span class="check-label">📶 Internet</span>
+                            </div>
+                            <div class="check-item" onclick="toggleServicio(this)" data-valor="TV de paga">
+                                <div class="check-box">✓</div>
+                                <span class="check-label">📺 TV de paga</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VII. SALUD -->
+            <div class="seccion">
+                <div class="seccion-header">
+                    <span class="icono">🏥</span>
+                    <h2>VII. Salud y Condiciones Especiales</h2>
+                </div>
+                <div class="seccion-body">
+                    <div class="campo">
+                        <label>¿El alumno tiene alguna enfermedad, condición médica o alergia? <span class="req">*</span></label>
+                        <select id="tiene_condicion" onchange="toggleExtra('campoCondicion', this)" required>
+                            <option value="">Selecciona...</option>
+                            <option value="no">No, está sano/a</option>
+                            <option value="si">Sí, tiene una condición</option>
+                        </select>
+                        <div class="campo-extra" id="campoCondicion">
+                            <textarea id="condicion_salud" placeholder="Describe la enfermedad, condición o alergia..."></textarea>
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>¿Tiene alguna discapacidad o necesidad educativa especial? <span class="req">*</span></label>
+                        <select id="tiene_discapacidad" onchange="toggleExtra('campoDiscapacidad', this)" required>
+                            <option value="">Selecciona...</option>
+                            <option value="no">No</option>
+                            <option value="si">Sí</option>
+                        </select>
+                        <div class="campo-extra" id="campoDiscapacidad">
+                            <textarea id="discapacidad" placeholder="Describe la discapacidad o necesidad educativa..."></textarea>
+                        </div>
+                    </div>
+                    <div class="campo">
+                        <label>Observaciones adicionales para la escuela</label>
+                        <textarea id="observaciones" placeholder="Cualquier información que consideres importante..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-guardar" id="btnGuardar">
+                GUARDAR FICHA SOCIOECONÓMICA
+            </button>
+
+        </form>
+
+        <div class="aviso-pie">
+            <a href="aviso-privacidad.html" target="_blank">📄 Aviso de Privacidad · EST 84</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const grado  = new URLSearchParams(window.location.search).get('grado');
+    const grupo  = new URLSearchParams(window.location.search).get('grupo');
+    const esDemo = new URLSearchParams(window.location.search).get('demo') === '1';
+    let alumnosGrupo = [];
+    let alumnoSeleccionado = null;
+
+    // ── INICIALIZAR ──
+    window.onload = async () => {
+        if (!grado || !grupo) return mostrarEstado('estInvalido');
+        try {
+            const res  = await fetch(`/api/ficha-publica?grado=${encodeURIComponent(grado)}&grupo=${encodeURIComponent(grupo)}${esDemo ? '&demo=1' : ''}`);
+            const data = await res.json();
+            if (!res.ok || !Array.isArray(data)) return mostrarEstado('estInvalido');
+            alumnosGrupo = data;
+            mostrarPantalla('pantallaBuscar');
+        } catch { mostrarEstado('estInvalido'); }
+    };
+
+    function mostrarEstado(id) {
+        ['estCargando','estInvalido','estCompletada','estExito',
+         'pantallaBuscar','pantallaForm'].forEach(i => {
+            const el = document.getElementById(i);
+            el.style.display = 'none';
+        });
+        const el = document.getElementById(id);
+        el.style.display = 'flex';
+    }
+
+    function mostrarPantalla(id) {
+        ['estCargando','estInvalido','estCompletada','estExito'].forEach(i =>
+            document.getElementById(i).style.display = 'none');
+        document.getElementById('pantallaBuscar').style.display = id === 'pantallaBuscar' ? 'block' : 'none';
+        document.getElementById('pantallaForm').style.display   = id === 'pantallaForm'   ? 'block' : 'none';
+    }
+
+    // ── BUSCADOR ──
+    function buscarAlumno(q) {
+        const cont = document.getElementById('resultados');
+        if (q.trim().length < 2) { cont.innerHTML = ''; return; }
+        const termino    = q.trim().toLowerCase();
+        const encontrados = alumnosGrupo.filter(a =>
+            (a.apellidos + ' ' + a.nombre).toLowerCase().includes(termino) ||
+            (a.nombre + ' ' + a.apellidos).toLowerCase().includes(termino)
+        );
+        if (encontrados.length === 0) {
+            cont.innerHTML = '<div class="res-vacio">No se encontró ningún alumno con ese nombre.</div>';
+            return;
+        }
+        cont.innerHTML = encontrados.map(a => {
+            const ok = a.ficha_completada;
+            return `<div class="res-item ${ok ? 'completada' : ''}"
+                ${!ok ? `onclick="seleccionarAlumno(${a.id_alumno})"` : ''}>
+                <div>
+                    <div class="res-nombre">${a.apellidos} ${a.nombre}</div>
+                    <div class="res-grado">${a.grado}° Grado, Grupo "${a.grupo}"</div>
+                </div>
+                <span class="res-badge ${ok ? 'ok' : ''}">
+                    ${ok ? '✅ Completada' : 'Llenar ficha →'}
+                </span>
+            </div>`;
+        }).join('');
+    }
+
+    function seleccionarAlumno(id) {
+        alumnoSeleccionado = alumnosGrupo.find(a => a.id_alumno === id);
+        if (!alumnoSeleccionado) return;
+        document.getElementById('lblAlumno').textContent = `${alumnoSeleccionado.apellidos} ${alumnoSeleccionado.nombre}`;
+        document.getElementById('lblGrado').textContent  = `${alumnoSeleccionado.grado}° Grado, Grupo "${alumnoSeleccionado.grupo}"`;
+        mostrarPantalla('pantallaForm');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function volverBuscar() {
+        alumnoSeleccionado = null;
+        document.getElementById('inputBuscar').value = '';
+        document.getElementById('resultados').innerHTML = '';
+        mostrarPantalla('pantallaBuscar');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── SERVICIOS ──
+    function toggleServicio(el) { el.classList.toggle('marcado'); }
+
+    // ── CAMPOS CONDICIONALES ──
+    function toggleExtra(id, sel) {
+        document.getElementById(id).classList.toggle('visible', sel.value === 'si');
+    }
+    function toggleOtraColonia(sel) {
+        const campo = document.getElementById('campoOtraColonia');
+        const input = document.getElementById('otra_colonia');
+        if (sel.value === 'Otra') {
+            campo.classList.add('visible'); input.required = true;
+        } else {
+            campo.classList.remove('visible'); input.required = false; input.value = '';
+        }
+    }
+
+    // ── ENVIAR ──
+    document.getElementById('formFicha').onsubmit = async (e) => {
+        e.preventDefault();
+        if (!alumnoSeleccionado) return;
+
+        const btn = document.getElementById('btnGuardar');
+        btn.textContent = 'Guardando...'; btn.disabled = true;
+
+        const servicios = [...document.querySelectorAll('.check-item.marcado')]
+            .map(el => el.dataset.valor).join(', ');
+
+        const coloniaVal = document.getElementById('colonia').value;
+        const colonia    = coloniaVal === 'Otra'
+            ? document.getElementById('otra_colonia').value.trim()
+            : coloniaVal;
+
+        const calle    = document.getElementById('domicilio_calle').value.trim();
+        const numero   = document.getElementById('domicilio_numero').value.trim();
+        const domicilio = `${calle} #${numero}, ${colonia}`;
+
+        const juntar = (...p) => p.filter(Boolean).join(' ').trim().toUpperCase();
+
+        const payload = {
+            id_alumno:          alumnoSeleccionado.id_alumno,
+            tutor_nombre:       juntar(document.getElementById('tutor_ap_paterno').value, document.getElementById('tutor_ap_materno').value, document.getElementById('tutor_nombre').value),
+            tutor_parentesco:   document.getElementById('tutor_parentesco').value,
+            tutor_telefono:     document.getElementById('tutor_telefono').value.trim(),
+            tutor_ocupacion:    document.getElementById('tutor_ocupacion').value,
+            madre_nombre:       juntar(document.getElementById('madre_ap_paterno').value, document.getElementById('madre_ap_materno').value, document.getElementById('madre_nombre').value),
+            madre_telefono:     document.getElementById('madre_telefono').value.trim(),
+            madre_ocupacion:    document.getElementById('madre_ocupacion').value,
+            padre_nombre:       juntar(document.getElementById('padre_ap_paterno').value, document.getElementById('padre_ap_materno').value, document.getElementById('padre_nombre').value),
+            padre_telefono:     document.getElementById('padre_telefono').value.trim(),
+            padre_ocupacion:    document.getElementById('padre_ocupacion').value,
+            con_quien_vive:     document.getElementById('con_quien_vive').value,
+            num_hermanos:       document.getElementById('num_hermanos').value,
+            ingreso_mensual:    document.getElementById('ingreso_mensual').value,
+            vivienda_tipo:      document.getElementById('vivienda_tipo').value,
+            vivienda_servicios: servicios,
+            domicilio_calle:    domicilio,
+            telefono_casa:      document.getElementById('telefono_casa').value.trim(),
+            condicion_salud:    document.getElementById('tiene_condicion').value === 'si'
+                                    ? document.getElementById('condicion_salud').value.trim()
+                                    : 'Ninguna',
+            discapacidad:       document.getElementById('tiene_discapacidad').value === 'si'
+                                    ? document.getElementById('discapacidad').value.trim()
+                                    : 'Ninguna',
+            observaciones:      document.getElementById('observaciones').value.trim(),
+        };
+
+        try {
+            if (esDemo) payload.demo = '1';
+            const res  = await fetch('/api/ficha-publica', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('msgExito').textContent =
+                    `¡Ficha de ${alumnoSeleccionado.apellidos} ${alumnoSeleccionado.nombre} guardada!`;
+                mostrarEstado('estExito');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                alert('Error: ' + data.error);
+                btn.textContent = 'GUARDAR FICHA SOCIOECONÓMICA';
+                btn.disabled = false;
+            }
+        } catch {
+            alert('Error de conexión. Intenta de nuevo.');
+            btn.textContent = 'GUARDAR FICHA SOCIOECONÓMICA';
+            btn.disabled = false;
+        }
+    };
+</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+</body>
+</html>

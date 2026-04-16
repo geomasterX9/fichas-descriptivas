@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Observación - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --fondo: #f0f4f8; --blanco: #ffffff; --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+            --rojo: #e63946; --rojo-claro: #fff0f1; --rojo-borde: #fecdd3;
+            --verde: #2d9b6f; --verde-claro: #f0fdf6; --verde-borde: #bbf7d0;
+            --azul: #1B4F8A; --azul-claro: #eff6ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; padding: 24px 16px 60px; color: var(--texto); }
+        .contenedor { max-width: 560px; margin: 0 auto; }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+        .btn-back { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--borde); background: var(--blanco); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; text-decoration: none; color: var(--texto); flex-shrink: 0; transition: background 0.15s; }
+        .btn-back:hover { background: var(--fondo); }
+        .header-text h1 { font-size: 20px; font-weight: 800; }
+        .header-text p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .chip-alumno { background: var(--blanco); border: 1px solid var(--borde); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .chip-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--azul-claro); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .chip-nombre { font-weight: 700; font-size: 15px; }
+        .chip-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .selector-titulo { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; }
+        .selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+        .tipo-card { border: 2px solid var(--borde); border-radius: 14px; padding: 18px 16px; cursor: pointer; transition: all 0.2s; background: var(--blanco); text-align: left; }
+        .tipo-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .tipo-card.falta { border-color: var(--rojo-borde); }
+        .tipo-card.falta:hover, .tipo-card.falta.activo { border-color: var(--rojo); background: var(--rojo-claro); box-shadow: 0 6px 20px rgba(230,57,70,0.12); }
+        .tipo-card.positiva { border-color: var(--verde-borde); }
+        .tipo-card.positiva:hover, .tipo-card.positiva.activo { border-color: var(--verde); background: var(--verde-claro); box-shadow: 0 6px 20px rgba(45,155,111,0.12); }
+        .tipo-icono { font-size: 28px; margin-bottom: 10px; display: block; }
+        .tipo-titulo { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+        .tipo-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+        .tipo-card.falta .tipo-titulo { color: var(--rojo); }
+        .tipo-card.positiva .tipo-titulo { color: var(--verde); }
+        .formulario { background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde); overflow: hidden; display: none; animation: slideDown 0.25s ease; }
+        .formulario.visible { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .form-header { padding: 16px 22px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .form-header.falta { background: var(--rojo-claro); color: var(--rojo); border-bottom: 1px solid var(--rojo-borde); }
+        .form-header.positiva { background: var(--verde-claro); color: var(--verde); border-bottom: 1px solid var(--verde-borde); }
+        .form-body { padding: 22px; }
+        label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+        select, input, textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--borde); border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif; color: var(--texto); background: var(--blanco); margin-bottom: 18px; transition: border-color 0.15s; appearance: none; }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: var(--azul); }
+        textarea { resize: none; height: 100px; }
+        input[type="hidden"] { display: none; margin: 0; }
+        .gravedad-pills { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        .pill { padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--borde); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; background: var(--blanco); color: var(--muted); }
+        .pill:hover { border-color: #94a3b8; color: var(--texto); }
+        .pill.leve.activo { background: #fef9c3; border-color: #eab308; color: #854d0e; }
+        .pill.moderada.activo { background: #fff7ed; border-color: #f97316; color: #9a3412; }
+        .pill.grave.activo { background: var(--rojo-claro); border-color: var(--rojo); color: var(--rojo); }
+        .btn-guardar { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+        .btn-guardar.falta { background: var(--rojo); color: white; }
+        .btn-guardar.falta:hover { background: #c1121f; }
+        .btn-guardar.positiva { background: var(--verde); color: white; }
+        .btn-guardar.positiva:hover { background: #1e7a57; }
+        .btn-guardar:disabled { opacity: 0.6; cursor: not-allowed; }
+    </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+<div class="contenedor">
+    <div class="header">
+        <a id="linkVolver" href="buscador.html" style="display:inline-flex;align-items:center;gap:6px;background:#f8fafc;color:var(--texto);border:1.5px solid var(--borde);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none;transition:all 0.15s;">← Regresar</a>
+        <div class="header-text">
+            <h1>Nueva Observación</h1>
+            <p>EST 84 · Control Disciplinario</p>
+        </div>
+    </div>
+    <div class="chip-alumno">
+        <div class="chip-avatar">🎓</div>
+        <div>
+            <div class="chip-nombre" id="lblAlumno">Cargando...</div>
+            <div class="chip-sub" id="lblGradoGrupo">—</div>
+        </div>
+    </div>
+    <div class="selector-titulo">¿Qué tipo de observación es?</div>
+    <div class="selector-grid">
+        <div class="tipo-card falta" onclick="seleccionarTipo('falta')">
+            <span class="tipo-icono">⚠️</span>
+            <div class="tipo-titulo">Reporte por Falta</div>
+            <div class="tipo-desc">Infracciones conductuales o académicas del alumno.</div>
+        </div>
+        <div class="tipo-card positiva" onclick="seleccionarTipo('positiva')">
+            <span class="tipo-icono">⭐</span>
+            <div class="tipo-titulo">Observación Positiva</div>
+            <div class="tipo-desc">Reconocer desempeño o actitud excepcional.</div>
+        </div>
+    </div>
+    <div class="formulario" id="form-falta">
+        <div class="form-header falta">⚠️ &nbsp;Registrar Falta o Incidencia</div>
+        <div class="form-body">
+            <form id="formFalta">
+                <input type="hidden" id="gravedad-falta" value="">
+                <label>Quién reporta</label>
+                <div style="background:#f8fafc; border:1.5px solid var(--borde); border-radius:10px; padding:11px 14px; font-size:14px; font-weight:600; margin-bottom:18px; color:var(--texto);" id="lbl-reporta-falta">—</div>
+                <label>Nivel de gravedad</label>
+                <div class="gravedad-pills">
+                    <div class="pill leve" onclick="setGravedad('Leve', this)">Leve</div>
+                    <div class="pill moderada" onclick="setGravedad('Moderada', this)">Moderada</div>
+                    <div class="pill grave" onclick="setGravedad('Grave', this)">Grave</div>
+                </div>
+                <label>Fecha</label>
+                <input type="date" id="fecha-falta" required>
+                <label>Descripción del hecho</label>
+                <textarea id="motivo-falta" required placeholder="Describe brevemente lo ocurrido..."></textarea>
+                <label>Acuerdo o compromiso <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(opcional)</span></label>
+                <textarea id="acuerdo-falta" placeholder="Describe el acuerdo al que se llegó con el alumno..." style="height:80px;"></textarea>
+                <button type="submit" class="btn-guardar falta" id="btnFalta">GUARDAR REPORTE</button>
+            </form>
+        </div>
+    </div>
+    <div class="formulario" id="form-positiva">
+        <div class="form-header positiva">⭐ &nbsp;Registrar Observación Positiva</div>
+        <div class="form-body">
+            <form id="formPositiva">
+                <label>Quién reconoce</label>
+                <div style="background:#f8fafc; border:1.5px solid var(--borde); border-radius:10px; padding:11px 14px; font-size:14px; font-weight:600; margin-bottom:18px; color:var(--texto);" id="lbl-reporta-positiva">—</div>
+                <label>Fecha</label>
+                <input type="date" id="fecha-positiva" required>
+                <label>Descripción del logro o actitud</label>
+                <textarea id="motivo-positiva" required placeholder="Describe el desempeño o actitud destacada..."></textarea>
+                <button type="submit" class="btn-guardar positiva" id="btnPositiva">GUARDAR RECONOCIMIENTO</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+    const idAlumno = new URLSearchParams(window.location.search).get('id_alumno');
+    const rolActivo = localStorage.getItem('rolActivo');
+    const nombreActivo = localStorage.getItem('nombreActivo');
+
+
+    window.onload = async () => {
+        if (!idAlumno) return window.location.href = 'buscador.html';
+        document.getElementById('linkVolver').href = `expediente.html?id_alumno=${idAlumno}&from=reporte`;
+        // PREFECTO y DOCENTE: regresar lleva a inicio, no al expediente
+        if (rolActivo === 'PREFECTO' || rolActivo === 'DOCENTE') {
+            document.getElementById('linkVolver').href = 'inicio.html';
+        }
+        document.getElementById('fecha-falta').valueAsDate = new Date();
+        document.getElementById('fecha-positiva').valueAsDate = new Date();
+        try {
+            const resAlu = await apiFetch(`/api/alumnos?id=${idAlumno}`);
+            const dataAlu = await resAlu.json();
+            document.getElementById('lblAlumno').innerText = `${dataAlu.apellidos} ${dataAlu.nombre}`;
+            document.getElementById('lblGradoGrupo').innerText = `${dataAlu.grado}° "${dataAlu.grupo}"`;
+            // Mostrar quién reporta (usuario en sesión)
+            document.getElementById('lbl-reporta-falta').innerText = nombreActivo || '—';
+            document.getElementById('lbl-reporta-positiva').innerText = nombreActivo || '—';
+        } catch (e) { console.error('Error de carga', e); }
+    };
+
+
+
+    function seleccionarTipo(tipo) {
+        document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('activo'));
+        document.querySelector(`.tipo-card.${tipo}`).classList.add('activo');
+        document.getElementById('form-falta').classList.toggle('visible', tipo === 'falta');
+        document.getElementById('form-positiva').classList.toggle('visible', tipo === 'positiva');
+        document.querySelector(`#form-${tipo}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function setGravedad(valor, el) {
+        document.querySelectorAll('.gravedad-pills .pill').forEach(p => p.classList.remove('activo'));
+        el.classList.add('activo');
+        document.getElementById('gravedad-falta').value = valor;
+    }
+
+    async function guardarReporte(gravedad, fecha, motivo, btnId, acuerdo = '') {
+        const btn = document.getElementById(btnId);
+        const textoOriginal = btn.innerText;
+        btn.innerText = 'Guardando...'; btn.disabled = true;
+        const idUsuario = parseInt(localStorage.getItem('idUsuario'));
+        try {
+            const res = await apiFetch('/api/reportes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_alumno: parseInt(idAlumno), id_usuario: idUsuario, fecha, gravedad, motivo: motivo.trim(), acuerdo })
+            });
+            if (res && res.ok) {
+                alert(gravedad === 'Positiva' ? '⭐ ¡Reconocimiento guardado correctamente!' : '✅ Reporte guardado correctamente.');
+                registrarLog('REGISTRAR_OBSERVACION', `Alumno ID: ${idAlumno}, Gravedad: ${gravedad}`);
+                window.location.href = `expediente.html?id_alumno=${idAlumno}&from=reporte`;
+            } else {
+                const err = await res.json();
+                alert('Error al guardar: ' + err.error);
+                btn.innerText = textoOriginal; btn.disabled = false;
+            }
+        } catch (e) { alert('Error de conexión.'); btn.innerText = textoOriginal; btn.disabled = false; }
+    }
+
+    document.getElementById('formFalta').onsubmit = async (e) => {
+        e.preventDefault();
+        const gravedad = document.getElementById('gravedad-falta').value;
+        if (!gravedad) return alert('Selecciona el nivel de gravedad.');
+        const acuerdo = document.getElementById('acuerdo-falta').value.trim();
+        await guardarReporte(gravedad, document.getElementById('fecha-falta').value, document.getElementById('motivo-falta').value, 'btnFalta', acuerdo);
+    };
+
+    document.getElementById('formPositiva').onsubmit = async (e) => {
+        e.preventDefault();
+        await guardarReporte('Positiva', document.getElementById('fecha-positiva').value, document.getElementById('motivo-positiva').value, 'btnPositiva');
+    };
+</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+</body>
+</html>

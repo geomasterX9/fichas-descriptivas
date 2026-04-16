@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fichas Socioeconómicas - EST 84</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --azul:#1B4F8A; --azul-claro:#eff6ff; --fondo:#f0f4f8; --blanco:#fff; --texto:#1a2332; --muted:#64748b; --borde:#e2e8f0; --verde:#2d9b6f; --verde-claro:#f0fdf6; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Outfit',sans-serif; background:var(--fondo); color:var(--texto); padding:24px 16px 60px; }
+        .contenedor { max-width:900px; margin:0 auto; }
+        .btn-back { display:inline-flex; align-items:center; gap:8px; background:var(--blanco); border:1px solid var(--borde); border-radius:10px; padding:9px 16px; text-decoration:none; color:var(--muted); font-size:14px; font-weight:600; margin-bottom:20px; }
+        .page-header { background:var(--azul); color:white; border-radius:16px; padding:24px; margin-bottom:20px; }
+        .page-header h1 { font-size:20px; font-weight:800; margin-bottom:4px; }
+        .page-header p { font-size:13px; opacity:0.8; }
+
+        /* RESUMEN */
+        .resumen { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+        .res-card { background:var(--blanco); border:1px solid var(--borde); border-radius:12px; padding:16px; text-align:center; }
+        .res-num { font-size:28px; font-weight:800; color:var(--azul); }
+        .res-label { font-size:12px; color:var(--muted); margin-top:4px; }
+        .res-card.ok .res-num { color:var(--verde); }
+        .res-card.pend .res-num { color:#d97706; }
+
+        /* LIGAS POR GRUPO */
+        .grupos-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; margin-bottom:28px; }
+        .grupo-card { background:var(--blanco); border:1px solid var(--borde); border-radius:14px; padding:18px; }
+        .grupo-titulo { font-size:16px; font-weight:800; color:var(--azul); margin-bottom:4px; }
+        .grupo-sub { font-size:12px; color:var(--muted); margin-bottom:14px; }
+        .liga-box { background:#f8fafc; border:1.5px solid var(--borde); border-radius:10px; padding:10px 12px; font-size:11px; font-family:monospace; color:var(--muted); word-break:break-all; margin-bottom:10px; }
+        .grupo-btns { display:flex; gap:8px; }
+        .btn-sm { flex:1; padding:9px; border-radius:9px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; border:none; transition:all 0.15s; text-align:center; }
+        .btn-copiar-liga { background:var(--azul-claro); color:var(--azul); }
+        .btn-copiar-liga:hover { background:#dbeafe; }
+        .btn-copiar-liga.copiado { background:var(--verde-claro); color:var(--verde); }
+        .btn-whats { background:#25D366; color:white; }
+        .btn-whats:hover { background:#1da851; }
+
+        /* TABLA */
+        .seccion-titulo { font-size:16px; font-weight:800; color:var(--texto); margin-bottom:12px; }
+        .controles { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); padding:16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+        .ctrl-group { display:flex; flex-direction:column; gap:5px; }
+        .ctrl-group label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
+        select { padding:9px 14px; border:1.5px solid var(--borde); border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif; color:var(--texto); background:var(--blanco); }
+        .badge { background:var(--azul-claro); color:var(--azul); border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; align-self:center; }
+        .tabla-wrap { background:var(--blanco); border-radius:14px; border:1px solid var(--borde); overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#f8fafc; padding:11px 14px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); border-bottom:1px solid var(--borde); }
+        td { padding:11px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:middle; }
+        tr:last-child td { border-bottom:none; }
+        .chip-ok { background:var(--verde-claro); color:var(--verde); display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+        .chip-pend { background:#fef9c3; color:#854d0e; display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+        .empty { text-align:center; padding:40px; color:var(--muted); }
+    </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1B4F8A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sist. EST 84">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+<div class="contenedor">
+    <a href="dashboard.html" class="btn-back">← Volver al Dashboard</a>
+
+    <div class="page-header">
+        <h1>📋 Fichas Socioeconómicas</h1>
+        <p>Comparte la liga de cada grupo en WhatsApp. Los padres buscan a su hijo y llenan la ficha.</p>
+    </div>
+
+    <div class="resumen">
+        <div class="res-card"><div class="res-num" id="resTotal">—</div><div class="res-label">Total alumnos</div></div>
+        <div class="res-card ok"><div class="res-num" id="resCompletas">—</div><div class="res-label">Fichas completadas</div></div>
+        <div class="res-card pend"><div class="res-num" id="resPendientes">—</div><div class="res-label">Pendientes</div></div>
+    </div>
+
+    <!-- LIGAS POR GRUPO -->
+    <div class="seccion-titulo">🔗 Ligas por grupo</div>
+    <div class="grupos-grid" id="gruposGrid">
+        <div class="empty" style="grid-column:1/-1;">Cargando grupos...</div>
+    </div>
+
+    <!-- TABLA DE SEGUIMIENTO -->
+    <div class="seccion-titulo">📊 Seguimiento individual</div>
+    <div class="controles">
+        <div class="ctrl-group">
+            <label>Grado</label>
+            <select id="filtroGrado" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="1">1°</option><option value="2">2°</option><option value="3">3°</option>
+            </select>
+        </div>
+        <div class="ctrl-group">
+            <label>Grupo</label>
+            <select id="filtroGrupo" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option>A</option><option>B</option><option>C</option>
+                <option>D</option><option>E</option><option>F</option>
+            </select>
+        </div>
+        <div class="ctrl-group">
+            <label>Estado ficha</label>
+            <select id="filtroFicha" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="completada">Completada ✅</option>
+                <option value="pendiente">Pendiente ⏳</option>
+            </select>
+        </div>
+        <span class="badge" id="conteo">—</span>
+        <button onclick="exportarFichasPDF()" style="padding:9px 18px;background:var(--azul);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#163f6e'" onmouseout="this.style.background='var(--azul)'">🖨️ Exportar PDF</button>
+    </div>
+
+    <div class="tabla-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Alumno</th>
+                    <th>Grado / Grupo</th>
+                    <th>Estado ficha</th>
+                    <th>Expediente</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+    verificarSesion();
+    const BASE = window.location.origin;
+    const esDemo = localStorage.getItem('esDemo') === 'true';
+    let todos = [];
+    let filtrados = [];
+
+    async function obtenerConfigInstitucional() {
+        try {
+            const res = await apiFetch('/api/dashboard?tipo=config_institucional');
+            if (res) return await res.json();
+        } catch(e) {}
+        return {};
+    }
+
+    async function exportarFichasPDF() {
+        const cfg = await obtenerConfigInstitucional();
+        const nombre   = cfg.nombre_escuela    || 'ESCUELA SECUNDARIA';
+        const clave    = cfg.clave_escuela     || '';
+        const direccion= cfg.direccion_escuela || '';
+        const ciclo    = cfg.ciclo_activo      || '';
+        const logoIzq  = cfg.logo_izquierdo    || '';
+        const logoDer  = cfg.logo_derecho      || '';
+        const fecha    = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+
+        const grado = document.getElementById('filtroGrado').value;
+        const grupo = document.getElementById('filtroGrupo').value;
+        const ficha = document.getElementById('filtroFicha').value;
+        const subtitulo = [grado ? `${grado}° Grado` : '', grupo ? `Grupo ${grupo}` : '', ficha === 'completada' ? 'Completadas' : ficha === 'pendiente' ? 'Pendientes' : ''].filter(Boolean).join(' · ') || 'Todos';
+
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+            @page { size: letter; margin: 14mm 12mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #1a2332; }
+            .header-inst { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1B4F8A; padding-bottom:10px; margin-bottom:14px; }
+            .header-logo { width:65px; height:55px; object-fit:contain; }
+            .header-logo-ph { width:65px; height:55px; display:flex; align-items:center; justify-content:center; font-size:28px; }
+            .header-center { text-align:center; flex:1; padding:0 10px; }
+            .header-sep { font-size:9px; color:#555; font-weight:600; }
+            .header-title { font-size:14px; font-weight:800; color:#1B4F8A; margin:3px 0; }
+            .header-sub { font-size:10px; color:#555; }
+            h3 { font-size:12px; color:#1B4F8A; margin:0 0 2px; }
+            p  { font-size:10px; color:#64748b; margin:0 0 12px; }
+            table { width:100%; border-collapse:collapse; }
+            th { background:#1B4F8A; color:white; padding:7px 8px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+            td { padding:6px 8px; border-bottom:1px solid #e2e8f0; font-size:10px; }
+            tr:nth-child(even) td { background:#f8fafc; }
+            .ok { color:#166534; font-weight:700; }
+            .pend { color:#92400e; font-weight:700; }
+        </style></head><body>
+        <div class="header-inst">
+            ${logoIzq ? `<img src="${logoIzq}" class="header-logo">` : '<div class="header-logo-ph">🎓</div>'}
+            <div class="header-center">
+                <div class="header-title">${nombre}</div>
+                ${clave ? `<div class="header-sub">CLAVE: ${clave}</div>` : ''}
+                ${direccion ? `<div class="header-sub">${direccion}</div>` : ''}
+                ${ciclo ? `<div class="header-sub">Ciclo Escolar ${ciclo}</div>` : ''}
+            </div>
+            ${logoDer ? `<img src="${logoDer}" class="header-logo">` : '<div class="header-logo-ph">🏫</div>'}
+        </div>
+        <h3>Seguimiento de Fichas Socioeconómicas</h3>
+        <p>${subtitulo} &nbsp;|&nbsp; Generado el ${fecha}</p>
+        <table><thead><tr><th>#</th><th>Alumno</th><th>Grado/Grupo</th><th>Estado</th></tr></thead><tbody>
+        ${filtrados.map((a,i) => `<tr>
+            <td>${i+1}</td>
+            <td><b>${a.apellidos} ${a.nombre}</b></td>
+            <td>${a.grado}° "${a.grupo}"</td>
+            <td class="${a.ficha_completada ? 'ok' : 'pend'}">${a.ficha_completada ? '✅ Completada' : '⏳ Pendiente'}</td>
+        </tr>`).join('')}
+        </tbody></table></body></html>`;
+
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+    }
+
+    window.onload = async () => {
+        try {
+            const res = await apiFetch('/api/alumnos');
+            todos = await res.json();
+            todos.sort((a,b) => (a.apellidos+a.nombre).localeCompare(b.apellidos+b.nombre));
+            actualizarResumen();
+            renderGrupos();
+            filtrar();
+        } catch(e) {
+            document.getElementById('cuerpoTabla').innerHTML = '<tr><td colspan="4" class="empty">Error al cargar.</td></tr>';
+        }
+    };
+
+    function actualizarResumen() {
+        document.getElementById('resTotal').textContent     = todos.length;
+        document.getElementById('resCompletas').textContent = todos.filter(a => a.ficha_completada).length;
+        document.getElementById('resPendientes').textContent= todos.filter(a => !a.ficha_completada).length;
+    }
+
+    function renderGrupos() {
+        // Extraer grupos únicos
+        const grupos = [...new Set(todos.map(a => `${a.grado}-${a.grupo}`))].sort();
+        const grid = document.getElementById('gruposGrid');
+        if (grupos.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">No hay alumnos.</div>'; return; }
+
+        grid.innerHTML = grupos.map(clave => {
+            const [grado, grupo] = clave.split('-');
+            const liga = `${BASE}/captura_ficha.html?grado=${grado}&grupo=${grupo}${esDemo ? '&demo=1' : ''}`;
+            const total = todos.filter(a => String(a.grado) === grado && a.grupo === grupo).length;
+            const completas = todos.filter(a => String(a.grado) === grado && a.grupo === grupo && a.ficha_completada).length;
+            return `<div class="grupo-card">
+                <div class="grupo-titulo">📚 ${grado}° Grupo "${grupo}"</div>
+                <div class="grupo-sub">${completas} de ${total} fichas completadas</div>
+                <div class="liga-box">${liga}</div>
+                <div class="grupo-btns">
+                    <button class="btn-sm btn-copiar-liga" onclick="copiarLiga(this, '${liga}')">📋 Copiar liga</button>
+                    <button class="btn-sm btn-whats" onclick="copiarWhats('${grado}', '${grupo}', '${liga}')">📱 WhatsApp</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function copiarLiga(btn, liga) {
+        navigator.clipboard.writeText(liga).then(() => {
+            btn.textContent = '✅ Copiada';
+            btn.classList.add('copiado');
+            setTimeout(() => { btn.textContent = '📋 Copiar liga'; btn.classList.remove('copiado'); }, 2000);
+        });
+    }
+
+    function copiarWhats(grado, grupo, liga) {
+        const total = todos.filter(a => String(a.grado) === grado && a.grupo === grupo).length;
+        const pendientes = todos.filter(a => String(a.grado) === grado && a.grupo === grupo && !a.ficha_completada).length;
+        const msg = `🎓 *Escuela Secundaria Técnica No. 84*\n\nEstimados padres de familia del ${grado}° Grado, Grupo "${grupo}":\n\nLes compartimos el enlace para llenar la *Ficha Socioeconómica* de su hijo(a).\n\n👉 ${liga}\n\nAl ingresar, busquen el nombre de su hijo(a) y completen el formulario. Solo pueden llenarlo una vez.\n\n📊 ${total - pendientes} de ${total} fichas completadas.\n\nGracias por su apoyo. 🙏`;
+        navigator.clipboard.writeText(msg).then(() => {
+            alert(`✅ Mensaje copiado. Ya puedes pegarlo en WhatsApp.`);
+        });
+    }
+
+    function filtrar() {
+        const grado = document.getElementById('filtroGrado').value;
+        const grupo = document.getElementById('filtroGrupo').value;
+        const ficha = document.getElementById('filtroFicha').value;
+
+        filtrados = todos.filter(a => {
+            if (grado && String(a.grado) !== grado) return false;
+            if (grupo && a.grupo !== grupo) return false;
+            if (ficha === 'completada' && !a.ficha_completada) return false;
+            if (ficha === 'pendiente'  &&  a.ficha_completada) return false;
+            return true;
+        });
+
+        document.getElementById('conteo').textContent = `${filtrados.length} alumnos`;
+        const tbody = document.getElementById('cuerpoTabla');
+        if (filtrados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">No hay alumnos con esos filtros.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtrados.map(a => `<tr>
+            <td><strong>${a.apellidos} ${a.nombre}</strong></td>
+            <td>${a.grado}° "${a.grupo}"</td>
+            <td>${a.ficha_completada
+                ? '<span class="chip-ok">✅ Completada</span>'
+                : '<span class="chip-pend">⏳ Pendiente</span>'}</td>
+            <td>${a.ficha_completada
+                ? `<a href="expediente.html?id_alumno=${a.id_alumno}&from=fichas" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#eff6ff;color:#1B4F8A;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">📋 Ver expediente</a>`
+                : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}</td>
+        </tr>`).join('');
+    }
+</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .catch(err => console.warn('SW no registrado:', err));
+        });
+      }
+    </script>
+</body>
+</html>
