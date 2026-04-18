@@ -490,15 +490,17 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     document.getElementById('listaResultados').innerHTML = '';
     document.getElementById('chipNombre').textContent = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
     document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
-    document.getElementById('chipAlumno').style.display  = 'flex';
-    document.getElementById('panelMedico').style.display = 'block';
-    cargarMedico();
+    document.getElementById('chipAlumno').style.display = 'flex';
+    document.getElementById('enfTabs').style.display    = 'flex';
+    cambiarPanelEnf('medico');
   }
 
   function limpiarAlumno() {
     alumnoActual = null;
     document.getElementById('chipAlumno').style.display  = 'none';
+    document.getElementById('enfTabs').style.display     = 'none';
     document.getElementById('panelMedico').style.display = 'none';
+    document.getElementById('panelAuthMed').style.display = 'none';
     document.getElementById('inputBuscar').value = '';
   }
 
