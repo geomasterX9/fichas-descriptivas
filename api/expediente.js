@@ -19,6 +19,7 @@ module.exports = async (req, res) => {
     if (tipo === 'visitas_enfermeria')   return handleVisitas(req, res, usuario, id);
     if (tipo === 'justificante')         return handleJustificante(req, res, usuario, id);
     if (tipo === 'autorizacion_med')     return handleAutorizacionMed(req, res, usuario, id);
+    if (tipo === 'pase_salida')          return handlePaseSalida(req, res, usuario, id);
 
     // Historial de todos los expedientes médicos registrados
     if (req.method === 'GET' && tipo === 'medico_historial') {
@@ -235,6 +236,65 @@ async function handleVisitas(req, res, usuario, id) {
             fecha: fecha || new Date().toISOString().split('T')[0],
             motivo, tratamiento: tratamiento || null,
             registrado_por: usuario.nombre
+        });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+    return res.status(405).json({ error: 'Método no permitido' });
+}
+
+// ── PASES DE SALIDA ─────────────────────────────────────────
+// GET  /api/expediente?tipo=pase_salida&id=X     → historial del alumno
+// GET  /api/expediente?tipo=pase_salida           → pases activos hoy
+// POST /api/expediente?tipo=pase_salida           { id_alumno, motivo, tipo, quien_recoge, parentesco, hora_salida }
+async function handlePaseSalida(req, res, usuario, id) {
+    const db = usuario._db || supabase;
+    const ROLES_EMITIR = ['ENFERMERIA', 'TRABAJO SOCIAL', 'ADMINISTRADOR'];
+    const ROLES_VER    = ['ENFERMERIA', 'TRABAJO SOCIAL', 'ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO'];
+
+    if (!ROLES_VER.includes(usuario.rol))
+        return res.status(403).json({ error: 'Sin acceso a pases de salida.' });
+
+    if (req.method === 'GET') {
+        if (id) {
+            // Historial de un alumno
+            const { data } = await db.from('pases_salida')
+                .select('*').eq('id_alumno', parseInt(id))
+                .order('created_at', { ascending: false });
+            return res.json(data || []);
+        } else {
+            // Pases activos hoy — para notificación a docentes/prefectos
+            const hoy = new Date().toISOString().split('T')[0];
+            const { data } = await db.from('pases_salida')
+                .select('*, alumnos(apellidos, nombre, grado, grupo)')
+                .eq('fecha', hoy)
+                .eq('activo', true)
+                .order('created_at', { ascending: false });
+            return res.json(data || []);
+        }
+    }
+    if (req.method === 'POST') {
+        if (!ROLES_EMITIR.includes(usuario.rol))
+            return res.status(403).json({ error: 'Sin permiso para emitir pases de salida.' });
+        const { id_alumno, motivo, tipo, quien_recoge, parentesco, hora_salida } = req.body || {};
+        if (!id_alumno || !motivo || !tipo)
+            return res.status(400).json({ error: 'Faltan campos requeridos.' });
+        if (!['MEDICO','FAMILIAR'].includes(tipo))
+            return res.status(400).json({ error: 'Tipo de pase inválido.' });
+        const ciclo = await getCicloActivo(db);
+        const hoy   = new Date().toISOString().split('T')[0];
+        const { error } = await db.from('pases_salida').insert({
+            id_alumno:    parseInt(id_alumno),
+            ciclo_escolar: ciclo,
+            fecha:        hoy,
+            hora_salida:  hora_salida || new Date().toTimeString().slice(0,5),
+            motivo:       sanitize(motivo.trim()),
+            tipo,
+            quien_recoge: quien_recoge ? sanitize(quien_recoge.trim()) : null,
+            parentesco:   parentesco   ? sanitize(parentesco.trim())   : null,
+            emitido_por:  usuario.nombre,
+            departamento: usuario.rol === 'ENFERMERIA' ? 'ENFERMERIA' : 'TRABAJO SOCIAL',
+            activo:       true
         });
         if (error) return res.status(400).json({ error: error.message });
         return res.json({ exito: true });

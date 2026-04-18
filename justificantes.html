@@ -143,6 +143,12 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <div id="listaGlobal"><div class="estado-vacio">Cargando...</div></div>
   </div>
 
+  <!-- Pases de salida hoy — visible siempre -->
+  <div class="panel-global" style="border-left:4px solid #7c3aed;">
+    <div class="panel-titulo" style="color:#7c3aed;">🚪 Pases de Salida — Hoy</div>
+    <div id="listaPasesHoy"><div class="estado-vacio">Cargando...</div></div>
+  </div>
+
   <!-- Buscador para emitir nuevo justificante — solo ENFERMERIA/ADMIN -->
   <div id="seccionEmitir">
     <div class="buscador-box">
@@ -222,6 +228,33 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 
   let alumnoActual = null;
   let todosAlumnos = [];
+
+  // Cargar pases de salida hoy
+  async function cargarPasesHoy() {
+    try {
+      const res  = await apiFetch('/api/expediente?tipo=pase_salida');
+      const data = await res.json();
+      const cont = document.getElementById('listaPasesHoy');
+      cont.innerHTML = data.length ? data.map(p => {
+        const a = p.alumnos || {};
+        const tipoBadge = p.departamento === 'ENFERMERIA'
+          ? '<span style="font-size:10px;background:#f3e8ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:6px;padding:2px 8px;font-weight:800;">MÉDICO</span>'
+          : '<span style="font-size:10px;background:#fef9c3;color:#854d0e;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;font-weight:800;">FAMILIAR</span>';
+        return `<div style="padding:12px 14px;border-radius:10px;border:1px solid #e9d5ff;margin-bottom:8px;background:#fdf4ff;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-weight:800;font-size:14px;">${a.apellidos||''} ${a.nombre||''}</span>
+            ${tipoBadge}
+          </div>
+          <div style="font-size:12px;color:var(--muted);">${a.grado||''}° Grupo "${a.grupo||''}" · Salida: ${p.hora_salida||'—'}</div>
+          <div style="font-size:12px;margin-top:3px;">${p.motivo}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Recoge: ${p.quien_recoge||'—'} · Emitido por: ${p.emitido_por||'—'}</div>
+        </div>`;
+      }).join('') : '<div class="estado-vacio">Sin pases de salida hoy</div>';
+    } catch(e) {
+      document.getElementById('listaPasesHoy').innerHTML = '<div class="estado-vacio">Sin pases de salida hoy</div>';
+    }
+  }
+  cargarPasesHoy();
 
   // Cargar justificantes activos hoy
   cargarGlobal();

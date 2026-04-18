@@ -88,6 +88,27 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 .estado-vacio { text-align: center; padding: 32px 0; color: var(--muted); font-size: 14px; }
 @media (max-width: 480px) { .campo-fila { grid-template-columns: 1fr; } }
 
+.btn-pase {
+  width: 100%; padding: 13px; border: none; border-radius: 10px;
+  background: #7c3aed; color: white; font-size: 14px; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; margin-top: 10px;
+  transition: background 0.15s;
+}
+.btn-pase:hover { background: #6d28d9; }
+.pase-form {
+  display: none; margin-top: 16px; padding: 16px;
+  background: #fdf4ff; border-radius: 12px; border: 1.5px solid #e9d5ff;
+}
+.pase-form-titulo { font-size: 13px; font-weight: 800; color: #7c3aed; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.6px; }
+.historial-pase {
+  padding: 12px 14px; border-radius: 10px; border: 1px solid #e9d5ff;
+  margin-bottom: 8px; background: #fdf4ff;
+}
+.historial-pase-header { display: flex; justify-content: space-between; align-items: center; }
+.historial-pase-fecha  { font-size: 11px; color: var(--muted); font-weight: 700; }
+.historial-pase-motivo { font-size: 13px; font-weight: 600; color: var(--texto); margin-top: 3px; }
+.historial-pase-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
 .filtros-grupo {
   display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
 }
@@ -172,6 +193,40 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       <div class="panel-titulo">Historial de Visitas</div>
       <div id="historialVisitas"><div class="estado-vacio">Sin visitas registradas</div></div>
     </div>
+
+    <!-- Pase de Salida Médico -->
+    <div style="margin-top:20px; border-top:2px dashed #e9d5ff; padding-top:18px;">
+      <div class="panel-titulo">🚪 Pase de Salida</div>
+      <button class="btn-pase" onclick="togglePaseForm()">📋 Generar Pase de Salida Médico</button>
+      <div class="pase-form" id="paseForm">
+        <div class="pase-form-titulo">🚪 Pase de Salida — Motivo Médico</div>
+        <div class="campo">
+          <label>Motivo de salida</label>
+          <input type="text" id="p-motivo" placeholder="ej. MALESTAR GENERAL, FIEBRE..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
+        </div>
+        <div class="campo-fila">
+          <div class="campo">
+            <label>Hora de salida</label>
+            <input type="time" id="p-hora">
+          </div>
+          <div class="campo">
+            <label>Quién recoge</label>
+            <input type="text" id="p-quien" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()">
+          </div>
+        </div>
+        <div class="campo">
+          <label>Parentesco</label>
+          <input type="text" id="p-parentesco" placeholder="ej. MADRE, PADRE, TÍO..." oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <button class="btn-guardar" onclick="emitirPase()" id="btnEmitirPase" style="background:#7c3aed;">💾 Guardar y Generar Pase</button>
+        <div class="msg-ok"    id="okPase" style="display:none;">✅ Pase generado</div>
+        <div class="msg-error" id="errPase"></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:10px;">Historial de Pases</div>
+        <div id="historialPases"><div class="estado-vacio">Sin pases registrados</div></div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -233,6 +288,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     document.getElementById('panelVisitas').style.display = 'block';
     document.getElementById('v-fecha').valueAsDate = new Date();
     cargarVisitas();
+    cargarPases();
   }
 
   function limpiarAlumno() {
@@ -255,6 +311,123 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           ${v.tratamiento ? `<div class="historial-trat">↳ ${v.tratamiento}</div>` : ''}
         </div>`).join('') : '<div class="estado-vacio">Sin visitas registradas</div>';
     } catch(e) {}
+  }
+
+  async function cargarPases() {
+    if (!alumnoActual) return;
+    try {
+      const res  = await apiFetch(`/api/expediente?tipo=pase_salida&id=${alumnoActual.id_alumno}`);
+      const data = await res.json();
+      const cont = document.getElementById('historialPases');
+      cont.innerHTML = data.length ? data.map(p => `
+        <div class="historial-pase">
+          <div class="historial-pase-header">
+            <span class="historial-pase-fecha">📅 ${p.fecha} ${p.hora_salida||''}</span>
+            <span style="font-size:10px;background:#f3e8ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:6px;padding:2px 8px;font-weight:800;">MÉDICO</span>
+          </div>
+          <div class="historial-pase-motivo">${p.motivo}</div>
+          <div class="historial-pase-sub">Recoge: ${p.quien_recoge||'—'} (${p.parentesco||'—'}) · Emitido por: ${p.emitido_por||'—'}</div>
+        </div>`).join('') : '<div class="estado-vacio">Sin pases registrados</div>';
+    } catch(e) {}
+  }
+
+  function togglePaseForm() {
+    const f = document.getElementById('paseForm');
+    f.style.display = f.style.display === 'block' ? 'none' : 'block';
+    if (f.style.display === 'block') {
+      const now = new Date();
+      document.getElementById('p-hora').value = now.toTimeString().slice(0,5);
+    }
+  }
+
+  async function emitirPase() {
+    if (!alumnoActual) return;
+    const motivo = document.getElementById('p-motivo').value.trim();
+    if (!motivo) { alert('Ingresa el motivo de salida.'); return; }
+    const btn = document.getElementById('btnEmitirPase');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      const res = await apiFetch('/api/expediente?tipo=pase_salida', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_alumno:   alumnoActual.id_alumno,
+          motivo:      motivo.toUpperCase(),
+          tipo:        'MEDICO',
+          hora_salida: document.getElementById('p-hora').value,
+          quien_recoge: document.getElementById('p-quien').value.trim().toUpperCase(),
+          parentesco:   document.getElementById('p-parentesco').value.trim().toUpperCase()
+        })
+      });
+      const data = await res.json();
+      if (data.exito) {
+        document.getElementById('okPase').style.display = 'block';
+        setTimeout(() => document.getElementById('okPase').style.display = 'none', 3000);
+        document.getElementById('p-motivo').value    = '';
+        document.getElementById('p-quien').value     = '';
+        document.getElementById('p-parentesco').value = '';
+        document.getElementById('paseForm').style.display = 'none';
+        await cargarPases();
+        await imprimirPase({
+          alumno:      `${alumnoActual.apellidos} ${alumnoActual.nombre}`,
+          grado:       alumnoActual.grado,
+          grupo:       alumnoActual.grupo,
+          motivo:      motivo.toUpperCase(),
+          hora:        document.getElementById('p-hora').value || new Date().toTimeString().slice(0,5),
+          quien:       document.getElementById('p-quien').value.trim().toUpperCase(),
+          parentesco:  document.getElementById('p-parentesco').value.trim().toUpperCase(),
+          tipo:        'MEDICO',
+          emitidoPor:  nombre
+        });
+      } else {
+        document.getElementById('errPase').textContent = '❌ ' + (data.error||'Error');
+      }
+    } catch(e) { document.getElementById('errPase').textContent = '❌ Error de conexión'; }
+    btn.disabled = false; btn.textContent = '💾 Guardar y Generar Pase';
+  }
+
+  async function imprimirPase(d) {
+    let cfg = {};
+    try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg = await r.json(); } catch(e){}
+    const logoIzq = cfg.logo_izquierdo ? '<img src="'+cfg.logo_izquierdo+'" style="max-height:55px;max-width:65px;">' : '';
+    const logoDer = cfg.logo_derecho   ? '<img src="'+cfg.logo_derecho+'"   style="max-height:55px;max-width:65px;">' : '';
+    const hoy = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+    const html =
+      '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Pase de Salida</title>'+
+      '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:1.5cm;color:#000;}'+
+      '.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:8px;margin-bottom:12px;}'+
+      '.inst{font-size:13px;font-weight:900;color:#1B4F8A;text-align:center;}.sub{font-size:10px;color:#444;text-align:center;}'+
+      '.titulo{font-size:15px;font-weight:900;text-align:center;margin:10px 0;text-transform:uppercase;letter-spacing:1px;}'+
+      '.dept{font-size:11px;font-weight:700;text-align:center;color:#7c3aed;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;}'+
+      '.dato{margin-bottom:8px;font-size:12px;border-bottom:1px dotted #ccc;padding-bottom:5px;}'+
+      '.dato b{display:inline-block;width:160px;font-weight:700;color:#444;}'+
+      '.nota{font-size:10px;margin:14px 0;border:1px solid #000;padding:6px;font-weight:700;}'+
+      '.firmas{display:flex;justify-content:space-around;margin-top:30px;}'+
+      '.fb{text-align:center;width:180px;}.fl{border-bottom:1px solid #000;height:32px;margin-bottom:5px;}.ft{font-size:10px;}'+
+      '@page{margin:1.5cm;size:letter;}</style></head><body>'+
+      '<div class="hdr">'+
+        '<div style="width:70px;text-align:center;">'+logoIzq+'</div>'+
+        '<div style="flex:1;text-align:center;"><div class="inst">'+(cfg.nombre_escuela||'ESCUELA SECUNDARIA')+'</div>'+
+        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div></div>'+
+        '<div style="width:70px;text-align:center;">'+logoDer+'</div>'+
+      '</div>'+
+      '<div class="titulo">Pase de Salida</div>'+
+      '<div class="dept">Área de Enfermería</div>'+
+      '<div class="dato"><b>Alumno:</b> '+d.alumno+'</div>'+
+      '<div class="dato"><b>Grado / Grupo:</b> '+d.grado+'° Grupo "'+d.grupo+'"</div>'+
+      '<div class="dato"><b>Fecha:</b> '+hoy+'</div>'+
+      '<div class="dato"><b>Hora de salida:</b> '+d.hora+'</div>'+
+      '<div class="dato"><b>Motivo:</b> '+d.motivo+'</div>'+
+      '<div class="dato"><b>Quién recoge:</b> '+(d.quien||'—')+'</div>'+
+      '<div class="dato"><b>Parentesco:</b> '+(d.parentesco||'—')+'</div>'+
+      '<div class="nota">El alumno(a) sale de las instalaciones bajo la responsabilidad del familiar o tutor que lo recoge. Se deberá presentar justificante médico a su regreso.</div>'+
+      '<div style="text-align:center;font-size:10px;margin-bottom:6px;margin-top:16px;">ATENTAMENTE</div>'+
+      '<div class="firmas">'+
+        '<div class="fb"><div class="fl"></div><div class="ft">'+d.emitidoPor+'<br>ÁREA DE ENFERMERÍA</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASISTENCIA EDUCATIVA</div></div>'+
+      '</div></body></html>';
+    const win = window.open('','_blank');
+    win.document.write(html); win.document.close(); win.focus();
+    setTimeout(()=>win.print(),600);
   }
 
   async function guardarVisita() {

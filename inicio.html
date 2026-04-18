@@ -402,6 +402,16 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
+  <!-- Pase de salida — solo TRABAJO SOCIAL -->
+  <a class="btn-opcion" href="pase_salida_ts.html" id="btnPaseSalidaTS" style="display:none;">
+    <div class="opcion-icono" style="background:#fffbeb;">🚪</div>
+    <div class="opcion-texto">
+      <div class="opcion-titulo">Pase de Salida</div>
+      <div class="opcion-desc">Emite pases de salida por motivos familiares o personales.</div>
+    </div>
+    <div class="opcion-flecha">›</div>
+  </a>
+
   <!-- Seguimiento de reportes — solo TRABAJO SOCIAL -->
   <a class="btn-opcion" href="reportes_ts.html" id="btnSeguimientoTS" style="display:none;">
     <div class="opcion-icono" style="background:#fdf2f8;">📋</div>
@@ -463,15 +473,6 @@ body {
     <div class="opcion-flecha">›</div>
   </a>
 
-  <a class="btn-opcion" href="autorizacion_med.html" id="btnAuthMed" style="display:none;">
-    <div class="opcion-icono" style="background:#fdf4ff;">💊</div>
-    <div class="opcion-texto">
-      <div class="opcion-titulo">Autorización de Medicamentos</div>
-      <div class="opcion-desc">Registra y gestiona la autorización de medicamentos por alumno.</div>
-    </div>
-    <div class="opcion-flecha">›</div>
-  </a>
-
   <a class="btn-opcion" href="reporte_enfermeria.html" id="btnReporteEnf" style="display:none;">
     <div class="opcion-icono" style="background:#f0fdf6;">📊</div>
     <div class="opcion-texto">
@@ -525,6 +526,7 @@ body {
     document.getElementById('btnEvaluaciones').style.display      = 'none';
     document.querySelector('a[href="recuperacion.html"]').style.display = 'none';
     document.getElementById('btnPaseLista').style.display         = 'flex';
+    document.getElementById('btnPaseSalidaTS').style.display       = 'flex';
     document.getElementById('btnSeguimientoTS').style.display     = 'flex';
     document.getElementById('btnEstadisticas').style.display       = 'flex';
     document.getElementById('cardFaltas').style.display           = 'block';
@@ -557,7 +559,6 @@ body {
     document.getElementById('btnVisitas').style.display       = 'flex';
     document.getElementById('btnJustificantes').style.display = 'flex';
     document.getElementById('btnReporteEnf').style.display    = 'flex';
-    document.getElementById('btnAuthMed').style.display        = 'flex';
   }
 
   // PREFECTO: no ve Evaluaciones Parciales ni Recuperación

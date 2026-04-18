@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pase de Salida — Trabajo Social</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul:#1B4F8A; --azul-hover:#163f6e; --azul-claro:#eff6ff;
+  --verde:#2d9b6f; --verde-claro:#f0fdf6;
+  --rojo:#e63946; --naranja:#f59e0b;
+  --fondo:#f0f4f8; --blanco:#fff;
+  --texto:#1a2332; --muted:#64748b; --borde:#e2e8f0;
+  --ts:#f59e0b;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100vh; }
+.header {
+  background:var(--azul); padding:0 24px; height:62px;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 2px 12px rgba(27,79,138,0.25); position:sticky; top:0; z-index:100;
+}
+.header-left { display:flex; align-items:center; gap:12px; }
+.btn-back {
+  width:36px; height:36px; border-radius:10px;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2);
+  color:white; font-size:18px; display:flex; align-items:center;
+  justify-content:center; text-decoration:none;
+}
+.btn-back:hover { background:rgba(255,255,255,0.25); }
+.header-title  { font-size:16px; font-weight:800; color:white; }
+.header-sub    { font-size:12px; color:rgba(255,255,255,0.7); margin-top:1px; }
+.header-nombre { font-size:13px; font-weight:700; color:white; }
+.contenido { max-width:720px; margin:0 auto; padding:28px 20px 60px; }
+
+.buscador-box {
+  background:var(--blanco); border-radius:16px; border:1px solid var(--borde);
+  padding:20px 24px; margin-bottom:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+.filtros-grupo { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.filtros-grupo select {
+  width:100%; padding:10px 14px; border:1.5px solid var(--borde);
+  border-radius:10px; font-size:13px; font-family:'Outfit',sans-serif;
+  color:var(--texto); background:var(--blanco); outline:none; cursor:pointer;
+}
+.filtros-grupo select:focus { border-color:var(--azul); }
+.buscador-box input[type=text] {
+  width:100%; padding:12px 16px; border:1.5px solid var(--borde);
+  border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif;
+  color:var(--texto); outline:none;
+}
+.buscador-box input:focus { border-color:var(--azul); }
+.lista-resultados { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.item-alumno {
+  padding:12px 16px; border-radius:10px; border:1.5px solid var(--borde);
+  background:var(--blanco); cursor:pointer; transition:all 0.15s;
+}
+.item-alumno:hover { border-color:var(--azul); background:var(--azul-claro); }
+.alumno-nombre { font-weight:700; font-size:14px; }
+.alumno-grupo  { font-size:12px; color:var(--muted); }
+
+.chip-alumno {
+  background:var(--azul-claro); border:1.5px solid #bfdbfe;
+  border-radius:12px; padding:14px 18px; margin-bottom:20px;
+  display:none; align-items:center; gap:12px;
+}
+.chip-nombre { font-weight:800; font-size:15px; color:var(--azul); }
+.chip-sub    { font-size:12px; color:var(--muted); margin-top:2px; }
+
+.panel {
+  background:var(--blanco); border-radius:16px; border:1px solid var(--borde);
+  padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:none;
+}
+.panel-titulo { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:20px; }
+.campo { margin-bottom:16px; }
+.campo label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:6px; }
+.campo input, .campo select, .campo textarea {
+  width:100%; padding:11px 14px; border:1.5px solid var(--borde);
+  border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif;
+  color:var(--texto); outline:none;
+}
+.campo input:focus, .campo select:focus, .campo textarea:focus { border-color:var(--azul); }
+.campo textarea { resize:none; height:70px; }
+.campo-fila { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.btn-guardar {
+  width:100%; padding:13px; border:none; border-radius:10px;
+  background:var(--naranja); color:white; font-size:14px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer; margin-top:4px;
+}
+.btn-guardar:hover { background:#d97706; }
+.btn-guardar:disabled { opacity:0.6; cursor:not-allowed; }
+.msg-ok    { color:var(--verde); font-size:13px; font-weight:700; margin-top:10px; display:none; }
+.msg-error { color:var(--rojo);  font-size:13px; font-weight:700; margin-top:10px; }
+
+.historial-pase {
+  padding:12px 14px; border-radius:10px; border:1px solid #fde68a;
+  margin-bottom:8px; background:#fffbeb;
+}
+.historial-pase-fecha  { font-size:11px; color:var(--muted); font-weight:700; }
+.historial-pase-motivo { font-size:13px; font-weight:600; color:var(--texto); margin-top:3px; }
+.historial-pase-sub    { font-size:12px; color:var(--muted); margin-top:2px; }
+.estado-vacio { text-align:center; padding:24px 0; color:var(--muted); font-size:14px; }
+@media (max-width:480px) { .campo-fila { grid-template-columns:1fr; } }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">🚪 Pase de Salida</div>
+      <div class="header-sub">EST 84 · Trabajo Social</div>
+    </div>
+  </div>
+  <div class="header-nombre" id="headerNombre">—</div>
+</div>
+
+<div class="contenido">
+
+  <div class="buscador-box">
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">Buscar Alumno</div>
+    <div class="filtros-grupo">
+      <select id="filtroGrado" onchange="actualizarFiltros()">
+        <option value="">— Todos los grados —</option>
+        <option value="1">1° Grado</option>
+        <option value="2">2° Grado</option>
+        <option value="3">3° Grado</option>
+      </select>
+      <select id="filtroGrupo" onchange="actualizarFiltros()">
+        <option value="">— Todos los grupos —</option>
+        <option value="A">Grupo A</option><option value="B">Grupo B</option>
+        <option value="C">Grupo C</option><option value="D">Grupo D</option>
+        <option value="E">Grupo E</option><option value="F">Grupo F</option>
+      </select>
+    </div>
+    <input type="text" id="inputBuscar" placeholder="Nombre o apellido del alumno..." oninput="buscarAlumno()">
+    <div class="lista-resultados" id="listaResultados"></div>
+  </div>
+
+  <div class="chip-alumno" id="chipAlumno">
+    <div style="font-size:28px;">🎓</div>
+    <div>
+      <div class="chip-nombre" id="chipNombre">—</div>
+      <div class="chip-sub"   id="chipSub">—</div>
+    </div>
+    <button onclick="limpiarAlumno()" style="margin-left:auto;background:none;border:none;color:var(--azul);font-size:13px;font-weight:700;cursor:pointer;">Cambiar</button>
+  </div>
+
+  <div class="panel" id="panelPase">
+    <div class="panel-titulo">🚪 Emitir Pase de Salida</div>
+
+    <div class="campo">
+      <label>Tipo de motivo</label>
+      <select id="p-tipo">
+        <option value="FAMILIAR">Familiar</option>
+        <option value="MEDICO">Médico</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label>Motivo de salida</label>
+      <textarea id="p-motivo" placeholder="ej. ASUNTO FAMILIAR, CITA MÉDICA..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;"></textarea>
+    </div>
+    <div class="campo-fila">
+      <div class="campo">
+        <label>Hora de salida</label>
+        <input type="time" id="p-hora">
+      </div>
+      <div class="campo">
+        <label>Quién recoge</label>
+        <input type="text" id="p-quien" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+    <div class="campo">
+      <label>Parentesco</label>
+      <input type="text" id="p-parentesco" placeholder="ej. MADRE, PADRE, TÍO..." oninput="this.value=this.value.toUpperCase()">
+    </div>
+
+    <button class="btn-guardar" onclick="emitirPase()" id="btnEmitirPase">💾 Guardar y Generar Pase</button>
+    <div class="msg-ok"    id="okPase">✅ Pase generado correctamente</div>
+    <div class="msg-error" id="errPase"></div>
+
+    <div style="margin-top:28px;">
+      <div class="panel-titulo">Historial de Pases</div>
+      <div id="historialPases"><div class="estado-vacio">Sin pases registrados</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rol    = localStorage.getItem('rolActivo') || '';
+  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  document.getElementById('headerNombre').textContent = nombre;
+
+  if (!['TRABAJO SOCIAL','ADMINISTRADOR'].includes(rol)) window.location.href = 'inicio.html';
+
+  let alumnoActual = null;
+  let todosAlumnos = [];
+
+  (async () => {
+    try {
+      const res = await apiFetch('/api/alumnos');
+      if (res) todosAlumnos = await res.json();
+    } catch(e) {}
+  })();
+
+  function actualizarFiltros() { document.getElementById('inputBuscar').value=''; mostrarFiltrados(); }
+  function buscarAlumno()      { mostrarFiltrados(); }
+
+  function mostrarFiltrados() {
+    const q     = document.getElementById('inputBuscar').value.trim().toUpperCase();
+    const grado = document.getElementById('filtroGrado').value;
+    const grupo = document.getElementById('filtroGrupo').value;
+    const lista = document.getElementById('listaResultados');
+    if (!q && !grado && !grupo) { lista.innerHTML=''; return; }
+    const f = todosAlumnos.filter(a =>
+      (!q    || `${a.apellidos} ${a.nombre}`.toUpperCase().includes(q)) &&
+      (!grado || String(a.grado)===grado) &&
+      (!grupo || a.grupo===grupo)
+    ).slice(0,30);
+    lista.innerHTML = f.length ? f.map(a =>
+      `<div class="item-alumno" onclick="seleccionarAlumno(${a.id_alumno})">
+        <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
+        <div class="alumno-grupo">${a.grado}° Grupo "${a.grupo}"</div>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:8px;">Sin resultados</div>';
+  }
+
+  async function seleccionarAlumno(id) {
+    alumnoActual = todosAlumnos.find(a => a.id_alumno === id);
+    if (!alumnoActual) return;
+    document.getElementById('inputBuscar').value = '';
+    document.getElementById('listaResultados').innerHTML = '';
+    document.getElementById('chipNombre').textContent = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
+    document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
+    document.getElementById('chipAlumno').style.display = 'flex';
+    document.getElementById('panelPase').style.display  = 'block';
+    document.getElementById('p-hora').value = new Date().toTimeString().slice(0,5);
+    cargarPases();
+  }
+
+  function limpiarAlumno() {
+    alumnoActual = null;
+    document.getElementById('chipAlumno').style.display = 'none';
+    document.getElementById('panelPase').style.display  = 'none';
+    document.getElementById('inputBuscar').value = '';
+  }
+
+  async function cargarPases() {
+    if (!alumnoActual) return;
+    try {
+      const res  = await apiFetch(`/api/expediente?tipo=pase_salida&id=${alumnoActual.id_alumno}`);
+      const data = await res.json();
+      const cont = document.getElementById('historialPases');
+      cont.innerHTML = data.length ? data.map(p => `
+        <div class="historial-pase">
+          <div class="historial-pase-fecha">📅 ${p.fecha} ${p.hora_salida||''} · ${p.tipo==='MEDICO'?'🏥 Médico':'👨‍👩‍👧 Familiar'}</div>
+          <div class="historial-pase-motivo">${p.motivo}</div>
+          <div class="historial-pase-sub">Recoge: ${p.quien_recoge||'—'} (${p.parentesco||'—'}) · ${p.emitido_por||'—'}</div>
+        </div>`).join('') : '<div class="estado-vacio">Sin pases registrados</div>';
+    } catch(e) {}
+  }
+
+  async function emitirPase() {
+    if (!alumnoActual) return;
+    const motivo = document.getElementById('p-motivo').value.trim();
+    if (!motivo) { alert('Ingresa el motivo de salida.'); return; }
+    const btn = document.getElementById('btnEmitirPase');
+    btn.disabled=true; btn.textContent='Guardando...';
+    const tipo      = document.getElementById('p-tipo').value;
+    const hora      = document.getElementById('p-hora').value;
+    const quien     = document.getElementById('p-quien').value.trim().toUpperCase();
+    const parentesco = document.getElementById('p-parentesco').value.trim().toUpperCase();
+    try {
+      const res = await apiFetch('/api/expediente?tipo=pase_salida', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id_alumno:alumnoActual.id_alumno, motivo:motivo.toUpperCase(), tipo, hora_salida:hora, quien_recoge:quien, parentesco })
+      });
+      const data = await res.json();
+      if (data.exito) {
+        const ok = document.getElementById('okPase');
+        ok.style.display='block'; setTimeout(()=>ok.style.display='none',3000);
+        document.getElementById('p-motivo').value    = '';
+        document.getElementById('p-quien').value     = '';
+        document.getElementById('p-parentesco').value = '';
+        await cargarPases();
+        await imprimirPase({ alumno:`${alumnoActual.apellidos} ${alumnoActual.nombre}`, grado:alumnoActual.grado, grupo:alumnoActual.grupo, motivo:motivo.toUpperCase(), tipo, hora, quien, parentesco });
+      } else {
+        document.getElementById('errPase').textContent = '❌ ' + (data.error||'Error');
+      }
+    } catch(e) { document.getElementById('errPase').textContent = '❌ Error de conexión'; }
+    btn.disabled=false; btn.textContent='💾 Guardar y Generar Pase';
+  }
+
+  async function imprimirPase(d) {
+    let cfg={};
+    try { const r=await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg=await r.json(); } catch(e){}
+    const logoIzq = cfg.logo_izquierdo?'<img src="'+cfg.logo_izquierdo+'" style="max-height:55px;max-width:65px;">':'';
+    const logoDer = cfg.logo_derecho  ?'<img src="'+cfg.logo_derecho+'"   style="max-height:55px;max-width:65px;">':'';
+    const hoy = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+    const tipoLabel = d.tipo==='MEDICO' ? 'Motivo Médico' : 'Motivo Familiar/Personal';
+    const html =
+      '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Pase de Salida</title>'+
+      '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:1.5cm;color:#000;}'+
+      '.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:8px;margin-bottom:12px;}'+
+      '.inst{font-size:13px;font-weight:900;color:#1B4F8A;text-align:center;}.sub{font-size:10px;color:#444;text-align:center;}'+
+      '.titulo{font-size:15px;font-weight:900;text-align:center;margin:10px 0;text-transform:uppercase;letter-spacing:1px;}'+
+      '.dept{font-size:11px;font-weight:700;text-align:center;color:#f59e0b;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;}'+
+      '.dato{margin-bottom:8px;font-size:12px;border-bottom:1px dotted #ccc;padding-bottom:5px;}'+
+      '.dato b{display:inline-block;width:160px;font-weight:700;color:#444;}'+
+      '.nota{font-size:10px;margin:14px 0;border:1px solid #000;padding:6px;font-weight:700;}'+
+      '.firmas{display:flex;justify-content:space-around;margin-top:30px;}'+
+      '.fb{text-align:center;width:180px;}.fl{border-bottom:1px solid #000;height:32px;margin-bottom:5px;}.ft{font-size:10px;}'+
+      '@page{margin:1.5cm;size:letter;}</style></head><body>'+
+      '<div class="hdr">'+
+        '<div style="width:70px;text-align:center;">'+logoIzq+'</div>'+
+        '<div style="flex:1;text-align:center;"><div class="inst">'+(cfg.nombre_escuela||'ESCUELA SECUNDARIA')+'</div>'+
+        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div></div>'+
+        '<div style="width:70px;text-align:center;">'+logoDer+'</div>'+
+      '</div>'+
+      '<div class="titulo">Pase de Salida</div>'+
+      '<div class="dept">Trabajo Social — '+tipoLabel+'</div>'+
+      '<div class="dato"><b>Alumno:</b> '+d.alumno+'</div>'+
+      '<div class="dato"><b>Grado / Grupo:</b> '+d.grado+'° Grupo "'+d.grupo+'"</div>'+
+      '<div class="dato"><b>Fecha:</b> '+hoy+'</div>'+
+      '<div class="dato"><b>Hora de salida:</b> '+d.hora+'</div>'+
+      '<div class="dato"><b>Motivo:</b> '+d.motivo+'</div>'+
+      '<div class="dato"><b>Quién recoge:</b> '+(d.quien||'—')+'</div>'+
+      '<div class="dato"><b>Parentesco:</b> '+(d.parentesco||'—')+'</div>'+
+      '<div class="nota">El alumno(a) sale de las instalaciones bajo la responsabilidad del familiar o tutor que lo recoge.</div>'+
+      '<div style="text-align:center;font-size:10px;margin-bottom:6px;margin-top:16px;">ATENTAMENTE</div>'+
+      '<div class="firmas">'+
+        '<div class="fb"><div class="fl"></div><div class="ft">'+nombre+'<br>TRABAJO SOCIAL</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASISTENCIA EDUCATIVA</div></div>'+
+      '</div></body></html>';
+    const win = window.open('','_blank');
+    win.document.write(html); win.document.close(); win.focus();
+    setTimeout(()=>win.print(),600);
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>
