@@ -345,7 +345,10 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 
   async function emitirPase() {
     if (!alumnoActual) return;
-    const motivo = document.getElementById('p-motivo').value.trim();
+    const motivo     = document.getElementById('p-motivo').value.trim();
+    const quien      = document.getElementById('p-quien').value.trim().toUpperCase();
+    const parentesco = document.getElementById('p-parentesco').value.trim().toUpperCase();
+    const hora       = document.getElementById('p-hora').value || new Date().toTimeString().slice(0,5);
     if (!motivo) { alert('Ingresa el motivo de salida.'); return; }
     const btn = document.getElementById('btnEmitirPase');
     btn.disabled = true; btn.textContent = 'Guardando...';
@@ -356,9 +359,9 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           id_alumno:   alumnoActual.id_alumno,
           motivo:      motivo.toUpperCase(),
           tipo:        'MEDICO',
-          hora_salida: document.getElementById('p-hora').value,
-          quien_recoge: document.getElementById('p-quien').value.trim().toUpperCase(),
-          parentesco:   document.getElementById('p-parentesco').value.trim().toUpperCase()
+          hora_salida: hora,
+          quien_recoge: quien,
+          parentesco:   parentesco
         })
       });
       const data = await res.json();
@@ -375,9 +378,9 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           grado:       alumnoActual.grado,
           grupo:       alumnoActual.grupo,
           motivo:      motivo.toUpperCase(),
-          hora:        document.getElementById('p-hora').value || new Date().toTimeString().slice(0,5),
-          quien:       document.getElementById('p-quien').value.trim().toUpperCase(),
-          parentesco:  document.getElementById('p-parentesco').value.trim().toUpperCase(),
+          hora:        hora,
+          quien:       quien,
+          parentesco:  parentesco,
           tipo:        'MEDICO',
           emitidoPor:  nombreCompleto
         });
