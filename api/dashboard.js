@@ -1,757 +1,399 @@
-const { supabase, getSupabase, requireAuth, setSecurityHeaders, sanitize, getCicloActivo, setCicloActivo, invalidarTokens } = require('./_lib');
+import { useState, useRef, useEffect } from 'react';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { supabase } from './supabaseClient';
 
-// Tipos accesibles para todos los roles autenticados
-const TIPOS_TODOS_ROLES = ['riesgo_disciplinario', 'riesgo_academico_parcial', 'recuperacion', 'config_institucional', 'emergencia', 'asistencia', 'asistencia_fecha', 'faltas_alumno'];
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
-module.exports = async (req, res) => {
-    setSecurityHeaders(res, 'GET, POST, DELETE, OPTIONS', req.headers.origin);
-    if (req.method === 'OPTIONS') return res.status(200).end();
+export default function Dashboard() {
+  const [notas, setNotas] = useState<any[]>([]);
+  const [filtroActual, setFiltroActual] = useState<'hoy' | 'semana' | 'mes'>('hoy');
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [resultadoIA, setResultadoIA] = useState<any>(null);
+  const [toast, setToast] = useState<{ mensaje: string; tipo: 'success' | 'error' | 'confirm'; id?: string } | null>(null);
+  const [nombreDocente, setNombreDocente] = useState<string>('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [seccionesExpandidas, setSeccionesExpandidas] = useState<{ [key: string]: boolean }>({});
+  const [isManualEntry, setIsManualEntry] = useState(false);
 
-    const tipo = req.query.tipo || 'kpis';
+  const recognitionRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Para tipos de alerta: cualquier rol autenticado puede acceder
-    const recurso = TIPOS_TODOS_ROLES.includes(tipo) ? null : 'dashboard';
-    const usuario = await requireAuth(req, res, recurso);
-    if (!usuario) return;
-    const db = usuario._db || supabase;
+  const showToast = (mensaje: string, tipo: 'success' | 'error' | 'confirm' = 'success', id?: string) => {
+    setToast({ mensaje, tipo, id });
+    if (tipo !== 'confirm') {
+      setTimeout(() => setToast(null), 4000);
+    }
+  };
 
+  const getGradoStyle = (grado: string) => {
+    switch (grado) {
+      case '1ro': return 'bg-sky-100 text-sky-800 border-sky-200';
+      case '2do': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case '3ro': return 'bg-orange-100 text-orange-800 border-orange-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  };
+
+  const cargarDatosIniciales = async () => {
     try {
-        if (tipo === 'kpis') {
-            const ciclo = await getCicloActivo(db);
-            const { count: totalAlumnos } = await db.from('alumnos').select('*', { count: 'exact', head: true }).eq('ciclo_escolar', ciclo);
-            const { count: totalReportes } = await db.from('reportes_disciplinarios').select('*', { count: 'exact', head: true }).eq('ciclo_escolar', ciclo);
-            const { data: califRiesgo } = await db.from('calificaciones').select('id_alumno, promedio_trimestral, materias').eq('ciclo_escolar', ciclo);
-            const idsEnRiesgo = new Set();
-            if (califRiesgo) {
-                califRiesgo.forEach(c => {
-                    if (parseFloat(c.promedio_trimestral) <= 6.5) idsEnRiesgo.add(c.id_alumno);
-                    else if (c.materias && c.materias.some(m => parseFloat(m.calif) <= 5)) idsEnRiesgo.add(c.id_alumno);
-                });
-            }
-            return res.json({ totalAlumnos: totalAlumnos || 0, totalReportes: totalReportes || 0, alumnosEnRiesgo: idsEnRiesgo.size });
-        }
+      const savedName = localStorage.getItem('nombre_docente');
+      if (savedName) setNombreDocente(savedName);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const { data, error } = await supabase
+        .from('notas_bitacora')
+        .select('*')
+        .eq('docente_id', session.user.id)
+        .order('creado_en', { ascending: false });
+      if (error) throw error;
+      if (data) setNotas(data);
+    } catch (err) { console.error(err); }
+  };
 
-        if (tipo === 'estadisticas') {
-            const ciclo = await getCicloActivo(db);
-            const { data: calif } = await db.from('calificaciones').select('*').eq('ciclo_escolar', ciclo);
-            const { data: alum } = await db.from('alumnos').select('id_alumno, grado').eq('ciclo_escolar', ciclo);
-            if (!calif || !alum) return res.json({});
-            const aluGrado = {};
-            alum.forEach(a => aluGrado[a.id_alumno] = a.grado);
-            const SIGLAS = ['ESP','MAT','SLI','CIE','HIS','GMM','FCE','ETE','EFI','ART','ESO'];
-            let mats = {}; SIGLAS.forEach(s => mats[s] = []);
-            let trimes = { 1: [], 2: [], 3: [] }, grads = { 1: [], 2: [], 3: [] };
-            // porGradoMateria: { 1: { ESP: [], MAT: [], ... }, 2: {...}, 3: {...} }
-            const pgm = { 1: {}, 2: {}, 3: {} };
-            SIGLAS.forEach(s => { pgm[1][s] = []; pgm[2][s] = []; pgm[3][s] = []; });
-            calif.forEach(c => {
-                const v = parseFloat(c.promedio_trimestral);
-                const g = aluGrado[c.id_alumno];
-                if (v >= 5 && v <= 10) {
-                    if (trimes[c.trimestre]) trimes[c.trimestre].push(v);
-                    if (g) grads[g].push(v);
-                    if (c.materias) c.materias.forEach(m => {
-                        const cal = parseFloat(m.calif);
-                        if (mats[m.sigla] && cal >= 5) mats[m.sigla].push(cal);
-                        if (g && pgm[g][m.sigla] && cal >= 5) pgm[g][m.sigla].push(cal);
-                    });
-                }
-            });
-            const prom = arr => arr.length ? parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)) : 0;
+  useEffect(() => { cargarDatosIniciales(); }, []);
 
-            // Comparativo por materia desglosado por trimestre (para gráfica de líneas)
-            const matSiglas = Object.keys(mats);
-            const matsPorTrim = { 1: {}, 2: {}, 3: {} };
-            matSiglas.forEach(s => { matsPorTrim[1][s] = []; matsPorTrim[2][s] = []; matsPorTrim[3][s] = []; });
-            calif.forEach(c => {
-                const t = c.trimestre;
-                if ([1,2,3].includes(t) && c.materias) {
-                    c.materias.forEach(m => {
-                        const cal = parseFloat(m.calif);
-                        if (matsPorTrim[t][m.sigla] && cal >= 5) matsPorTrim[t][m.sigla].push(cal);
-                    });
-                }
-            });
-            // Para cada materia, array de promedios [T1, T2, T3] — solo trimestres con datos
-            const comparativoPorTrimestre = {};
-            matSiglas.forEach(s => {
-                comparativoPorTrimestre[s] = [1,2,3]
-                    .filter(t => trimes[t].length > 0)
-                    .map(t => prom(matsPorTrim[t][s]));
-            });
+  const guardarNombre = (nuevoNombre: string) => {
+    setNombreDocente(nuevoNombre);
+    localStorage.setItem('nombre_docente', nuevoNombre);
+    setIsEditingName(false);
+    showToast('Identidad actualizada');
+  };
 
-            return res.json({
-                porTrimestre: { labels: ['T1', 'T2', 'T3'], valores: [prom(trimes[1]), prom(trimes[2]), prom(trimes[3])] },
-                porGrado: { labels: ['1°', '2°', '3°'], valores: [prom(grads[1]), prom(grads[2]), prom(grads[3])] },
-                porMateria: { labels: matSiglas, valores: matSiglas.map(s => prom(mats[s])) },
-                comparativoPorTrimestre,
-                porGradoMateria: {
-                    labels: SIGLAS,
-                    grado1: SIGLAS.map(s => prom(pgm[1][s])),
-                    grado2: SIGLAS.map(s => prom(pgm[2][s])),
-                    grado3: SIGLAS.map(s => prom(pgm[3][s]))
-                }
-            });
-        }
+  const ejecutarEliminacion = async (id: string) => {
+    try {
+      const { error } = await supabase.from('notas_bitacora').delete().eq('id', id);
+      if (error) throw error;
+      showToast('Nota eliminada');
+      setNotas(notas.filter(n => n.id !== id));
+    } catch (err) { showToast('Error al eliminar', 'error'); }
+  };
 
-        if (tipo === 'riesgo') {
-            const ciclo = await getCicloActivo(db);
-            const { data: calif } = await db.from('calificaciones').select('*').eq('ciclo_escolar', ciclo);
-            if (!calif || calif.length === 0) return res.json([]);
-            const califEnRiesgo = calif.filter(c =>
-                parseFloat(c.promedio_trimestral) <= 6.5 ||
-                (c.materias && c.materias.some(m => parseFloat(m.calif) <= 5))
-            );
-            if (califEnRiesgo.length === 0) return res.json([]);
-            const ids = [...new Set(califEnRiesgo.map(c => c.id_alumno))];
-            const { data: alumnos } = await db.from('alumnos').select('*').in('id_alumno', ids).eq('ciclo_escolar', ciclo);
-            const lista = alumnos.map(alu => {
-                const c = califEnRiesgo.find(x => x.id_alumno === alu.id_alumno);
-                const reprobadas = c.materias ? c.materias.filter(m => parseFloat(m.calif) <= 6).map(m => `${m.sigla}: ${m.calif}`).join(', ') : '';
-                return { ...alu, promedio: c.promedio_trimestral, materiasRiesgo: reprobadas || 'Promedio Bajo General' };
-            });
-            lista.sort((a, b) => { if (a.grado !== b.grado) return a.grado - b.grado; if (a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo); return a.apellidos.localeCompare(b.apellidos); });
-            return res.json(lista);
-        }
+  const reiniciarCiclo = async () => {
+    try {
+      const idsAEliminar = notasFiltradas.map(n => n.id);
+      if (idsAEliminar.length === 0) return;
+      const { error } = await supabase.from('notas_bitacora').delete().in('id', idsAEliminar);
+      if (error) throw error;
+      showToast('Vista reiniciada');
+      setNotas(notas.filter(n => !idsAEliminar.includes(n.id)));
+    } catch (err) { showToast('Error al reiniciar', 'error'); }
+  };
 
-        if (tipo === 'reportes') {
-            const ciclo = await getCicloActivo(db);
-            const { data: reportes } = await db.from('reportes_disciplinarios').select('*')
-                .eq('ciclo_escolar', ciclo).order('fecha', { ascending: false });
-            const { data: alumnos } = await db.from('alumnos').select('id_alumno, nombre, apellidos, grado, grupo').eq('ciclo_escolar', ciclo);
-            const identificados = (reportes || []).map(rep => {
-                const alu = (alumnos || []).find(a => a.id_alumno == rep.id_alumno);
-                return { ...rep, nombre_alumno: alu ? `${alu.apellidos} ${alu.nombre}` : 'Desconocido', grado_grupo: alu ? `${alu.grado}°"${alu.grupo}"` : '--' };
-            });
-            return res.json(identificados);
-        }
+  const notasFiltradas = notas.filter(nota => {
+    const fechaNota = new Date(nota.creado_en);
+    const hoy = new Date();
+    const diffDias = Math.floor((hoy.getTime() - fechaNota.getTime()) / (1000 * 3600 * 24));
+    if (filtroActual === 'hoy') return diffDias === 0 && hoy.getDate() === fechaNota.getDate();
+    if (filtroActual === 'semana') return diffDias < 7;
+    return diffDias < 31;
+  });
 
-        // Alumnos en riesgo académico por evaluaciones parciales
-        if (tipo === 'riesgo_academico_parcial') {
-            const ciclo = await getCicloActivo(db);
-            const { data: evaluaciones } = await supabase
-                .from('evaluaciones_parciales')
-                .select('*')
-                .eq('ciclo_escolar', ciclo);
-            if (!evaluaciones || evaluaciones.length === 0) return res.json([]);
-
-            const enRiesgo = evaluaciones.filter(e =>
-                e.materias && Array.isArray(e.materias) && e.materias.length > 0 &&
-                e.materias.some(m => parseFloat(m.calif) <= 6)
-            );
-            if (enRiesgo.length === 0) return res.json([]);
-
-            const ids = [...new Set(enRiesgo.map(e => e.id_alumno))];
-            const { data: alumnos } = await supabase
-                .from('alumnos')
-                .select('id_alumno, nombre, apellidos, grado, grupo')
-                .in('id_alumno', ids)
-                .eq('ciclo_escolar', ciclo)
-                .order('apellidos', { ascending: true });
-
-            const lista = (alumnos || []).map(a => {
-                const evals = enRiesgo.filter(e => e.id_alumno === a.id_alumno);
-                const materiasRiesgo = [];
-                evals.forEach(e => {
-                    (e.materias || []).forEach(m => {
-                        if (parseFloat(m.calif) <= 6)
-                            materiasRiesgo.push(`T${e.trimestre} ${m.sigla}:${m.calif}`);
-                    });
-                });
-                return { ...a, materias_riesgo: materiasRiesgo, total_riesgo: materiasRiesgo.length };
-            });
-            lista.sort((a, b) => b.total_riesgo - a.total_riesgo);
-            return res.json(lista);
-        }
-
-        // Alumnos a recuperación (materias con calif 5 en calificaciones finales)
-        if (tipo === 'recuperacion') {
-            const ciclo = await getCicloActivo(db);
-            const rolParam = req.query.rol || null;
-            const materiasParam = req.query.materias ? req.query.materias.split(',') : null;
-
-            const { data: cals } = await supabase
-                .from('calificaciones')
-                .select('id_alumno, trimestre, materias, recuperacion, ciclo_escolar')
-                .eq('ciclo_escolar', ciclo);
-            if (!cals || cals.length === 0) return res.json([]);
-
-            // Filtrar trimestres con materias en 5
-            const enRecuperacion = [];
-            cals.forEach(c => {
-                const materiasEn5 = (c.materias || []).filter(m => parseFloat(m.calif) === 5);
-                if (materiasEn5.length === 0) return;
-                // Filtrar por materia si aplica (docente)
-                const materiasFiltradas = materiasParam
-                    ? materiasEn5.filter(m => materiasParam.includes(m.sigla))
-                    : materiasEn5;
-                if (materiasFiltradas.length === 0) return;
-                enRecuperacion.push({
-                    id_alumno: c.id_alumno,
-                    trimestre: c.trimestre,
-                    materias_recuperacion: materiasFiltradas,
-                    recuperacion: c.recuperacion || []
-                });
-            });
-            if (enRecuperacion.length === 0) return res.json([]);
-
-            const ids = [...new Set(enRecuperacion.map(e => e.id_alumno))];
-            const { data: alumnos } = await supabase
-                .from('alumnos')
-                .select('id_alumno, nombre, apellidos, grado, grupo')
-                .in('id_alumno', ids)
-                .eq('ciclo_escolar', ciclo)
-                .eq('status', 'ACTIVO')
-                .order('apellidos', { ascending: true });
-
-            const lista = [];
-            (alumnos || []).forEach(a => {
-                const regs = enRecuperacion.filter(e => e.id_alumno === a.id_alumno);
-                regs.forEach(r => {
-                    lista.push({ ...a, trimestre: r.trimestre,
-                        materias_recuperacion: r.materias_recuperacion,
-                        recuperacion: r.recuperacion });
-                });
-            });
-            return res.json(lista);
-        }
-
-        // Alumnos con motivos de reprobación registrados
-        if (tipo === 'motivos_reprobacion') {
-            const ciclo = await getCicloActivo(db);
-            const { data: cals } = await supabase
-                .from('calificaciones')
-                .select('id_alumno, trimestre, materias, motivos_reprobacion')
-                .eq('ciclo_escolar', ciclo)
-                .not('motivos_reprobacion', 'is', null);
-            // Filtrar los que tienen al menos un motivo en el array jsonb
-            const calsConMotivos = (cals || []).filter(c =>
-                Array.isArray(c.motivos_reprobacion) && c.motivos_reprobacion.length > 0
-            );
-            if (calsConMotivos.length === 0) return res.json([]);
-
-            const ids = [...new Set(calsConMotivos.map(c => c.id_alumno))];
-            const { data: alumnos } = await supabase
-                .from('alumnos')
-                .select('id_alumno, nombre, apellidos, grado, grupo')
-                .in('id_alumno', ids)
-                .eq('ciclo_escolar', ciclo)
-                .order('apellidos', { ascending: true });
-
-            const lista = [];
-            (alumnos || []).forEach(a => {
-                const regsCal = calsConMotivos.filter(c => c.id_alumno === a.id_alumno);
-                regsCal.forEach(c => {
-                    const reprobadas = (c.materias || [])
-                        .filter(m => parseFloat(m.calif) < 6)
-                        .map(m => `${m.sigla}: ${m.calif}`).join(', ');
-                    // motivos_reprobacion es ahora un array jsonb
-                    const motivosArr = Array.isArray(c.motivos_reprobacion) ? c.motivos_reprobacion : [];
-                    // Crear una fila por cada motivo registrado
-                    if (motivosArr.length > 0) {
-                        motivosArr.forEach(mv => {
-                            lista.push({
-                                ...a,
-                                trimestre: c.trimestre,
-                                materias_reprobadas: reprobadas,
-                                motivos_reprobacion: mv.texto || '—',
-                                nombre_docente: mv.nombre || '—',
-                                materia_docente: mv.materia || '—'
-                            });
-                        });
-                    }
-                });
-            });
-            return res.json(lista);
-        }
-
-        // ── Configuración institucional ──────────────────────────────
-        if (tipo === 'config_institucional') {
-            if (req.method === 'GET') {
-                const { data } = await supabase
-                    .from('configuracion')
-                    .select('clave, valor')
-                    .in('clave', ['nombre_escuela','clave_escuela','direccion_escuela','logo_izquierdo','logo_derecho','ciclo_activo']);
-                const cfg = {};
-                (data || []).forEach(r => { cfg[r.clave] = r.valor; });
-                return res.json(cfg);
-            }
-            if (req.method === 'POST') {
-                if (usuario.rol !== 'ADMINISTRADOR')
-                    return res.status(403).json({ error: 'Solo el administrador puede modificar la configuración institucional.' });
-                const body = req.body || {};
-                const claves = ['nombre_escuela','clave_escuela','direccion_escuela','logo_izquierdo','logo_derecho','ciclo_activo'];
-                await Promise.all(
-                    claves.filter(c => body[c] !== undefined).map(clave =>
-                        db.from('configuracion')
-                            .upsert({ clave, valor: body[clave], updated_at: new Date().toISOString() })
-                    )
-                );
-                return res.json({ exito: true });
-            }
-        }
-
-        // Alumnos en riesgo disciplinario (falta grave o 3+ reportes)
-        if (tipo === 'riesgo_disciplinario') {
-            const ciclo = await getCicloActivo(db);
-            const { data: reportes } = await db
-                .from('reportes_disciplinarios')
-                .select('id_alumno, gravedad, estatus_seguimiento, seguimiento_por')
-                .eq('ciclo_escolar', ciclo)
-                .neq('gravedad', 'Positiva');
-            if (!reportes || reportes.length === 0) return res.json([]);
-
-            // Agrupar por alumno
-            const mapaAlumno = {};
-            reportes.forEach(r => {
-                if (!mapaAlumno[r.id_alumno]) mapaAlumno[r.id_alumno] = { total: 0, graves: 0, atendidos: 0, solucionados: 0 };
-                mapaAlumno[r.id_alumno].total++;
-                if (r.gravedad === 'Grave') mapaAlumno[r.id_alumno].graves++;
-                if (r.seguimiento_por) mapaAlumno[r.id_alumno].atendidos++;
-                if (r.estatus_seguimiento === 'Solucionado') mapaAlumno[r.id_alumno].solucionados++;
-            });
-
-            // Filtrar: falta grave O 3+ reportes
-            const idsEnRiesgo = Object.keys(mapaAlumno).filter(id =>
-                mapaAlumno[id].graves >= 1 || mapaAlumno[id].total >= 3
-            ).map(Number);
-
-            if (idsEnRiesgo.length === 0) return res.json([]);
-
-            const { data: alumnos } = await db
-                .from('alumnos')
-                .select('id_alumno, nombre, apellidos, grado, grupo')
-                .in('id_alumno', idsEnRiesgo)
-                .eq('ciclo_escolar', ciclo)
-                .eq('status', 'ACTIVO')
-                .order('apellidos', { ascending: true });
-
-            const lista = (alumnos || []).map(a => {
-                const m = mapaAlumno[a.id_alumno] || { total: 0, graves: 0, atendidos: 0, solucionados: 0 };
-                let estatus_seguimiento = 'Sin seguimiento';
-                if (m.atendidos > 0)
-                    estatus_seguimiento = m.solucionados >= m.atendidos ? 'Solucionado' : 'En proceso';
-                return {
-                    ...a,
-                    total_reportes:      m.total,
-                    reportes_graves:     m.graves,
-                    con_seguimiento:     m.atendidos,
-                    estatus_seguimiento,
-                };
-            });
-            return res.json(lista);
-        }
-
-        // ── EMERGENCIA ──────────────────────────────────────────
-        if (tipo === 'emergencia') {
-            // GET — consultar si hay emergencia activa
-            if (req.method === 'GET') {
-                const { data } = await supabase
-                    .from('emergencias')
-                    .select('*')
-                    .eq('activa', true)
-                    .order('fecha', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-                return res.json({ activa: !!data, emergencia: data || null });
-            }
-            // POST — activar emergencia (cualquier usuario autenticado)
-            if (req.method === 'POST') {
-                await db.from('emergencias').update({ activa: false }).eq('activa', true);
-                const { error } = await db.from('emergencias').insert({
-                    id_usuario:     usuario.id,
-                    nombre_usuario: usuario.nombre,
-                    rol:            usuario.rol,
-                    activa:         true
-                });
-                if (error) return res.status(500).json({ error: error.message });
-                return res.json({ exito: true });
-            }
-            // DELETE — desactivar (solo ADMINISTRADOR o DIRECTIVO)
-            if (req.method === 'DELETE') {
-                if (!['ADMINISTRADOR', 'DIRECTIVO'].includes(usuario.rol))
-                    return res.status(403).json({ error: 'Sin permiso para desactivar emergencia' });
-                await db.from('emergencias').update({ activa: false }).eq('activa', true);
-                return res.json({ exito: true });
-            }
-        }
-
-        // Operaciones de cierre de ciclo
-        if (tipo === 'ciclo_config' || tipo === 'ciclo_op' ||
-            tipo === 'ciclo_fichas' || tipo === 'ciclo_reportes_count' ||
-            tipo === 'ciclo_reportes_todos' || tipo === 'ciclo_calificaciones') {
-            return await handleCiclo(req, res, usuario, tipo);
-        }
-
-
-        // ── ASISTENCIA ───────────────────────────────────────────
-        if (tipo === 'asistencia') {
-            const hoy = new Date().toISOString().split('T')[0];
-
-            if (req.method === 'GET') {
-                const grado = req.query.grado;
-                const grupo = req.query.grupo;
-
-                if (grado && grupo) {
-                    // Lista de alumnos del grupo con su estado de asistencia hoy
-                    const { data: alumnos } = await supabase
-                        .from('alumnos')
-                        .select('id_alumno, apellidos, nombre')
-                        .eq('grado', parseInt(grado))
-                        .eq('grupo', grupo.toUpperCase())
-                        .order('apellidos', { ascending: true });
-
-                    const { data: asistencia } = await supabase
-                        .from('asistencia')
-                        .select('id_alumno, presente')
-                        .eq('fecha', hoy)
-                        .eq('grado', parseInt(grado))
-                        .eq('grupo', grupo.toUpperCase());
-
-                    const mapaAsist = {};
-                    (asistencia || []).forEach(a => { mapaAsist[a.id_alumno] = a.presente; });
-
-                    return res.json((alumnos || []).map(a => ({
-                        ...a,
-                        presente: mapaAsist[a.id_alumno] !== undefined ? mapaAsist[a.id_alumno] : null
-                    })));
-                } else {
-                    // Ausentes de hoy para badge de docentes
-                    const { data } = await supabase
-                        .from('asistencia')
-                        .select('id_alumno, grado, grupo, alumnos(apellidos, nombre, grado, grupo)')
-                        .eq('fecha', hoy)
-                        .eq('presente', false)
-                        .order('grado', { ascending: true });
-                    return res.json(data || []);
-                }
-            }
-
-            if (req.method === 'POST') {
-                if (!['TRABAJO SOCIAL', 'ADMINISTRADOR'].includes(usuario.rol))
-                    return res.status(403).json({ error: 'Sin permiso para registrar asistencia.' });
-
-                const { grado, grupo, alumnos: listaAlumnos, finalizado } = req.body || {};
-
-                // Llamada de finalizado sin alumnos — solo marcar como notificado
-                if (finalizado && (!listaAlumnos || listaAlumnos.length === 0)) {
-                    return res.json({ exito: true });
-                }
-
-                if (!grado || !grupo || !Array.isArray(listaAlumnos) || listaAlumnos.length === 0)
-                    return res.status(400).json({ error: 'Faltan parámetros.' });
-
-                const registros = listaAlumnos.map(a => ({
-                    fecha:          hoy,
-                    grado:          parseInt(grado),
-                    grupo:          grupo.toUpperCase(),
-                    id_alumno:      a.id_alumno,
-                    presente:       a.presente !== false,
-                    registrado_por: usuario.nombre,
-                    finalizado:     !!finalizado
-                }));
-
-                const { error } = await supabase
-                    .from('asistencia')
-                    .upsert(registros, { onConflict: 'fecha,id_alumno' });
-
-                if (error) return res.status(400).json({ error: error.message });
-                return res.json({ exito: true });
-            }
-        }
-
-        // ── FALTAS ACUMULADAS POR ALUMNO ────────────────────────
-        if (tipo === 'faltas_alumno') {
-            const id = parseInt(req.query.id);
-            if (!id || isNaN(id)) return res.status(400).json({ error: 'Falta id de alumno.' });
-
-            // Trimestres escolares — ajustar si cambia el calendario
-            const TRIMESTRES = [
-                { num: 1, inicio: '-09-01', fin: '-11-30' },
-                { num: 2, inicio: '-12-01', fin: '-02-28' },
-                { num: 3, inicio: '-03-01', fin: '-06-30' },
-            ];
-
-            const { data: faltas } = await supabase
-                .from('asistencia')
-                .select('fecha')
-                .eq('id_alumno', id)
-                .eq('presente', false)
-                .order('fecha', { ascending: true });
-
-            if (!faltas || faltas.length === 0)
-                return res.json({ total: 0, porSemana: [], porMes: [], porTrimestre: [] });
-
-            const hoy = new Date();
-            const anioActual = hoy.getFullYear();
-
-            // ── Por semana (últimas 8 semanas) ──
-            const semanas = {};
-            faltas.forEach(f => {
-                const d = new Date(f.fecha + 'T12:00:00');
-                // Lunes de esa semana
-                const dia = d.getDay();
-                const lunes = new Date(d);
-                lunes.setDate(d.getDate() - (dia === 0 ? 6 : dia - 1));
-                const key = lunes.toISOString().split('T')[0];
-                semanas[key] = (semanas[key] || 0) + 1;
-            });
-            // Últimas 8 semanas
-            const porSemana = Object.entries(semanas)
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .slice(-8)
-                .map(([fecha, faltas]) => {
-                    const d = new Date(fecha + 'T12:00:00');
-                    const label = d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-                    return { semana: label, faltas };
-                });
-
-            // ── Por mes ──
-            const meses = {};
-            const NOMBRES_MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            faltas.forEach(f => {
-                const d = new Date(f.fecha + 'T12:00:00');
-                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                meses[key] = (meses[key] || 0) + 1;
-            });
-            const porMes = Object.entries(meses)
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .map(([key, faltas]) => {
-                    const [anio, mes] = key.split('-');
-                    return { mes: `${NOMBRES_MES[parseInt(mes)-1]} ${anio}`, faltas };
-                });
-
-            // ── Por trimestre ──
-            const conteoTrim = { 1: 0, 2: 0, 3: 0 };
-            faltas.forEach(f => {
-                const d = new Date(f.fecha + 'T12:00:00');
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                const mmdd = `-${mm}-${dd}`;
-                // T2 cruza año: dic del año anterior + ene-feb del siguiente
-                const anio = d.getFullYear();
-                for (const t of TRIMESTRES) {
-                    if (t.num === 2) {
-                        if (mmdd >= '-12-01' || mmdd <= '-02-28') { conteoTrim[2]++; break; }
-                    } else {
-                        if (mmdd >= t.inicio && mmdd <= t.fin) { conteoTrim[t.num]++; break; }
-                    }
-                }
-            });
-            const porTrimestre = [1,2,3].map(n => ({ trimestre: `T${n}`, faltas: conteoTrim[n] }));
-
-            return res.json({
-                total: faltas.length,
-                porSemana,
-                porMes,
-                porTrimestre
-            });
-        }
-
-        // ── ASISTENCIA POR FECHA (para reporte) ─────────────────
-        if (tipo === 'asistencia_fecha') {
-            const fecha = req.query.fecha;
-            if (!fecha) return res.status(400).json({ error: 'Falta parámetro fecha.' });
-            const { data } = await supabase
-                .from('asistencia')
-                .select('*, alumnos(apellidos, nombre, grado, grupo)')
-                .eq('fecha', fecha)
-                .order('grado', { ascending: true });
-            return res.json(data || []);
-        }
-
-        // ── RESET DE DATOS ───────────────────────────────────────
-        if (tipo === 'reset') {
-            if (req.method !== 'POST')
-                return res.status(405).json({ error: 'Método no permitido.' });
-            if (usuario.rol !== 'ADMINISTRADOR')
-                return res.status(403).json({ error: 'Solo el administrador puede ejecutar un reset.' });
-
-            const { tablas, confirmacion } = req.body || {};
-            if (confirmacion !== 'CONFIRMAR')
-                return res.status(400).json({ error: 'Confirmación inválida.' });
-            if (!Array.isArray(tablas) || tablas.length === 0)
-                return res.status(400).json({ error: 'Selecciona al menos una tabla.' });
-
-            const TABLAS_PERMITIDAS = [
-                'reportes_disciplinarios', 'evaluaciones_parciales', 'expedientes_medicos',
-                'visitas_enfermeria', 'justificantes_medicos', 'asistencia',
-                'logs_actividad', 'calificaciones', 'datos_socioeconomicos', 'emergencias'
-            ];
-
-            const tablasInvalidas = tablas.filter(t => !TABLAS_PERMITIDAS.includes(t));
-            if (tablasInvalidas.length > 0)
-                return res.status(400).json({ error: `Tablas no permitidas: ${tablasInvalidas.join(', ')}` });
-
-            const errores  = [];
-            const exitosas = [];
-
-            for (const tabla of tablas) {
-                const { error } = await db.rpc('truncate_tabla', { nombre_tabla: tabla });
-                if (error) errores.push(`${tabla}: ${error.message}`);
-                else exitosas.push(tabla);
-            }
-
-            // Registrar en logs (si logs_actividad no fue truncada)
-            if (!exitosas.includes('logs_actividad')) {
-                await db.from('logs_actividad').insert([{
-                    id_usuario:     usuario.id,
-                    nombre_usuario: usuario.nombre,
-                    rol:            usuario.rol,
-                    accion:         'RESET_DATOS',
-                    detalle:        `Tablas limpiadas: ${exitosas.join(', ')}`,
-                    ip:             req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
-                    fecha:          new Date().toISOString()
-                }]);
-            }
-
-            if (errores.length > 0 && exitosas.length === 0)
-                return res.status(500).json({ error: errores.join('; ') });
-            return res.json({ exito: true, exitosas, errores });
-        }
-
-        res.status(400).json({ error: 'Tipo no válido' });
-    } catch (e) { res.status(500).json({ error: 'Error en dashboard' }); }
-};
-
-
-// ── OPERACIONES DE CIERRE DE CICLO ──────────────────────────
-async function handleCiclo(req, res, usuario, operacion) {
-    if (usuario.rol !== 'ADMINISTRADOR') {
-        return res.status(403).json({ error: 'Solo el administrador puede ejecutar el cierre de ciclo.' });
+  const toggleDictado = () => {
+    setIsManualEntry(false);
+    if (isListening) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      setIsListening(false);
+      return;
     }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return showToast('No compatible', 'error');
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = true;
+    recognitionRef.current.lang = 'es-MX';
+    recognitionRef.current.onstart = () => { setIsListening(true); setTranscript(''); setResultadoIA(null); };
+    recognitionRef.current.onresult = (event: any) => {
+      let current = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        current += event.results[i][0].transcript;
+      }
+      setTranscript(current);
+    };
+    recognitionRef.current.onend = () => setIsListening(false);
+    recognitionRef.current.start();
+  };
 
-    // GET: leer configuración (ej. ?tipo=ciclo_config&clave=ciclo_activo)
-    if (req.method === 'GET' && operacion === 'ciclo_config') {
-        const clave = req.query.clave;
-        if (!clave) return res.status(400).json({ error: 'Falta parámetro clave' });
-        const { data, error } = await db.from('configuracion').select('valor').eq('clave', clave).single();
-        if (error || !data) return res.status(404).json({ error: 'Clave no encontrada' });
-        return res.json({ clave, valor: data.valor });
-    }
+  const safetySettings = [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  ];
 
-    // GET: todas las fichas de un ciclo (para respaldo masivo)
-    if (req.method === 'GET' && operacion === 'ciclo_fichas') {
-        const ciclo = req.query.ciclo;
-        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: alumnos3 } = await db.from('alumnos')
-            .select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
-        if (!alumnos3 || alumnos3.length === 0) return res.json([]);
-        const ids = alumnos3.map(a => a.id_alumno);
-        const { data: fichas } = await db.from('datos_socioeconomicos')
-            .select('*').in('id_alumno', ids);
-        return res.json(fichas || []);
-    }
+  const manejarOCR = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsManualEntry(false);
+    setIsProcessing(true);
+    setResultadoIA(null);
+    try {
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite", safetySettings });
+      const prompt = `Analiza esta imagen de una nota escolar (NEM). Extrae el contenido y responde UNICAMENTE con este JSON: {"contenido": "resumen legible", "grado": "1ro/2do/3ro", "grupo": "A-H", "alumnos_involucrados": "nombres", "foco_rojo": boolean}`;
+      const result = await model.generateContent([prompt, { inlineData: { data: base64Data, mimeType: file.type } }]);
+      const match = result.response.text().match(/{[^]*}/);
+      if (match) {
+        setResultadoIA(JSON.parse(match[0]));
+        showToast("✨ Foto procesada");
+      }
+    } catch (err: any) { showToast(`Error OCR: ${err.message}`, "error"); } finally { setIsProcessing(false); }
+  };
 
-    // GET: conteo de reportes por alumno de un ciclo (para respaldo)
-    if (req.method === 'GET' && operacion === 'ciclo_reportes_count') {
-        const ciclo = req.query.ciclo;
-        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: alumnos3 } = await db.from('alumnos')
-            .select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
-        if (!alumnos3 || alumnos3.length === 0) return res.json([]);
-        const ids = alumnos3.map(a => a.id_alumno);
-        const { data: reportes } = await db.from('reportes_disciplinarios')
-            .select('id_alumno').in('id_alumno', ids).eq('ciclo_escolar', ciclo);
-        // Agrupar conteo por id_alumno
-        const conteo = {};
-        (reportes || []).forEach(r => { conteo[r.id_alumno] = (conteo[r.id_alumno] || 0) + 1; });
-        return res.json(ids.map(id => ({ id_alumno: id, count: conteo[id] || 0 })));
-    }
+  const procesarVozIA = async () => {
+    if (!transcript) return;
+    setIsProcessing(true);
+    try {
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite", safetySettings });
+      
+      const prompt = `[EXTRACTOR TÉCNICO]
+      ENTRADA: <<< ${transcript} >>>
+      TAREA: Extraer JSON con contenido literal entre <<< >>>.
+      
+      REGLAS DE CLASIFICACIÓN:
+      - GRADO: (1ro-3ro)
+      - GRUPO: (A-H). FONÉTICA: [be=B, de=D, ce=C, ge=G].
+      - ALUMNOS: (Nombres o null)
+      - CONSIGNAS: (Tema o null)
+      - FOCO ROJO: boolean (Criterio estricto de riesgo)
+      - SEGUIMIENTO: boolean (requiere_seguimiento)
 
-    // GET: todos los reportes de un ciclo (para backup completo)
-    if (req.method === 'GET' && operacion === 'ciclo_reportes_todos') {
-        const ciclo = req.query.ciclo;
-        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: alumnos } = await db.from('alumnos')
-            .select('id_alumno, apellidos, nombre').eq('ciclo_escolar', ciclo);
-        const ids = (alumnos || []).map(a => a.id_alumno);
-        if (ids.length === 0) return res.json([]);
-        const mapaAlumnos = {};
-        (alumnos || []).forEach(a => { mapaAlumnos[a.id_alumno] = a.apellidos + ' ' + a.nombre; });
-        const { data: reportes } = await db.from('reportes_disciplinarios')
-            .select('*').in('id_alumno', ids).order('fecha', { ascending: false });
-        const { data: usuariosDB } = await db.from('usuarios').select('id_usuario, nombre_completo');
-        const { data: personal }   = await db.from('personal').select('id_personal, nombre_completo');
-        const mapaU = {}; const mapaP = {};
-        (usuariosDB || []).forEach(u => { mapaU[u.id_usuario]  = u.nombre_completo; });
-        (personal   || []).forEach(p => { mapaP[p.id_personal] = p.nombre_completo; });
-        return res.json((reportes || []).map(r => ({
-            ...r,
-            nombre_alumno: mapaAlumnos[r.id_alumno] || '',
-            nombre_reporta: r.id_usuario ? (mapaU[r.id_usuario] || '') : (mapaP[r.id_personal] || '')
-        })));
-    }
+      FORMATO JSON ESPERADO:
+      {
+         "contenido": "texto literal",
+         "grado": "VALOR",
+         "grupo": "LETRA",
+         "alumnos_involucrados": "nombres o null",
+         "consignas_relacionadas": "tema o null",
+         "foco_rojo": boolean,
+         "requiere_seguimiento": boolean
+      }`;
 
-    // GET: todas las calificaciones de un ciclo (para backup completo)
-    if (req.method === 'GET' && operacion === 'ciclo_calificaciones') {
-        const ciclo = req.query.ciclo;
-        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: cals } = await db.from('calificaciones')
-            .select('*').eq('ciclo_escolar', ciclo);
-        return res.json(cals || []);
-    }
+      const result = await model.generateContent(prompt);
+      const match = result.response.text().match(/\{[\s\S]*\}/);
+      
+      if (match) {
+        let data = JSON.parse(match[0]);
+        if (data.contenido) {
+          data.contenido = data.contenido.replace(/bateador/gi, "vapeador");
+          data.contenido = data.contenido.replace(/bateadores/gi, "vapeadores");
+        }
+        setResultadoIA(data);
+      }
+    } catch (err: any) { showToast(`Error IA: ${err.message}`, "error"); } finally { setIsProcessing(false); }
+  };
 
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+  const guardarNota = async () => {
+    if (!resultadoIA) return;
+    setIsProcessing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) throw new Error("Sesión expirada");
+      const focoRojoBooleano = resultadoIA.foco_rojo === true || resultadoIA.foco_rojo === "true";
+      let tipoEntrada = isManualEntry ? 'texto_directo' : (transcript ? 'voz' : 'ocr');
 
-    const { suboperacion } = req.body || {};
+      const { error } = await supabase.from('notas_bitacora').insert([{
+        docente_id: session.user.id,
+        contenido: String(resultadoIA.contenido || ''),
+        grado: String(resultadoIA.grado || ''),
+        grupo: String(resultadoIA.grupo || ''),
+        alumnos_involucrados: String(resultadoIA.alumnos_involucrados || ''),
+        foco_rojo: focoRojoBooleano,
+        tipo_entrada: tipoEntrada
+      }]);
 
-    if (suboperacion === 'eliminar_egresados') {
-        const { ciclo } = req.body;
-        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: egresados, error: errE } = await supabase
-            .from('alumnos').select('id_alumno').eq('grado', 3).eq('ciclo_escolar', ciclo);
-        if (errE) return res.status(500).json({ error: errE.message });
-        if (!egresados || egresados.length === 0) return res.json({ eliminados: 0 });
-        const ids = egresados.map(a => a.id_alumno);
-        await db.from('calificaciones').delete().in('id_alumno', ids);
-        await db.from('reportes_disciplinarios').delete().in('id_alumno', ids);
-        await db.from('datos_socioeconomicos').delete().in('id_alumno', ids);
-        const { error: errDel } = await db.from('alumnos').delete().in('id_alumno', ids);
-        if (errDel) return res.status(500).json({ error: errDel.message });
-        await db.from('logs_actividad').insert([{
-            id_usuario: usuario.id_usuario, nombre_usuario: usuario.nombre_completo, rol: usuario.rol,
-            accion: 'CIERRE_CICLO_EGRESADOS', detalle: `Eliminados ${ids.length} egresados del ciclo ${ciclo}`,
-            ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown', fecha: new Date().toISOString()
-        }]);
-        return res.json({ eliminados: ids.length });
-    }
+      if (error) throw error;
+      showToast('✅ Guardado con éxito');
+      setResultadoIA(null); setTranscript(''); setIsManualEntry(false);
+      setTimeout(() => cargarDatosIniciales(), 500);
+    } catch (err: any) { showToast(`Error DB: ${err.message}`, 'error'); } finally { setIsProcessing(false); }
+  };
 
-    if (suboperacion === 'promover') {
-        const { de, a, ciclo } = req.body;
-        if (!de || !a || !ciclo) return res.status(400).json({ error: 'Faltan parámetros' });
-        if (![1, 2].includes(Number(de)) || ![2, 3].includes(Number(a)))
-            return res.status(400).json({ error: 'Grados inválidos' });
-        const { data: actualizados, error: errP } = await supabase
-            .from('alumnos').update({ grado: Number(a) })
-            .eq('grado', Number(de)).eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
-        if (errP) return res.status(500).json({ error: errP.message });
-        return res.json({ promovidos: actualizados?.length || 0 });
-    }
+  const exportarBitacora = async () => {
+    if (notasFiltradas.length === 0) return showToast('No hay notas para exportar', 'error');
+    setIsProcessing(true);
+    try {
+      const fechaHoy = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '_');
+      const nombreArchivo = `Bitacora_NEM_${fechaHoy}.pdf`;
+      const htmlContent = `<html><head><style>body { font-family: 'Calibri', sans-serif; padding: 40px; color: #1e293b; } .header { border-bottom: 3px solid #2563eb; padding-bottom: 10px; text-align: center; } .registro { margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; } .firmas { margin-top: 50px; display: flex; justify-content: space-around; } .firma-box { border-top: 2px solid #000; width: 40%; text-align: center; padding-top: 5px; font-size: 12px; }</style></head><body><div class="header"><h2>REPORTE OFICIAL DE BITÁCORA</h2><p>Planeador NEM Pro</p></div><p><strong>DOCENTE:</strong> ${nombreDocente}<br><strong>FECHA:</strong> ${new Date().toLocaleDateString()}</p>${notasFiltradas.map((n, i) => `<div class="registro"><strong>#${i + 1} - ${n.grado} ${n.grupo}</strong> [${n.foco_rojo ? 'RIESGO' : 'ESTÁNDAR'}]<br>${n.contenido}<br><small>Alumnos: ${n.alumnos_involucrados}</small></div>`).join('')}<div class="firmas"><div class="firma-box">FIRMA DOCENTE</div><div class="firma-box">SELLO Y FIRMA DIRECTOR</div></div></body></html>`;
+      const win = window.open('', '', 'width=900,height=700');
+      if (win) {
+        win.document.write(htmlContent); win.document.close(); win.document.title = nombreArchivo;
+        setTimeout(() => { win.print(); win.close(); }, 500);
+      }
+    } catch (err) { showToast('Error al exportar', 'error'); } finally { setIsProcessing(false); }
+  };
 
-    if (suboperacion === 'resetear_fichas') {
-        const { ciclo } = req.body;
-        if (!ciclo) return res.status(400).json({ error: 'Falta ciclo' });
-        const { data: actualizados, error: errR } = await supabase
-            .from('alumnos').update({ ficha_completada: false })
-            .eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
-        if (errR) return res.status(500).json({ error: errR.message });
-        return res.json({ reseteadas: actualizados?.length || 0 });
-    }
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] p-6 pb-24 font-sans max-w-md mx-auto relative overflow-x-hidden selection:bg-blue-200">
+      <style>{`* { font-family: 'Calibri', 'Inter', sans-serif !important; }`}</style>
+      
+      {/* Toast Notificación Premium (Glassmorphism) */}
+      {toast && (
+        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-md font-semibold text-[13px] flex flex-col items-center gap-3 min-w-[300px] transition-all duration-300 animate-in slide-in-from-top-4 border ${toast.tipo === 'success' ? 'bg-white/95 text-slate-800 border-slate-200/60' : 'bg-rose-600/95 text-white border-rose-500'}`}>
+          <span className="flex items-center gap-2">{toast.tipo === 'success' && <span className="text-emerald-500 text-lg">●</span>} {toast.mensaje}</span>
+          {toast.tipo === 'confirm' && (
+            <div className="flex gap-3 w-full mt-1">
+              <button onClick={() => { if(toast.mensaje.includes('reiniciar')) reiniciarCiclo(); else ejecutarEliminacion(toast.id!); setToast(null); }} className="flex-1 bg-rose-500 hover:bg-rose-600 px-4 py-2 rounded-xl text-white font-bold transition-colors shadow-sm">Confirmar</button>
+              <button onClick={() => setToast(null)} className="flex-1 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-slate-700 font-semibold transition-colors">Cancelar</button>
+            </div>
+          )}
+        </div>
+      )}
 
-    if (suboperacion === 'activar_ciclo') {
-        const { nuevoCiclo } = req.body;
-        if (!nuevoCiclo || !/^\d{4}-\d{4}$/.test(nuevoCiclo))
-            return res.status(400).json({ error: 'Formato de ciclo inválido' });
-        const { setCicloActivo } = require('./_lib');
-        try { await setCicloActivo(nuevoCiclo, db); } catch(e) { return res.status(500).json({ error: e.message }); }
-        await db.from('logs_actividad').insert([{
-            id_usuario: usuario.id_usuario, nombre_usuario: usuario.nombre_completo, rol: usuario.rol,
-            accion: 'CIERRE_CICLO_ACTIVAR', detalle: `Ciclo activado: ${nuevoCiclo}`,
-            ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown', fecha: new Date().toISOString()
-        }]);
-        return res.json({ exito: true, cicloActivo: nuevoCiclo });
-    }
+      <header className="mb-10 flex justify-between items-start pt-2">
+        <div>
+          <h1 onClick={() => setIsEditingName(true)} className="text-[26px] leading-none font-extrabold text-slate-800 tracking-tight flex items-center gap-2 cursor-pointer group">
+            {isEditingName ? (
+              <input autoFocus className="border-b-2 border-blue-500 bg-transparent outline-none w-44 text-slate-800 placeholder-slate-400" placeholder="Tu nombre..." onBlur={(e) => guardarNombre(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && guardarNombre(e.currentTarget.value)}/>
+            ) : (nombreDocente || 'Tu Bitácora')}
+            {!isEditingName && <span className="text-slate-300 group-hover:text-blue-500 transition-colors text-sm">✎</span>}
+          </h1>
+          <p className="text-blue-600/80 font-semibold text-[11px] uppercase mt-2 tracking-[0.15em]">NEM Pro Digital</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <button onClick={() => showToast(`¿Reiniciar vista de ${filtroActual}?`, 'confirm')} className="bg-white p-2.5 rounded-full border border-slate-200/60 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all text-slate-600">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </button>
+          <button onClick={exportarBitacora} className="bg-slate-800 hover:bg-slate-900 px-4 py-2.5 rounded-full shadow-md text-white font-semibold text-[12px] tracking-wide flex items-center gap-1.5 transition-all active:scale-95">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            PDF
+          </button>
+        </div>
+      </header>
 
-    return res.status(400).json({ error: `Suboperacion desconocida: ${suboperacion}` });
+      <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={manejarOCR} className="hidden" />
+
+      <section className="grid grid-cols-3 gap-4 mb-10">
+        <button onClick={toggleDictado} className={`aspect-square rounded-3xl border flex flex-col items-center justify-center transition-all duration-300 ease-out shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] active:scale-95 ${isListening ? 'border-rose-200 bg-rose-50 shadow-rose-100' : 'border-slate-100 bg-white'}`}>
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-2 transition-colors ${isListening ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-200' : 'bg-slate-50 text-slate-700'}`}>
+            {isListening ? '⏹️' : '🎙️'}
+          </div>
+          <span className={`text-[12px] font-bold tracking-wide ${isListening ? 'text-rose-700' : 'text-slate-600'}`}>{isListening ? 'Parar' : 'Dictar'}</span>
+        </button>
+
+        <button onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-3xl bg-white border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ease-out">
+          <div className="w-14 h-14 rounded-full bg-slate-50 text-slate-700 flex items-center justify-center text-2xl mb-2">📷</div>
+          <span className="text-[12px] font-bold tracking-wide text-slate-600">Foto</span>
+        </button>
+
+        <button onClick={() => { setIsManualEntry(true); setTranscript(''); setResultadoIA(null); }} className={`aspect-square rounded-3xl border flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ease-out shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${isManualEntry ? 'border-blue-200 bg-blue-50' : 'border-slate-100 bg-white'}`}>
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-2 ${isManualEntry ? 'bg-blue-500 text-white shadow-lg shadow-blue-200' : 'bg-slate-50 text-slate-700'}`}>✍️</div>
+          <span className={`text-[12px] font-bold tracking-wide ${isManualEntry ? 'text-blue-700' : 'text-slate-600'}`}>Manual</span>
+        </button>
+      </section>
+
+      {isProcessing && (
+        <div className="mb-8 p-6 bg-slate-800 rounded-3xl text-white text-center font-semibold text-[13px] tracking-widest shadow-lg animate-pulse flex items-center justify-center gap-3">
+          <span className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></span> PROCESANDO IA
+        </div>
+      )}
+
+      {(transcript || resultadoIA || isManualEntry) && (
+        <div className="mb-10 p-6 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex justify-between items-center mb-5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100">Vista Previa</span>
+            <button onClick={() => {setTranscript(''); setResultadoIA(null); setIsManualEntry(false);}} className="text-rose-500 font-bold text-[12px] hover:bg-rose-50 px-3 py-1 rounded-full transition-colors">Cancelar ✕</button>
+          </div>
+          
+          {isManualEntry && !resultadoIA ? (
+            <textarea autoFocus value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Escribe los detalles del reporte aquí..." className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl p-5 text-[15px] text-slate-700 font-medium min-h-[120px] outline-none focus:border-blue-400 focus:bg-white transition-all mb-5 shadow-inner placeholder:text-slate-400"/>
+          ) : (
+            <div className="bg-slate-50/80 rounded-2xl p-5 mb-6 border border-slate-100">
+              <p className="text-slate-700 font-medium text-[15px] leading-relaxed">"{resultadoIA?.contenido || transcript}"</p>
+            </div>
+          )}
+
+          {resultadoIA ? (
+            <button onClick={guardarNota} disabled={isProcessing} className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-[13px] tracking-wide shadow-lg shadow-emerald-200 transition-all active:scale-[0.98]">
+              Guardar en Bitácora
+            </button>
+          ) : (
+            transcript.trim() !== '' && (
+              <button onClick={procesarVozIA} disabled={isProcessing} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[13px] tracking-wide shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                Estructurar con IA <span className="text-lg">✨</span>
+              </button>
+            )
+          )}
+        </div>
+      )}
+
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-6 px-1">
+          <h2 className="text-[20px] font-extrabold text-slate-800 flex items-center gap-2">
+            Historial
+            <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold border border-slate-200">{notasFiltradas.length}</span>
+          </h2>
+          <div className="flex bg-slate-100 p-1.5 rounded-full border border-slate-200/60 shadow-inner">
+            {['hoy', 'semana', 'mes'].map((f) => (
+              <button key={f} onClick={() => setFiltroActual(f as any)} className={`text-[11px] font-bold px-4 py-1.5 rounded-full capitalize transition-all duration-200 ${filtroActual === f ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}>{f}</button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="space-y-5">
+          {notasFiltradas.length === 0 ? (
+             <div className="text-center py-12 px-4 bg-white rounded-3xl border border-slate-100 border-dashed">
+               <p className="text-slate-400 font-medium text-sm">No hay registros en este periodo.</p>
+             </div>
+          ) : (
+            notasFiltradas.slice(0, seccionesExpandidas[filtroActual] ? undefined : 3).map((n) => (
+              <div key={n.id} className={`p-6 rounded-3xl border relative transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] group ${n.foco_rojo ? 'bg-rose-50/50 border-rose-100 shadow-sm' : 'bg-white border-slate-100 shadow-[0_2px_15px_rgb(0,0,0,0.03)]'}`}>
+                
+                <button onClick={() => showToast('¿Eliminar registro permanentemente?', 'confirm', n.id)} className="absolute top-5 right-5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-full transition-colors opacity-0 group-hover:opacity-100">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full border ${getGradoStyle(n.grado)}`}>
+                    {n.grado} {n.grupo}
+                  </span>
+                  {n.foco_rojo && (
+                    <span className="text-[10px] font-extrabold text-rose-600 uppercase tracking-widest bg-rose-100 px-3 py-1.5 rounded-full border border-rose-200 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span> Riesgo
+                    </span>
+                  )}
+                  <span className="text-[11px] font-medium text-slate-400 ml-auto mr-8">
+                    {new Date(n.creado_en).toLocaleString('es-MX', {day: 'numeric', month: 'short', hour:'2-digit', minute:'2-digit', hour12:true})}
+                  </span>
+                </div>
+                
+                <p className={`text-[15px] font-medium leading-relaxed mb-4 ${n.foco_rojo ? 'text-slate-800' : 'text-slate-700'}`}>
+                  {n.contenido}
+                </p>
+                
+                {n.alumnos_involucrados && (
+                  <div className="flex items-center gap-2">
+                     <span className="text-slate-400 text-sm">👤</span>
+                     <span className="text-[12px] font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                       {n.alumnos_involucrados}
+                     </span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+          
+          {notasFiltradas.length > 3 && (
+            <button onClick={() => setSeccionesExpandidas({...seccionesExpandidas, [filtroActual]: !seccionesExpandidas[filtroActual]})} className="w-full py-4 text-[12px] font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-colors">
+              {seccionesExpandidas[filtroActual] ? 'Mostrar menos' : `Cargar ${notasFiltradas.length - 3} registros más`}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
