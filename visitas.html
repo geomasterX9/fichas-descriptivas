@@ -235,7 +235,9 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 <script>
   verificarSesion();
   const rol    = localStorage.getItem('rolActivo') || '';
-  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  const nombreCorto   = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  const nombreCompleto = localStorage.getItem('nombreActivo') || nombreCorto;
+  const nombre = nombreCorto;
   document.getElementById('headerNombre').textContent = nombre;
 
   let alumnoActual = null;
@@ -327,6 +329,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           </div>
           <div class="historial-pase-motivo">${p.motivo}</div>
           <div class="historial-pase-sub">Recoge: ${p.quien_recoge||'—'} (${p.parentesco||'—'}) · Emitido por: ${p.emitido_por||'—'}</div>
+          <button onclick='reimprimir(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="margin-top:8px;background:none;border:1.5px solid #7c3aed;color:#7c3aed;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;">🖨️ Reimprimir</button>
         </div>`).join('') : '<div class="estado-vacio">Sin pases registrados</div>';
     } catch(e) {}
   }
@@ -376,13 +379,28 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           quien:       document.getElementById('p-quien').value.trim().toUpperCase(),
           parentesco:  document.getElementById('p-parentesco').value.trim().toUpperCase(),
           tipo:        'MEDICO',
-          emitidoPor:  nombre
+          emitidoPor:  nombreCompleto
         });
       } else {
         document.getElementById('errPase').textContent = '❌ ' + (data.error||'Error');
       }
     } catch(e) { document.getElementById('errPase').textContent = '❌ Error de conexión'; }
     btn.disabled = false; btn.textContent = '💾 Guardar y Generar Pase';
+  }
+
+  async function reimprimir(p) {
+    // Reconstruir objeto para imprimirPase desde el historial guardado
+    await imprimirPase({
+      alumno:      `${alumnoActual.apellidos} ${alumnoActual.nombre}`,
+      grado:       alumnoActual.grado,
+      grupo:       alumnoActual.grupo,
+      motivo:      p.motivo,
+      tipo:        'MEDICO',
+      hora:        p.hora_salida || '',
+      quien:       p.quien_recoge || '',
+      parentesco:  p.parentesco  || '',
+      emitidoPor:  p.emitido_por || nombreCompleto
+    });
   }
 
   async function imprimirPase(d) {

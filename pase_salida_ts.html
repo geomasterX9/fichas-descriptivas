@@ -262,6 +262,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
           <div class="historial-pase-fecha">📅 ${p.fecha} ${p.hora_salida||''} · ${p.tipo==='MEDICO'?'🏥 Médico':'👨‍👩‍👧 Familiar'}</div>
           <div class="historial-pase-motivo">${p.motivo}</div>
           <div class="historial-pase-sub">Recoge: ${p.quien_recoge||'—'} (${p.parentesco||'—'}) · ${p.emitido_por||'—'}</div>
+          <button onclick='reimprimir(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="margin-top:8px;background:none;border:1.5px solid #f59e0b;color:#f59e0b;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;">🖨️ Reimprimir</button>
         </div>`).join('') : '<div class="estado-vacio">Sin pases registrados</div>';
     } catch(e) {}
   }
@@ -289,12 +290,26 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
         document.getElementById('p-quien').value     = '';
         document.getElementById('p-parentesco').value = '';
         await cargarPases();
-        await imprimirPase({ alumno:`${alumnoActual.apellidos} ${alumnoActual.nombre}`, grado:alumnoActual.grado, grupo:alumnoActual.grupo, motivo:motivo.toUpperCase(), tipo, hora, quien, parentesco });
+        await imprimirPase({ alumno:`${alumnoActual.apellidos} ${alumnoActual.nombre}`, grado:alumnoActual.grado, grupo:alumnoActual.grupo, motivo:motivo.toUpperCase(), tipo, hora, quien, parentesco, emitidoPor:nombreCompleto });
       } else {
         document.getElementById('errPase').textContent = '❌ ' + (data.error||'Error');
       }
     } catch(e) { document.getElementById('errPase').textContent = '❌ Error de conexión'; }
     btn.disabled=false; btn.textContent='💾 Guardar y Generar Pase';
+  }
+
+  async function reimprimir(p) {
+    await imprimirPase({
+      alumno:      `${alumnoActual.apellidos} ${alumnoActual.nombre}`,
+      grado:       alumnoActual.grado,
+      grupo:       alumnoActual.grupo,
+      motivo:      p.motivo,
+      tipo:        p.tipo,
+      hora:        p.hora_salida || '',
+      quien:       p.quien_recoge || '',
+      parentesco:  p.parentesco  || '',
+      emitidoPor:  p.emitido_por || nombreCompleto
+    });
   }
 
   async function imprimirPase(d) {
