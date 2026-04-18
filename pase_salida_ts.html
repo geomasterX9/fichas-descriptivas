@@ -202,6 +202,14 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
 
   let alumnoActual = null;
   let todosAlumnos = [];
+  let cfgInstitucional = {};
+
+  (async () => {
+    try {
+      const r = await apiFetch('/api/dashboard?tipo=config_institucional');
+      if (r) cfgInstitucional = await r.json();
+    } catch(e) {}
+  })();
 
   (async () => {
     try {
@@ -290,7 +298,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
         document.getElementById('p-quien').value     = '';
         document.getElementById('p-parentesco').value = '';
         await cargarPases();
-        await imprimirPase({ alumno:`${alumnoActual.apellidos} ${alumnoActual.nombre}`, grado:alumnoActual.grado, grupo:alumnoActual.grupo, motivo:motivo.toUpperCase(), tipo, hora, quien, parentesco, emitidoPor:nombreCompleto });
+        await imprimirPase({ alumno:`${alumnoActual.apellidos} ${alumnoActual.nombre}`, grado:alumnoActual.grado, grupo:alumnoActual.grupo, motivo:motivo.toUpperCase(), tipo, hora, quien, parentesco, emitidoPor:nombreCompleto, cfg:cfgInstitucional });
       } else {
         document.getElementById('errPase').textContent = '❌ ' + (data.error||'Error');
       }
@@ -308,20 +316,20 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
       hora:        p.hora_salida || '',
       quien:       p.quien_recoge || '',
       parentesco:  p.parentesco  || '',
-      emitidoPor:  p.emitido_por || nombreCompleto
+      emitidoPor:  p.emitido_por || nombreCompleto,
+      cfg:         cfgInstitucional
     });
   }
 
   async function imprimirPase(d) {
-    let cfg={};
-    try { const r=await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg=await r.json(); } catch(e){}
+    const cfg = d.cfg || cfgInstitucional || {};
     const invertirNombre = n => {
       if (!n) return '';
       const p = n.trim().split(' ').filter(Boolean);
       if (p.length <= 1) return n;
       return p[p.length-1] + ' ' + p.slice(0,-1).join(' ');
     };
-    const firmaEmitidor = invertirNombre(d.emitidoPor || nombre);
+    const firmaEmitidor = invertirNombre(d.emitidoPor || nombreCompleto);
     const logoIzq = cfg.logo_izquierdo?'<img src="'+cfg.logo_izquierdo+'" style="max-height:55px;max-width:65px;">':'';
     const logoDer = cfg.logo_derecho  ?'<img src="'+cfg.logo_derecho+'"   style="max-height:55px;max-width:65px;">':'';
     const hoy = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
@@ -342,7 +350,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
       '<div class="hdr">'+
         '<div style="width:70px;text-align:center;">'+logoIzq+'</div>'+
         '<div style="flex:1;text-align:center;"><div class="inst">'+(cfg.nombre_escuela||'ESCUELA SECUNDARIA')+'</div>'+
-        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div>'+(cfg.direccion_escuela?'<div class="sub">'+cfg.direccion_escuela+'</div>':'')+'</div>'+
+        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div></div>'+
         '<div style="width:70px;text-align:center;">'+logoDer+'</div>'+
       '</div>'+
       '<div class="titulo">Pase de Salida</div>'+
@@ -357,7 +365,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
       '<div class="nota">El alumno(a) sale de las instalaciones bajo la responsabilidad del familiar o tutor que lo recoge.</div>'+
       '<div style="text-align:center;font-size:10px;margin-bottom:6px;margin-top:16px;">ATENTAMENTE</div>'+
       '<div class="firmas">'+
-        '<div class="fb"><div class="fl"></div><div class="ft">'+firmaEmitidor+'<br>TRABAJO SOCIAL</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">'+nombre+'<br>TRABAJO SOCIAL</div></div>'+
         '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASISTENCIA EDUCATIVA</div></div>'+
       '</div></body></html>';
     const win = window.open('','_blank');
