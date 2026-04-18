@@ -124,6 +124,7 @@
         .badge-activo  { background: var(--verde-claro); color: var(--verde); }
         .badge-baja    { background: #f1f5f9; color: #475569; }
         .badge-grado   { background: var(--azul-claro); color: var(--azul); }
+        .badge-axt     { background: #fdf4ff; color: #7c3aed; border: 1px solid #e9d5ff; }
 
         .acciones-tarjeta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .btn-abrir {
@@ -322,6 +323,13 @@
                 </div>
             </div>
         </div>
+        <div style="margin:10px 0 4px; padding:10px 14px; background:#fdf4ff; border-radius:10px; border:1px solid #e9d5ff; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="chkAxt" style="width:16px;height:16px;cursor:pointer;">
+            <div>
+                <div style="font-size:13px;font-weight:700;color:#7c3aed;">⚡ Alta Extemporánea (AXT)</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px;">Marca si el alumno se incorpora después del inicio del ciclo</div>
+            </div>
+        </div>
         <div class="modal-btns">
             <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
             <button class="btn-guardar-alumno" onclick="guardarNuevoAlumno()" id="btnGuardarAlumno">Guardar Alumno</button>
@@ -346,7 +354,9 @@
         document.getElementById('lblUsuario').innerText = nombre;
         document.getElementById('lblRol').innerText     = rolUsuario;
 
+        // Mostrar opción BAJA solo para ADMINISTRADOR
         if (rolUsuario === 'ADMINISTRADOR') {
+            document.querySelectorAll('.opcion-baja').forEach(el => el.style.display = '');
             document.getElementById('btnNuevoAlumno').style.display  = 'inline-flex';
             document.getElementById('btnRegresoAdmin').style.display = 'block';
         }
@@ -415,6 +425,7 @@
                         <div class="alumno-badges">
                             <span class="badge ${esBaja ? 'badge-baja' : 'badge-activo'}">${esBaja ? 'BAJA' : 'ACTIVO'}</span>
                             <span class="badge badge-grado">${a.grado}° "${a.grupo}"</span>
+                            ${a.es_axt ? '<span class="badge badge-axt">⚡ AXT</span>' : ''}
                         </div>
                     </div>
                     <div class="acciones-tarjeta">
@@ -432,6 +443,8 @@
 
     function abrirModal() {
         ['na_apellidos','na_nombre'].forEach(id => document.getElementById(id).value = '');
+        const chkAxt = document.getElementById('chkAxt');
+        if (chkAxt) chkAxt.checked = false;
         ['na_grado','na_grupo'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('modalNuevoAlumno').style.display = 'flex';
     }
@@ -449,7 +462,7 @@
         try {
             const res = await apiFetch('/api/alumnos', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ apellidos, nombre, grado: parseInt(grado), grupo, status: 'ACTIVO' })
+                body: JSON.stringify({ apellidos, nombre, grado: parseInt(grado), grupo, status: 'ACTIVO', es_axt: document.getElementById('chkAxt') ? document.getElementById('chkAxt').checked : false, fecha_alta: new Date().toISOString().split('T')[0] })
             });
             const data = await res.json();
             if (res.ok) { cerrarModal(); await cargarDatos(); alert(`✅ Alumno dado de alta correctamente.`); }
@@ -611,7 +624,10 @@
                 <td class="mut">${i + 1}</td>
                 <td><b>${esc(a.apellidos)} ${esc(a.nombre)}</b></td>
                 <td>${a.grado}° Grupo "${a.grupo}"</td>
-                <td class="${esBaja ? 'baja' : 'activo'}">${esBaja ? 'BAJA' : 'ACTIVO'}</td>
+                <td class="${esBaja ? 'baja' : 'activo'}">
+                  ${esBaja ? 'BAJA' : 'ACTIVO'}
+                  ${a.es_axt ? ' <span style="background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:800;">AXT</span>' : ''}
+                </td>
             </tr>`;
         });
 

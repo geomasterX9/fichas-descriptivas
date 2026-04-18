@@ -64,7 +64,12 @@ module.exports = async (req, res) => {
         let query = db.from('alumnos').select('*').eq('ciclo_escolar', ciclo);
         if (req.query.grado) query = query.eq('grado', parseInt(req.query.grado));
         if (req.query.grupo) query = query.eq('grupo', req.query.grupo.toUpperCase());
-        if (req.query.status) query = query.eq('status', req.query.status);
+        if (req.query.status) {
+            query = query.eq('status', req.query.status);
+        } else if (usuario.rol !== 'ADMINISTRADOR') {
+            // Roles que no son ADMINISTRADOR solo ven alumnos ACTIVOS
+            query = query.eq('status', 'ACTIVO');
+        }
         const { data } = await query.order('apellidos', { ascending: true });
         return res.json(data || []);
     }
