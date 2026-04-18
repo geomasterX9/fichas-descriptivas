@@ -172,6 +172,52 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   transition: border-color 0.15s; cursor: pointer;
 }
 .filtros-grupo select:focus { border-color: var(--azul); }
+
+/* ── TABS ENFERMERÍA ── */
+.enf-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.enf-tab {
+  padding:8px 16px; border-radius:10px; border:1.5px solid var(--borde);
+  font-size:12px; font-weight:700; cursor:pointer; background:var(--blanco);
+  color:var(--muted); font-family:'Outfit',sans-serif; transition:all 0.15s;
+}
+.enf-tab.activo { background:var(--azul); color:white; border-color:var(--azul); }
+.enf-tab:hover:not(.activo) { background:var(--fondo); }
+
+/* ── AUTH MED ── */
+.auth-sec { margin-bottom:14px; }
+.auth-sec-label {
+  font-size:11px; font-weight:800; text-transform:uppercase;
+  letter-spacing:0.6px; color:var(--muted); margin-bottom:8px; display:block;
+}
+.med-checks { display:flex; flex-wrap:wrap; gap:8px; }
+.med-chk {
+  display:flex; align-items:center; gap:6px;
+  background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;
+  padding:7px 12px; font-size:13px; cursor:pointer; font-family:'Outfit',sans-serif;
+}
+.med-chk input { width:15px; height:15px; cursor:pointer; }
+.contacto-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px; }
+.contacto-bloque {
+  background:var(--fondo); border-radius:10px; border:1px solid var(--borde); padding:12px;
+}
+.contacto-bloque h5 {
+  font-size:12px; font-weight:800; color:var(--azul);
+  margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--borde);
+}
+.campo-am { margin-bottom:7px; }
+.campo-am label { font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:3px; }
+.campo-am input {
+  width:100%; padding:7px 10px; border:1.5px solid var(--borde);
+  border-radius:8px; font-size:12px; font-family:'Outfit',sans-serif; outline:none;
+}
+.campo-am input:focus { border-color:var(--azul); }
+.btn-imprimir-auth {
+  background:var(--azul); color:white; border:none; border-radius:10px;
+  padding:10px 20px; font-size:13px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer; margin-left:8px;
+}
+.btn-imprimir-auth:hover { background:#163f6e; }
+@media (max-width:600px) { .contacto-grid { grid-template-columns:1fr; } }
 </style>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1B4F8A">
@@ -225,7 +271,14 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <button onclick="limpiarAlumno()" style="margin-left:auto; background:none; border:none; color:var(--azul); font-size:13px; font-weight:700; cursor:pointer;">Cambiar</button>
   </div>
 
-  <!-- TABS -->
+  <!-- TABS DE NAVEGACIÓN -->
+  <div class="enf-tabs" id="enfTabs" style="display:none;">
+    <button class="enf-tab activo" id="tabMedico"   onclick="cambiarPanelEnf('medico')">🩺 Expediente Médico</button>
+    <button class="enf-tab"        id="tabAuthMed"  onclick="cambiarPanelEnf('authmed')">💊 Autorización Medicamentos</button>
+    <button class="enf-tab"        id="tabVisitas"  onclick="cambiarPanelEnf('visitas')">🏥 Visitas</button>
+    <button class="enf-tab"        id="tabJust"     onclick="cambiarPanelEnf('just')">📄 Justificantes</button>
+  </div>
+
   <!-- PANEL: EXPEDIENTE MÉDICO -->
   <div class="panel" id="panelMedico" style="display:none;">
     <div class="panel-titulo">Expediente Médico</div>
@@ -269,6 +322,92 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <button class="btn-guardar" onclick="guardarMedico()" id="btnGuardarMedico">Guardar Expediente Médico</button>
     <div class="msg-ok"    id="okMedico">✅ Guardado correctamente</div>
     <div class="msg-error" id="errMedico"></div>
+  </div>
+
+  <!-- PANEL: AUTORIZACIÓN DE MEDICAMENTOS -->
+  <div class="panel" id="panelAuthMed" style="display:none;">
+    <div class="panel-titulo">💊 Autorización de Medicamentos</div>
+
+    <div class="auth-sec">
+      <span class="auth-sec-label">Tutor(a) que autoriza</span>
+      <div class="campo"><label>Nombre del padre, mamá y/o tutor(a)</label>
+        <input type="text" id="am_tutor_nombre" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+
+    <div class="auth-sec">
+      <span class="auth-sec-label">Diarrea</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_pepto_bismol"> Pepto Bismol</label>
+        <label class="med-chk"><input type="checkbox" id="am_treda"> Treda</label>
+      </div>
+    </div>
+    <div class="auth-sec">
+      <span class="auth-sec-label">Náuseas y Mareos</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_dramamine"> Dramamine</label>
+      </div>
+    </div>
+    <div class="auth-sec">
+      <span class="auth-sec-label">Dolor de Estómago</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_omeoprazol"> Omeoprazol</label>
+        <label class="med-chk"><input type="checkbox" id="am_buscapina"> Buscapina</label>
+      </div>
+    </div>
+    <div class="auth-sec">
+      <span class="auth-sec-label">Ciclo Menstrual</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_syncol"> Syncol</label>
+      </div>
+    </div>
+    <div class="auth-sec">
+      <span class="auth-sec-label">Dolor de Cabeza o Golpes</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_paracetamol"> Paracetamol</label>
+        <label class="med-chk"><input type="checkbox" id="am_naproxeno"> Naproxeno</label>
+      </div>
+    </div>
+
+    <div class="contacto-grid">
+      <div class="contacto-bloque">
+        <h5>Datos de la Madre</h5>
+        <div class="campo-am"><label>Nombre</label><input type="text" id="am_madre_nombre" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Domicilio</label><input type="text" id="am_madre_domicilio" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Tel. Celular</label><input type="tel" id="am_madre_tel_celular"></div>
+        <div class="campo-am"><label>Tel. de Casa</label><input type="tel" id="am_madre_tel_casa"></div>
+        <div class="campo-am"><label>Tel. Lugar de Trabajo</label><input type="tel" id="am_madre_tel_trabajo"></div>
+      </div>
+      <div class="contacto-bloque">
+        <h5>Datos del Padre</h5>
+        <div class="campo-am"><label>Nombre</label><input type="text" id="am_padre_nombre" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Domicilio</label><input type="text" id="am_padre_domicilio" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Tel. Celular</label><input type="tel" id="am_padre_tel_celular"></div>
+        <div class="campo-am"><label>Tel. de Casa</label><input type="tel" id="am_padre_tel_casa"></div>
+        <div class="campo-am"><label>Tel. Lugar de Trabajo</label><input type="tel" id="am_padre_tel_trabajo"></div>
+      </div>
+      <div class="contacto-bloque">
+        <h5>Datos Adicionales (1) — Emergencia</h5>
+        <div class="campo-am"><label>Nombre y Parentesco</label><input type="text" id="am_c1_nombre" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Domicilio</label><input type="text" id="am_c1_domicilio" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Tel. Celular</label><input type="tel" id="am_c1_tel_celular"></div>
+        <div class="campo-am"><label>Tel. de Casa</label><input type="tel" id="am_c1_tel_casa"></div>
+        <div class="campo-am"><label>Tel. Lugar de Trabajo</label><input type="tel" id="am_c1_tel_trabajo"></div>
+      </div>
+      <div class="contacto-bloque">
+        <h5>Datos Adicionales (2) — Emergencia</h5>
+        <div class="campo-am"><label>Nombre y Parentesco</label><input type="text" id="am_c2_nombre" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Domicilio</label><input type="text" id="am_c2_domicilio" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-am"><label>Tel. Celular</label><input type="tel" id="am_c2_tel_celular"></div>
+        <div class="campo-am"><label>Tel. de Casa</label><input type="tel" id="am_c2_tel_casa"></div>
+        <div class="campo-am"><label>Tel. Lugar de Trabajo</label><input type="tel" id="am_c2_tel_trabajo"></div>
+      </div>
+    </div>
+
+    <button class="btn-guardar" onclick="guardarAuthMed()" id="btnGuardarAuthMed">💾 Guardar Autorización</button>
+    <button class="btn-imprimir-auth" onclick="imprimirAuthMed()">🖨️ Imprimir Formulario</button>
+    <div class="msg-ok"    id="okAuthMed">✅ Guardado correctamente</div>
+    <div class="msg-error" id="errAuthMed"></div>
   </div>
 
   <!-- HISTORIAL DE EXPEDIENTES MÉDICOS RECIENTES -->
@@ -603,6 +742,148 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     } catch(e) {
       cont.innerHTML = '<p style="color:var(--rojo);font-size:13px;">Error al cargar la ficha.</p>';
     }
+  }
+
+  // ── TABS DE NAVEGACIÓN ──
+  function cambiarPanelEnf(panel) {
+    ['panelMedico','panelAuthMed'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.style.display = 'none';
+    });
+    ['tabMedico','tabAuthMed','tabVisitas','tabJust'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.classList.remove('activo');
+    });
+    if (panel === 'medico')  { document.getElementById('panelMedico').style.display='block';  document.getElementById('tabMedico').classList.add('activo');  cargarMedico(); }
+    if (panel === 'authmed') { document.getElementById('panelAuthMed').style.display='block'; document.getElementById('tabAuthMed').classList.add('activo'); cargarAuthMed(); }
+    if (panel === 'visitas') { document.getElementById('tabVisitas').classList.add('activo'); cargarVisitas(); }
+    if (panel === 'just')    { document.getElementById('tabJust').classList.add('activo');    cargarJustificantes(); }
+  }
+
+  // ── AUTORIZACIÓN DE MEDICAMENTOS ──
+  async function cargarAuthMed() {
+    if (!alumnoActual) return;
+    try {
+      const res = await apiFetch(`/api/expediente?tipo=autorizacion_med&id=${alumnoActual.id_alumno}`);
+      if (!res) return;
+      const data = await res.json();
+      if (data && data.id_autorizacion) llenarAuthMed(data);
+    } catch(e) {}
+  }
+
+  function llenarAuthMed(d) {
+    const s = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+    const c = (id,v) => { const el=document.getElementById(id); if(el) el.checked=!!v; };
+    s('am_tutor_nombre',d.tutor_nombre);
+    c('am_pepto_bismol',d.med_pepto_bismol); c('am_treda',d.med_treda);
+    c('am_dramamine',d.med_dramamine);
+    c('am_omeoprazol',d.med_omeoprazol); c('am_buscapina',d.med_buscapina);
+    c('am_syncol',d.med_syncol);
+    c('am_paracetamol',d.med_paracetamol); c('am_naproxeno',d.med_naproxeno);
+    s('am_madre_nombre',d.madre_nombre); s('am_madre_domicilio',d.madre_domicilio);
+    s('am_madre_tel_celular',d.madre_tel_celular); s('am_madre_tel_casa',d.madre_tel_casa); s('am_madre_tel_trabajo',d.madre_tel_trabajo);
+    s('am_padre_nombre',d.padre_nombre); s('am_padre_domicilio',d.padre_domicilio);
+    s('am_padre_tel_celular',d.padre_tel_celular); s('am_padre_tel_casa',d.padre_tel_casa); s('am_padre_tel_trabajo',d.padre_tel_trabajo);
+    s('am_c1_nombre',d.contacto1_nombre); s('am_c1_domicilio',d.contacto1_domicilio);
+    s('am_c1_tel_celular',d.contacto1_tel_celular); s('am_c1_tel_casa',d.contacto1_tel_casa); s('am_c1_tel_trabajo',d.contacto1_tel_trabajo);
+    s('am_c2_nombre',d.contacto2_nombre); s('am_c2_domicilio',d.contacto2_domicilio);
+    s('am_c2_tel_celular',d.contacto2_tel_celular); s('am_c2_tel_casa',d.contacto2_tel_casa); s('am_c2_tel_trabajo',d.contacto2_tel_trabajo);
+  }
+
+  async function guardarAuthMed() {
+    if (!alumnoActual) return;
+    const btn = document.getElementById('btnGuardarAuthMed');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+    const c = id => { const el=document.getElementById(id); return el?el.checked:false; };
+    const payload = {
+      id_alumno: alumnoActual.id_alumno,
+      tutor_nombre: g('am_tutor_nombre'),
+      med_pepto_bismol:c('am_pepto_bismol'), med_treda:c('am_treda'),
+      med_dramamine:c('am_dramamine'),
+      med_omeoprazol:c('am_omeoprazol'), med_buscapina:c('am_buscapina'),
+      med_syncol:c('am_syncol'),
+      med_paracetamol:c('am_paracetamol'), med_naproxeno:c('am_naproxeno'),
+      madre_nombre:g('am_madre_nombre'), madre_domicilio:g('am_madre_domicilio'),
+      madre_tel_celular:g('am_madre_tel_celular'), madre_tel_casa:g('am_madre_tel_casa'), madre_tel_trabajo:g('am_madre_tel_trabajo'),
+      padre_nombre:g('am_padre_nombre'), padre_domicilio:g('am_padre_domicilio'),
+      padre_tel_celular:g('am_padre_tel_celular'), padre_tel_casa:g('am_padre_tel_casa'), padre_tel_trabajo:g('am_padre_tel_trabajo'),
+      contacto1_nombre:g('am_c1_nombre'), contacto1_domicilio:g('am_c1_domicilio'),
+      contacto1_tel_celular:g('am_c1_tel_celular'), contacto1_tel_casa:g('am_c1_tel_casa'), contacto1_tel_trabajo:g('am_c1_tel_trabajo'),
+      contacto2_nombre:g('am_c2_nombre'), contacto2_domicilio:g('am_c2_domicilio'),
+      contacto2_tel_celular:g('am_c2_tel_celular'), contacto2_tel_casa:g('am_c2_tel_casa'), contacto2_tel_trabajo:g('am_c2_tel_trabajo'),
+    };
+    try {
+      const res = await apiFetch('/api/expediente?tipo=autorizacion_med', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.exito) {
+        const ok = document.getElementById('okAuthMed');
+        ok.style.display='block'; setTimeout(()=>ok.style.display='none',3000);
+      } else {
+        document.getElementById('errAuthMed').textContent = '❌ ' + (data.error||'Error al guardar');
+      }
+    } catch(e) { document.getElementById('errAuthMed').textContent = '❌ Error de conexión'; }
+    btn.disabled=false; btn.textContent='💾 Guardar Autorización';
+  }
+
+  async function imprimirAuthMed() {
+    if (!alumnoActual) return;
+    const g = id => { const el=document.getElementById(id); return el?(el.value||'').trim():''; };
+    const c = id => { const el=document.getElementById(id); return el?el.checked:false; };
+    const chk = v => v ? '&#9745;' : '&#9744;';
+    const campo = (lbl, val) =>
+      '<tr><td style="padding:3px 8px;font-weight:700;font-size:11px;width:160px;border:1px solid #000;">'+lbl+
+      '</td><td style="padding:3px 8px;font-size:11px;border:1px solid #000;">'+(val||'')+'</td></tr>';
+    let cfg={};
+    try { const r=await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg=await r.json(); } catch(e){}
+    const logoIzq = cfg.logo_izquierdo ? '<img src="'+cfg.logo_izquierdo+'" style="max-height:55px;max-width:65px;">' : '';
+    const logoDer = cfg.logo_derecho   ? '<img src="'+cfg.logo_derecho+'"   style="max-height:55px;max-width:65px;">' : '';
+    const html =
+      '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Autorización de Medicamentos</title>'+
+      '<style>body{font-family:Arial,sans-serif;font-size:11px;margin:1cm;color:#000;}'+
+      '.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:8px;margin-bottom:10px;}'+
+      '.inst{font-size:13px;font-weight:900;color:#1B4F8A;text-align:center;}.sub{font-size:10px;color:#444;text-align:center;}'+
+      '.tit{font-size:13px;font-weight:900;text-align:center;margin:8px 0;text-transform:uppercase;}'+
+      '.sec{font-weight:900;font-size:11px;margin:7px 0 3px;text-transform:uppercase;}'+
+      'table{width:100%;border-collapse:collapse;margin-bottom:5px;}'+
+      '.mf{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-size:11px;align-items:center;}'+
+      '.nota{font-size:10px;margin:8px 0;font-weight:700;border:1px solid #000;padding:5px;}'+
+      '.firmas{display:flex;justify-content:space-around;margin-top:25px;}'+
+      '.fb{text-align:center;width:175px;}.fl{border-bottom:1px solid #000;height:30px;margin-bottom:4px;}.ft{font-size:10px;}'+
+      '@page{margin:1cm;size:letter;}</style></head><body>'+
+      '<div class="hdr">'+
+        '<div style="width:70px;text-align:center;">'+logoIzq+'</div>'+
+        '<div style="flex:1;text-align:center;"><div class="inst">'+(cfg.nombre_escuela||'ESCUELA SECUNDARIA')+'</div>'+
+        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div></div>'+
+        '<div style="width:70px;text-align:center;">'+logoDer+'</div>'+
+      '</div>'+
+      '<div class="tit">Autorización de Medicamentos</div>'+
+      '<div style="font-size:11px;margin-bottom:7px;"><b>Alumno:</b> '+alumnoActual.apellidos+' '+alumnoActual.nombre+' &nbsp;&nbsp; <b>Grado/Grupo:</b> '+alumnoActual.grado+'° Grupo "'+alumnoActual.grupo+'"</div>'+
+      '<div style="font-size:11px;margin-bottom:7px;">YO, PAPÁ, MAMÁ Y/O TUTOR(A): <b>'+g('am_tutor_nombre')+'</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FIRMA: _______________________</div>'+
+      '<div class="sec">AUTORIZO DAR EL MEDICAMENTO, EN CASO DE PADECER:</div>'+
+      '<div class="mf"><i>DIARREA:</i> '+chk(c('am_pepto_bismol'))+' PEPTO BISMOL &nbsp; '+chk(c('am_treda'))+' TREDA</div>'+
+      '<div class="mf"><i>NÁUSEAS Y MAREOS:</i> '+chk(c('am_dramamine'))+' DRAMAMINE</div>'+
+      '<div class="mf"><i>DOLOR DE ESTÓMAGO:</i> '+chk(c('am_omeoprazol'))+' OMEOPRAZOL &nbsp; '+chk(c('am_buscapina'))+' BUSCAPINA</div>'+
+      '<div class="mf"><i>CICLO MENSTRUAL:</i> '+chk(c('am_syncol'))+' SYNCOL</div>'+
+      '<div class="mf"><i>DOLOR DE CABEZA O GOLPES:</i> '+chk(c('am_paracetamol'))+' PARACETAMOL &nbsp; '+chk(c('am_naproxeno'))+' NAPROXENO</div>'+
+      '<div class="sec">Datos de la Madre</div>'+
+      '<table>'+campo('Nombre',g('am_madre_nombre'))+campo('Domicilio',g('am_madre_domicilio'))+campo('Tel. celular',g('am_madre_tel_celular'))+campo('Tel. de casa',g('am_madre_tel_casa'))+campo('Tel. lugar de trabajo',g('am_madre_tel_trabajo'))+'</table>'+
+      '<div class="sec">Nombre del Padre</div>'+
+      '<table>'+campo('Nombre',g('am_padre_nombre'))+campo('Domicilio',g('am_padre_domicilio'))+campo('Tel. celular',g('am_padre_tel_celular'))+campo('Tel. de casa',g('am_padre_tel_casa'))+campo('Tel. lugar de trabajo',g('am_padre_tel_trabajo'))+'</table>'+
+      '<div class="sec">Datos adicionales (1) para localizar en caso de emergencia</div>'+
+      '<table>'+campo('Nombre (Parentesco)',g('am_c1_nombre'))+campo('Domicilio',g('am_c1_domicilio'))+campo('Tel. celular',g('am_c1_tel_celular'))+campo('Tel. de casa',g('am_c1_tel_casa'))+campo('Tel. lugar de trabajo',g('am_c1_tel_trabajo'))+'</table>'+
+      '<div class="sec">Datos adicionales (2) para localizar en caso de emergencia</div>'+
+      '<table>'+campo('Nombre (Parentesco)',g('am_c2_nombre'))+campo('Domicilio',g('am_c2_domicilio'))+campo('Tel. celular',g('am_c2_tel_celular'))+campo('Tel. de casa',g('am_c2_tel_casa'))+campo('Tel. lugar de trabajo',g('am_c2_tel_trabajo'))+'</table>'+
+      '<div class="nota">Nota.- Es importante que envíe a su hija (o) desayunado (a) para evitar algún inconveniente relacionado con su salud, asimismo NO mandar a su hija (o) enfermo y reportar en caso de falta.</div>'+
+      '<div style="text-align:center;font-size:10px;margin-bottom:6px;">ATENTAMENTE</div>'+
+      '<div class="firmas">'+
+        '<div class="fb"><div class="fl"></div><div class="ft">AREA DE ENFERMERÍA</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASIST. EDUCATIVA</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">Vo. Bo. DE DIRECTOR</div></div>'+
+      '</div></body></html>';
+    const win = window.open('','_blank');
+    win.document.write(html); win.document.close(); win.focus();
+    setTimeout(()=>win.print(),600);
   }
 </script>
 
