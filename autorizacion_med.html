@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autorización de Medicamentos — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul:#1B4F8A; --azul-hover:#163f6e; --azul-claro:#eff6ff;
+  --verde:#2d9b6f; --verde-claro:#f0fdf6;
+  --rojo:#e63946; --fondo:#f0f4f8; --blanco:#fff;
+  --texto:#1a2332; --muted:#64748b; --borde:#e2e8f0;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100vh; }
+.header {
+  background:var(--azul); padding:0 24px; height:62px;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 2px 12px rgba(27,79,138,0.25); position:sticky; top:0; z-index:100;
+}
+.header-left { display:flex; align-items:center; gap:12px; }
+.btn-back {
+  width:36px; height:36px; border-radius:10px;
+  background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2);
+  color:white; font-size:18px; display:flex; align-items:center;
+  justify-content:center; text-decoration:none; transition:background 0.15s;
+}
+.btn-back:hover { background:rgba(255,255,255,0.25); }
+.header-title { font-size:16px; font-weight:800; color:white; }
+.header-sub   { font-size:12px; color:rgba(255,255,255,0.7); margin-top:1px; }
+.header-nombre { font-size:13px; font-weight:700; color:white; }
+.contenido { max-width:720px; margin:0 auto; padding:28px 20px 60px; }
+
+/* BUSCADOR */
+.buscador-box {
+  background:var(--blanco); border-radius:16px; border:1px solid var(--borde);
+  padding:20px 24px; margin-bottom:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+.filtros-grupo { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.filtros-grupo select {
+  width:100%; padding:10px 14px; border:1.5px solid var(--borde);
+  border-radius:10px; font-size:13px; font-family:'Outfit',sans-serif;
+  color:var(--texto); background:var(--blanco); outline:none; cursor:pointer;
+}
+.filtros-grupo select:focus { border-color:var(--azul); }
+.buscador-box input {
+  width:100%; padding:12px 16px; border:1.5px solid var(--borde);
+  border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif;
+  color:var(--texto); outline:none;
+}
+.buscador-box input:focus { border-color:var(--azul); }
+.lista-resultados { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.item-alumno {
+  padding:12px 16px; border-radius:10px; border:1.5px solid var(--borde);
+  background:var(--blanco); cursor:pointer; transition:all 0.15s;
+}
+.item-alumno:hover { border-color:var(--azul); background:var(--azul-claro); }
+.alumno-nombre { font-weight:700; font-size:14px; }
+.alumno-grupo  { font-size:12px; color:var(--muted); }
+
+/* CHIP ALUMNO */
+.chip-alumno {
+  background:var(--azul-claro); border:1.5px solid #bfdbfe;
+  border-radius:12px; padding:14px 18px; margin-bottom:20px;
+  display:none; align-items:center; gap:12px;
+}
+.chip-nombre { font-weight:800; font-size:15px; color:var(--azul); }
+.chip-sub    { font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* PANEL */
+.panel {
+  background:var(--blanco); border-radius:16px; border:1px solid var(--borde);
+  padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:none;
+}
+.panel-titulo { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:20px; }
+.campo { margin-bottom:16px; }
+.campo label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:6px; }
+.campo input {
+  width:100%; padding:11px 14px; border:1.5px solid var(--borde);
+  border-radius:10px; font-size:14px; font-family:'Outfit',sans-serif;
+  color:var(--texto); outline:none;
+}
+.campo input:focus { border-color:var(--azul); }
+
+/* MEDICAMENTOS */
+.med-sec { margin-bottom:16px; }
+.med-sec-label { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:var(--muted); margin-bottom:8px; display:block; }
+.med-checks { display:flex; flex-wrap:wrap; gap:8px; }
+.med-chk {
+  display:flex; align-items:center; gap:6px;
+  background:var(--verde-claro); border:1px solid #bbf7d0;
+  border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer;
+}
+.med-chk input { width:15px; height:15px; cursor:pointer; }
+
+/* CONTACTOS */
+.contacto-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:4px; }
+.contacto-bloque {
+  background:var(--fondo); border-radius:10px;
+  border:1px solid var(--borde); padding:14px;
+}
+.contacto-bloque h5 {
+  font-size:12px; font-weight:800; color:var(--azul);
+  margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--borde);
+}
+.campo-sm { margin-bottom:8px; }
+.campo-sm label { font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:3px; }
+.campo-sm input {
+  width:100%; padding:7px 10px; border:1.5px solid var(--borde);
+  border-radius:8px; font-size:12px; font-family:'Outfit',sans-serif; outline:none;
+}
+.campo-sm input:focus { border-color:var(--azul); }
+
+.btn-guardar {
+  width:100%; padding:13px; border:none; border-radius:10px;
+  background:var(--verde); color:white; font-size:14px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer; margin-top:16px;
+}
+.btn-guardar:hover { background:#1e7a57; }
+.btn-guardar:disabled { opacity:0.6; cursor:not-allowed; }
+.btn-imprimir {
+  width:100%; padding:13px; border:none; border-radius:10px;
+  background:var(--azul); color:white; font-size:14px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer; margin-top:10px;
+}
+.btn-imprimir:hover { background:var(--azul-hover); }
+.msg-ok    { color:var(--verde); font-size:13px; font-weight:700; margin-top:10px; display:none; }
+.msg-error { color:var(--rojo);  font-size:13px; font-weight:700; margin-top:10px; }
+@media (max-width:600px) { .contacto-grid { grid-template-columns:1fr; } }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">💊 Autorización de Medicamentos</div>
+      <div class="header-sub">EST 84 · Módulo de Enfermería</div>
+    </div>
+  </div>
+  <div class="header-nombre" id="headerNombre">—</div>
+</div>
+
+<div class="contenido">
+
+  <div class="buscador-box">
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">Buscar Alumno</div>
+    <div class="filtros-grupo">
+      <select id="filtroGrado" onchange="actualizarFiltros()">
+        <option value="">— Todos los grados —</option>
+        <option value="1">1° Grado</option>
+        <option value="2">2° Grado</option>
+        <option value="3">3° Grado</option>
+      </select>
+      <select id="filtroGrupo" onchange="actualizarFiltros()">
+        <option value="">— Todos los grupos —</option>
+        <option value="A">Grupo A</option><option value="B">Grupo B</option>
+        <option value="C">Grupo C</option><option value="D">Grupo D</option>
+        <option value="E">Grupo E</option><option value="F">Grupo F</option>
+      </select>
+    </div>
+    <input type="text" id="inputBuscar" placeholder="Nombre o apellido del alumno..." oninput="buscarAlumno()">
+    <div class="lista-resultados" id="listaResultados"></div>
+  </div>
+
+  <div class="chip-alumno" id="chipAlumno">
+    <div style="font-size:28px;">🎓</div>
+    <div>
+      <div class="chip-nombre" id="chipNombre">—</div>
+      <div class="chip-sub"   id="chipSub">—</div>
+    </div>
+    <button onclick="limpiarAlumno()" style="margin-left:auto;background:none;border:none;color:var(--azul);font-size:13px;font-weight:700;cursor:pointer;">Cambiar</button>
+  </div>
+
+  <div class="panel" id="panelAuth">
+    <div class="panel-titulo">💊 Autorización de Medicamentos</div>
+
+    <div class="campo">
+      <label>Nombre del padre, mamá y/o tutor(a)</label>
+      <input type="text" id="am_tutor" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()">
+    </div>
+
+    <div class="med-sec">
+      <span class="med-sec-label">Diarrea</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_pepto"> Pepto Bismol</label>
+        <label class="med-chk"><input type="checkbox" id="am_treda"> Treda</label>
+      </div>
+    </div>
+    <div class="med-sec">
+      <span class="med-sec-label">Náuseas y Mareos</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_drama"> Dramamine</label>
+      </div>
+    </div>
+    <div class="med-sec">
+      <span class="med-sec-label">Dolor de Estómago</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_omeo"> Omeoprazol</label>
+        <label class="med-chk"><input type="checkbox" id="am_busca"> Buscapina</label>
+      </div>
+    </div>
+    <div class="med-sec">
+      <span class="med-sec-label">Ciclo Menstrual</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_syn"> Syncol</label>
+      </div>
+    </div>
+    <div class="med-sec">
+      <span class="med-sec-label">Dolor de Cabeza o Golpes</span>
+      <div class="med-checks">
+        <label class="med-chk"><input type="checkbox" id="am_para"> Paracetamol</label>
+        <label class="med-chk"><input type="checkbox" id="am_nap"> Naproxeno</label>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin:16px 0 10px;">Datos de Contacto</div>
+    <div class="contacto-grid">
+      <div class="contacto-bloque">
+        <h5>Datos de la Madre</h5>
+        <div class="campo-sm"><label>Nombre</label><input type="text" id="am_mn" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Domicilio</label><input type="text" id="am_md" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Tel. Celular</label><input type="tel" id="am_mc"></div>
+        <div class="campo-sm"><label>Tel. Casa</label><input type="tel" id="am_mh"></div>
+        <div class="campo-sm"><label>Tel. Trabajo</label><input type="tel" id="am_mt"></div>
+      </div>
+      <div class="contacto-bloque">
+        <h5>Datos del Padre</h5>
+        <div class="campo-sm"><label>Nombre</label><input type="text" id="am_pn" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Domicilio</label><input type="text" id="am_pd" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Tel. Celular</label><input type="tel" id="am_pc"></div>
+        <div class="campo-sm"><label>Tel. Casa</label><input type="tel" id="am_ph"></div>
+        <div class="campo-sm"><label>Tel. Trabajo</label><input type="tel" id="am_pt"></div>
+      </div>
+      <div class="contacto-bloque">
+        <h5>Datos Adicionales (1) — Emergencia</h5>
+        <div class="campo-sm"><label>Nombre y Parentesco</label><input type="text" id="am_c1n" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Domicilio</label><input type="text" id="am_c1d" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Tel. Celular</label><input type="tel" id="am_c1c"></div>
+        <div class="campo-sm"><label>Tel. Casa</label><input type="tel" id="am_c1h"></div>
+        <div class="campo-sm"><label>Tel. Trabajo</label><input type="tel" id="am_c1t"></div>
+      </div>
+      <div class="contacto-bloque">
+        <h5>Datos Adicionales (2) — Emergencia</h5>
+        <div class="campo-sm"><label>Nombre y Parentesco</label><input type="text" id="am_c2n" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Domicilio</label><input type="text" id="am_c2d" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="campo-sm"><label>Tel. Celular</label><input type="tel" id="am_c2c"></div>
+        <div class="campo-sm"><label>Tel. Casa</label><input type="tel" id="am_c2h"></div>
+        <div class="campo-sm"><label>Tel. Trabajo</label><input type="tel" id="am_c2t"></div>
+      </div>
+    </div>
+
+    <button class="btn-guardar" onclick="guardar()" id="btnGuardar">💾 Guardar Autorización</button>
+    <button class="btn-imprimir" onclick="imprimir()">🖨️ Imprimir Formulario</button>
+    <div class="msg-ok" id="msgOk">✅ Guardado correctamente</div>
+    <div class="msg-error" id="msgErr"></div>
+  </div>
+
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const rol    = localStorage.getItem('rolActivo') || '';
+  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  document.getElementById('headerNombre').textContent = nombre;
+
+  if (!['ENFERMERIA','ADMINISTRADOR'].includes(rol)) window.location.href = 'inicio.html';
+
+  let alumnoActual = null;
+  let todosAlumnos = [];
+
+  (async () => {
+    try {
+      const res = await apiFetch('/api/alumnos');
+      if (res) { todosAlumnos = await res.json(); }
+    } catch(e) {}
+  })();
+
+  function actualizarFiltros() { document.getElementById('inputBuscar').value=''; mostrarFiltrados(); }
+  function buscarAlumno()      { mostrarFiltrados(); }
+
+  function mostrarFiltrados() {
+    const q     = document.getElementById('inputBuscar').value.trim().toUpperCase();
+    const grado = document.getElementById('filtroGrado').value;
+    const grupo = document.getElementById('filtroGrupo').value;
+    const lista = document.getElementById('listaResultados');
+    if (!q && !grado && !grupo) { lista.innerHTML=''; return; }
+    const f = todosAlumnos.filter(a =>
+      (!q    || `${a.apellidos} ${a.nombre}`.toUpperCase().includes(q)) &&
+      (!grado || String(a.grado)===grado) &&
+      (!grupo || a.grupo===grupo)
+    ).slice(0,30);
+    lista.innerHTML = f.length ? f.map(a =>
+      `<div class="item-alumno" onclick="seleccionarAlumno(${a.id_alumno})">
+        <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
+        <div class="alumno-grupo">${a.grado}° Grupo "${a.grupo}"</div>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:8px;">Sin resultados</div>';
+  }
+
+  async function seleccionarAlumno(id) {
+    alumnoActual = todosAlumnos.find(a => a.id_alumno === id);
+    if (!alumnoActual) return;
+    document.getElementById('inputBuscar').value = '';
+    document.getElementById('listaResultados').innerHTML = '';
+    document.getElementById('chipNombre').textContent = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
+    document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
+    document.getElementById('chipAlumno').style.display = 'flex';
+    document.getElementById('panelAuth').style.display  = 'block';
+    cargar();
+  }
+
+  function limpiarAlumno() {
+    alumnoActual = null;
+    document.getElementById('chipAlumno').style.display = 'none';
+    document.getElementById('panelAuth').style.display  = 'none';
+    document.getElementById('inputBuscar').value = '';
+  }
+
+  async function cargar() {
+    if (!alumnoActual) return;
+    try {
+      const res = await apiFetch(`/api/expediente?tipo=autorizacion_med&id=${alumnoActual.id_alumno}`);
+      if (!res) return;
+      const d = await res.json();
+      if (!d || !d.id_autorizacion) return;
+      const s = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+      const c = (id,v) => { const el=document.getElementById(id); if(el) el.checked=!!v; };
+      s('am_tutor',d.tutor_nombre);
+      c('am_pepto',d.med_pepto_bismol); c('am_treda',d.med_treda);
+      c('am_drama',d.med_dramamine);
+      c('am_omeo',d.med_omeoprazol);   c('am_busca',d.med_buscapina);
+      c('am_syn',d.med_syncol);
+      c('am_para',d.med_paracetamol);  c('am_nap',d.med_naproxeno);
+      s('am_mn',d.madre_nombre);   s('am_md',d.madre_domicilio);
+      s('am_mc',d.madre_tel_celular); s('am_mh',d.madre_tel_casa); s('am_mt',d.madre_tel_trabajo);
+      s('am_pn',d.padre_nombre);   s('am_pd',d.padre_domicilio);
+      s('am_pc',d.padre_tel_celular); s('am_ph',d.padre_tel_casa); s('am_pt',d.padre_tel_trabajo);
+      s('am_c1n',d.contacto1_nombre); s('am_c1d',d.contacto1_domicilio);
+      s('am_c1c',d.contacto1_tel_celular); s('am_c1h',d.contacto1_tel_casa); s('am_c1t',d.contacto1_tel_trabajo);
+      s('am_c2n',d.contacto2_nombre); s('am_c2d',d.contacto2_domicilio);
+      s('am_c2c',d.contacto2_tel_celular); s('am_c2h',d.contacto2_tel_casa); s('am_c2t',d.contacto2_tel_trabajo);
+    } catch(e) {}
+  }
+
+  async function guardar() {
+    if (!alumnoActual) return;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled=true; btn.textContent='Guardando...';
+    const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+    const c = id => { const el=document.getElementById(id); return el?el.checked:false; };
+    const payload = {
+      id_alumno: alumnoActual.id_alumno,
+      tutor_nombre: g('am_tutor'),
+      med_pepto_bismol:c('am_pepto'), med_treda:c('am_treda'),
+      med_dramamine:c('am_drama'),
+      med_omeoprazol:c('am_omeo'), med_buscapina:c('am_busca'),
+      med_syncol:c('am_syn'),
+      med_paracetamol:c('am_para'), med_naproxeno:c('am_nap'),
+      madre_nombre:g('am_mn'), madre_domicilio:g('am_md'),
+      madre_tel_celular:g('am_mc'), madre_tel_casa:g('am_mh'), madre_tel_trabajo:g('am_mt'),
+      padre_nombre:g('am_pn'), padre_domicilio:g('am_pd'),
+      padre_tel_celular:g('am_pc'), padre_tel_casa:g('am_ph'), padre_tel_trabajo:g('am_pt'),
+      contacto1_nombre:g('am_c1n'), contacto1_domicilio:g('am_c1d'),
+      contacto1_tel_celular:g('am_c1c'), contacto1_tel_casa:g('am_c1h'), contacto1_tel_trabajo:g('am_c1t'),
+      contacto2_nombre:g('am_c2n'), contacto2_domicilio:g('am_c2d'),
+      contacto2_tel_celular:g('am_c2c'), contacto2_tel_casa:g('am_c2h'), contacto2_tel_trabajo:g('am_c2t'),
+    };
+    try {
+      const res  = await apiFetch('/api/expediente?tipo=autorizacion_med', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.exito) {
+        const ok = document.getElementById('msgOk');
+        ok.style.display='block'; setTimeout(()=>ok.style.display='none',3000);
+      } else {
+        document.getElementById('msgErr').textContent = '❌ ' + (data.error||'Error al guardar');
+      }
+    } catch(e) { document.getElementById('msgErr').textContent = '❌ Error de conexión'; }
+    btn.disabled=false; btn.textContent='💾 Guardar Autorización';
+  }
+
+  async function imprimir() {
+    if (!alumnoActual) return;
+    const g = id => { const el=document.getElementById(id); return el?(el.value||'').trim():''; };
+    const c = id => { const el=document.getElementById(id); return el?el.checked:false; };
+    const chk = v => v?'&#9745;':'&#9744;';
+    const fila = (lbl,val) =>
+      '<tr><td style="padding:3px 8px;font-weight:700;font-size:11px;width:160px;border:1px solid #000;">'+lbl+
+      '</td><td style="padding:3px 8px;font-size:11px;border:1px solid #000;">'+(val||'')+'</td></tr>';
+    let cfg={};
+    try { const r=await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg=await r.json(); } catch(e){}
+    const logoIzq = cfg.logo_izquierdo?'<img src="'+cfg.logo_izquierdo+'" style="max-height:55px;max-width:65px;">':'';
+    const logoDer = cfg.logo_derecho  ?'<img src="'+cfg.logo_derecho+'"   style="max-height:55px;max-width:65px;">':'';
+    const html =
+      '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Autorización de Medicamentos</title>'+
+      '<style>body{font-family:Arial,sans-serif;font-size:11px;margin:1cm;color:#000;}'+
+      '.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1B4F8A;padding-bottom:8px;margin-bottom:10px;}'+
+      '.inst{font-size:13px;font-weight:900;color:#1B4F8A;text-align:center;}.sub{font-size:10px;color:#444;text-align:center;}'+
+      '.tit{font-size:13px;font-weight:900;text-align:center;margin:8px 0;text-transform:uppercase;}'+
+      '.sec{font-weight:900;font-size:11px;margin:7px 0 3px;text-transform:uppercase;}'+
+      'table{width:100%;border-collapse:collapse;margin-bottom:5px;}'+
+      '.mf{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-size:11px;align-items:center;}'+
+      '.nota{font-size:10px;margin:8px 0;font-weight:700;border:1px solid #000;padding:5px;}'+
+      '.firmas{display:flex;justify-content:space-around;margin-top:25px;}'+
+      '.fb{text-align:center;width:175px;}.fl{border-bottom:1px solid #000;height:30px;margin-bottom:4px;}.ft{font-size:10px;}'+
+      '@page{margin:1cm;size:letter;}</style></head><body>'+
+      '<div class="hdr">'+
+        '<div style="width:70px;text-align:center;">'+logoIzq+'</div>'+
+        '<div style="flex:1;text-align:center;"><div class="inst">'+(cfg.nombre_escuela||'ESCUELA SECUNDARIA')+'</div>'+
+        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div></div>'+
+        '<div style="width:70px;text-align:center;">'+logoDer+'</div>'+
+      '</div>'+
+      '<div class="tit">Autorización de Medicamentos</div>'+
+      '<div style="font-size:11px;margin-bottom:7px;"><b>Alumno:</b> '+alumnoActual.apellidos+' '+alumnoActual.nombre+
+        ' &nbsp;&nbsp; <b>Grado/Grupo:</b> '+alumnoActual.grado+'° Grupo "'+alumnoActual.grupo+'"</div>'+
+      '<div style="font-size:11px;margin-bottom:7px;">YO, PAPÁ, MAMÁ Y/O TUTOR(A): <b>'+g('am_tutor')+'</b>'+
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FIRMA: _______________________</div>'+
+      '<div class="sec">AUTORIZO DAR EL MEDICAMENTO, EN CASO DE PADECER:</div>'+
+      '<div class="mf"><i>DIARREA:</i> '+chk(c('am_pepto'))+' PEPTO BISMOL &nbsp; '+chk(c('am_treda'))+' TREDA</div>'+
+      '<div class="mf"><i>NÁUSEAS Y MAREOS:</i> '+chk(c('am_drama'))+' DRAMAMINE</div>'+
+      '<div class="mf"><i>DOLOR DE ESTÓMAGO:</i> '+chk(c('am_omeo'))+' OMEOPRAZOL &nbsp; '+chk(c('am_busca'))+' BUSCAPINA</div>'+
+      '<div class="mf"><i>CICLO MENSTRUAL:</i> '+chk(c('am_syn'))+' SYNCOL</div>'+
+      '<div class="mf"><i>DOLOR DE CABEZA O GOLPES:</i> '+chk(c('am_para'))+' PARACETAMOL &nbsp; '+chk(c('am_nap'))+' NAPROXENO</div>'+
+      '<div class="sec">Datos de la Madre</div>'+
+      '<table>'+fila('Nombre',g('am_mn'))+fila('Domicilio',g('am_md'))+fila('Tel. celular',g('am_mc'))+fila('Tel. de casa',g('am_mh'))+fila('Tel. lugar de trabajo',g('am_mt'))+'</table>'+
+      '<div class="sec">Nombre del Padre</div>'+
+      '<table>'+fila('Nombre',g('am_pn'))+fila('Domicilio',g('am_pd'))+fila('Tel. celular',g('am_pc'))+fila('Tel. de casa',g('am_ph'))+fila('Tel. lugar de trabajo',g('am_pt'))+'</table>'+
+      '<div class="sec">Datos adicionales (1) para localizar en caso de emergencia</div>'+
+      '<table>'+fila('Nombre (Parentesco)',g('am_c1n'))+fila('Domicilio',g('am_c1d'))+fila('Tel. celular',g('am_c1c'))+fila('Tel. de casa',g('am_c1h'))+fila('Tel. lugar de trabajo',g('am_c1t'))+'</table>'+
+      '<div class="sec">Datos adicionales (2) para localizar en caso de emergencia</div>'+
+      '<table>'+fila('Nombre (Parentesco)',g('am_c2n'))+fila('Domicilio',g('am_c2d'))+fila('Tel. celular',g('am_c2c'))+fila('Tel. de casa',g('am_c2h'))+fila('Tel. lugar de trabajo',g('am_c2t'))+'</table>'+
+      '<div class="nota">Nota.- Es importante que envíe a su hija (o) desayunado (a) para evitar algún inconveniente relacionado con su salud, asimismo NO mandar a su hija (o) enfermo y reportar en caso de falta.</div>'+
+      '<div style="text-align:center;font-size:10px;margin-bottom:6px;">ATENTAMENTE</div>'+
+      '<div class="firmas">'+
+        '<div class="fb"><div class="fl"></div><div class="ft">AREA DE ENFERMERÍA</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASIST. EDUCATIVA</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">Vo. Bo. DE DIRECTOR</div></div>'+
+      '</div></body></html>';
+    const win = window.open('','_blank');
+    win.document.write(html); win.document.close(); win.focus();
+    setTimeout(()=>win.print(),600);
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>
