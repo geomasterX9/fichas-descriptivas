@@ -242,15 +242,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 
   let alumnoActual = null;
   let todosAlumnos = [];
-  let cfgInstitucional = {};
-
-  // Cargar config institucional al inicio (en el contexto principal donde hay token)
-  (async () => {
-    try {
-      const r = await apiFetch('/api/dashboard?tipo=config_institucional');
-      if (r) cfgInstitucional = await r.json();
-    } catch(e) {}
-  })();
 
   (async () => {
     try {
@@ -388,8 +379,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           quien:       document.getElementById('p-quien').value.trim().toUpperCase(),
           parentesco:  document.getElementById('p-parentesco').value.trim().toUpperCase(),
           tipo:        'MEDICO',
-          emitidoPor:  nombreCompleto,
-          cfg:         cfgInstitucional
+          emitidoPor:  nombreCompleto
         });
       } else {
         document.getElementById('errPase').textContent = '❌ ' + (data.error||'Error');
@@ -409,17 +399,19 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       hora:        p.hora_salida || '',
       quien:       p.quien_recoge || '',
       parentesco:  p.parentesco  || '',
-      emitidoPor:  p.emitido_por || nombreCompleto,
-      cfg:         cfgInstitucional
+      emitidoPor:  p.emitido_por || nombreCompleto
     });
   }
 
   async function imprimirPase(d) {
-    const cfg = d.cfg || cfgInstitucional || {};
+    let cfg = {};
+    try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg = await r.json(); } catch(e){}
+    // Convertir nombre de "APELLIDO1 APELLIDO2 NOMBRE" a "NOMBRE APELLIDO1 APELLIDO2"
     const invertirNombre = n => {
       if (!n) return '';
-      const p = n.trim().split(' ').filter(Boolean);
+      const p = n.trim().split(/\s+/);
       if (p.length <= 1) return n;
+      // Último token = primer nombre, resto = apellidos
       return p[p.length-1] + ' ' + p.slice(0,-1).join(' ');
     };
     const firmaEmitidor = invertirNombre(d.emitidoPor);

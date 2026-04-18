@@ -195,7 +195,9 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
 <script>
   verificarSesion();
   const rol    = localStorage.getItem('rolActivo') || '';
-  const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  const nombreCorto    = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  const nombreCompleto = localStorage.getItem('nombreActivo') || nombreCorto;
+  const nombre = nombreCorto;
   document.getElementById('headerNombre').textContent = nombre;
 
   if (!['TRABAJO SOCIAL','ADMINISTRADOR'].includes(rol)) window.location.href = 'inicio.html';
@@ -204,10 +206,29 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
   let todosAlumnos = [];
   let cfgInstitucional = {};
 
+  async function urlToBase64(url) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+      });
+    } catch(e) { return ''; }
+  }
+
   (async () => {
     try {
       const r = await apiFetch('/api/dashboard?tipo=config_institucional');
-      if (r) cfgInstitucional = await r.json();
+      if (r) {
+        cfgInstitucional = await r.json();
+        if (cfgInstitucional.logo_izquierdo)
+          cfgInstitucional.logo_izquierdo = await urlToBase64(cfgInstitucional.logo_izquierdo);
+        if (cfgInstitucional.logo_derecho)
+          cfgInstitucional.logo_derecho = await urlToBase64(cfgInstitucional.logo_derecho);
+      }
     } catch(e) {}
   })();
 
@@ -365,7 +386,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
       '<div class="nota">El alumno(a) sale de las instalaciones bajo la responsabilidad del familiar o tutor que lo recoge.</div>'+
       '<div style="text-align:center;font-size:10px;margin-bottom:6px;margin-top:16px;">ATENTAMENTE</div>'+
       '<div class="firmas">'+
-        '<div class="fb"><div class="fl"></div><div class="ft">'+nombre+'<br>TRABAJO SOCIAL</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">'+firmaEmitidor+'<br>TRABAJO SOCIAL</div></div>'+
         '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASISTENCIA EDUCATIVA</div></div>'+
       '</div></body></html>';
     const win = window.open('','_blank');
