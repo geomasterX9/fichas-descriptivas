@@ -16,7 +16,6 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
-
 .header {
   background: var(--rojo); padding: 0 24px; height: 62px;
   display: flex; justify-content: space-between; align-items: center;
@@ -31,10 +30,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 }
 .header-title { font-size: 16px; font-weight: 800; color: white; }
 .header-sub   { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 1px; }
-
 .contenido { max-width: 680px; margin: 0 auto; padding: 28px 20px 60px; }
-
-/* AVISO */
 .aviso {
   background: #fef2f2; border: 2px solid #fecaca; border-radius: 14px;
   padding: 20px 24px; margin-bottom: 28px;
@@ -43,8 +39,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 .aviso-icono { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
 .aviso-titulo { font-size: 15px; font-weight: 800; color: var(--rojo); margin-bottom: 6px; }
 .aviso-desc   { font-size: 13px; color: #7f1d1d; line-height: 1.6; }
-
-/* SECCIONES */
 .seccion {
   background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
   padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -53,8 +47,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   font-size: 13px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.8px; color: var(--muted); margin-bottom: 18px;
 }
-
-/* CHECKBOXES */
 .tabla-item {
   display: flex; align-items: center; gap: 14px;
   padding: 13px 16px; border-radius: 12px; border: 1.5px solid var(--borde);
@@ -72,30 +64,21 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   background: var(--naranja-claro); color: #92400e; flex-shrink: 0;
 }
 .tabla-badge.critica { background: #fef2f2; color: var(--rojo); }
-
-/* SELECCIÓN RÁPIDA */
 .sel-rapida { display: flex; gap: 8px; margin-bottom: 16px; }
 .btn-sel {
   padding: 7px 16px; border-radius: 8px; border: 1.5px solid var(--borde);
   font-size: 12px; font-weight: 700; font-family: 'Outfit', sans-serif;
-  cursor: pointer; background: var(--blanco); color: var(--muted);
-  transition: all 0.15s;
+  cursor: pointer; background: var(--blanco); color: var(--muted); transition: all 0.15s;
 }
 .btn-sel:hover { border-color: var(--rojo); color: var(--rojo); background: #fff0f1; }
-
-/* PASO 2 — CONFIRMACIÓN */
 .paso2 { display: none; }
 .resumen-borrado {
   background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px;
   padding: 16px 20px; margin-bottom: 20px;
 }
 .resumen-titulo { font-size: 13px; font-weight: 700; color: var(--rojo); margin-bottom: 10px; }
-.resumen-item {
-  font-size: 13px; color: #7f1d1d; padding: 4px 0;
-  border-bottom: 1px solid #fecaca;
-}
+.resumen-item { font-size: 13px; color: #7f1d1d; padding: 4px 0; border-bottom: 1px solid #fecaca; }
 .resumen-item:last-child { border-bottom: none; }
-
 .campo-confirm label {
   display: block; font-size: 12px; font-weight: 700; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
@@ -108,26 +91,20 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 }
 .campo-confirm input:focus { border-color: var(--rojo); }
 .campo-confirm input.ok    { border-color: var(--verde); background: var(--verde-claro); }
-
-/* BOTONES */
 .btn-continuar {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: var(--naranja); color: white; font-size: 15px; font-weight: 800;
-  font-family: 'Outfit', sans-serif; cursor: pointer; margin-top: 4px;
-  transition: background 0.15s;
+  font-family: 'Outfit', sans-serif; cursor: pointer; margin-top: 4px; transition: background 0.15s;
 }
 .btn-continuar:hover { background: #d97706; }
 .btn-continuar:disabled { opacity: 0.5; cursor: not-allowed; }
-
 .btn-ejecutar {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: var(--rojo); color: white; font-size: 15px; font-weight: 800;
-  font-family: 'Outfit', sans-serif; cursor: pointer; margin-top: 4px;
-  transition: background 0.15s;
+  font-family: 'Outfit', sans-serif; cursor: pointer; margin-top: 4px; transition: background 0.15s;
 }
 .btn-ejecutar:hover    { background: #b91c1c; }
 .btn-ejecutar:disabled { opacity: 0.5; cursor: not-allowed; }
-
 .btn-cancelar {
   width: 100%; padding: 12px; border: 1.5px solid var(--borde);
   border-radius: 12px; background: var(--blanco); color: var(--muted);
@@ -135,8 +112,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   cursor: pointer; margin-top: 10px; transition: all 0.15s;
 }
 .btn-cancelar:hover { border-color: var(--azul); color: var(--azul); }
-
-/* RESULTADO */
 .resultado { display: none; text-align: center; padding: 32px 20px; }
 .resultado-ok  { color: var(--verde); }
 .resultado-err { color: var(--rojo); }
@@ -151,7 +126,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-left">
     <a href="dashboard.html" class="btn-back">←</a>
@@ -161,10 +135,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     </div>
   </div>
 </div>
-
 <div class="contenido">
-
-  <!-- AVISO -->
   <div class="aviso">
     <div class="aviso-icono">⚠️</div>
     <div>
@@ -174,17 +145,13 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       </div>
     </div>
   </div>
-
-  <!-- PASO 1: SELECCIÓN -->
   <div id="paso1">
     <div class="seccion">
       <div class="seccion-titulo">Selecciona las tablas a limpiar</div>
-
       <div class="sel-rapida">
         <button class="btn-sel" onclick="seleccionarTodas()">Seleccionar todas</button>
         <button class="btn-sel" onclick="deseleccionarTodas()">Limpiar selección</button>
       </div>
-
       <label class="tabla-item" id="item-reportes_disciplinarios">
         <input type="checkbox" value="reportes_disciplinarios" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -193,7 +160,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Transaccional</span>
       </label>
-
       <label class="tabla-item" id="item-evaluaciones_parciales">
         <input type="checkbox" value="evaluaciones_parciales" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -202,7 +168,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Transaccional</span>
       </label>
-
       <label class="tabla-item" id="item-expedientes_medicos">
         <input type="checkbox" value="expedientes_medicos" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -211,7 +176,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Transaccional</span>
       </label>
-
       <label class="tabla-item" id="item-visitas_enfermeria">
         <input type="checkbox" value="visitas_enfermeria" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -220,7 +184,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Transaccional</span>
       </label>
-
       <label class="tabla-item" id="item-justificantes_medicos">
         <input type="checkbox" value="justificantes_medicos" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -229,7 +192,22 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Transaccional</span>
       </label>
-
+      <label class="tabla-item" id="item-autorizacion_medicamentos">
+        <input type="checkbox" value="autorizacion_medicamentos" onchange="actualizarItem(this)">
+        <div class="tabla-info">
+          <div class="tabla-nombre">💊 Autorizaciones de Medicamentos</div>
+          <div class="tabla-desc">Formularios de autorización firmados por tutores</div>
+        </div>
+        <span class="tabla-badge">Transaccional</span>
+      </label>
+      <label class="tabla-item" id="item-pases_salida">
+        <input type="checkbox" value="pases_salida" onchange="actualizarItem(this)">
+        <div class="tabla-info">
+          <div class="tabla-nombre">🚪 Pases de Salida</div>
+          <div class="tabla-desc">Pases emitidos por enfermería y trabajo social</div>
+        </div>
+        <span class="tabla-badge">Transaccional</span>
+      </label>
       <label class="tabla-item" id="item-asistencia">
         <input type="checkbox" value="asistencia" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -238,7 +216,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Transaccional</span>
       </label>
-
       <label class="tabla-item" id="item-logs_actividad">
         <input type="checkbox" value="logs_actividad" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -247,7 +224,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge">Auditoría</span>
       </label>
-
       <label class="tabla-item" id="item-calificaciones">
         <input type="checkbox" value="calificaciones" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -256,7 +232,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge critica">⚠️ Datos importantes</span>
       </label>
-
       <label class="tabla-item" id="item-datos_socioeconomicos">
         <input type="checkbox" value="datos_socioeconomicos" onchange="actualizarItem(this)">
         <div class="tabla-info">
@@ -265,48 +240,35 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         </div>
         <span class="tabla-badge critica">⚠️ Datos importantes</span>
       </label>
-
     </div>
-
     <button class="btn-continuar" id="btnContinuar" onclick="irAPaso2()" disabled>
       Continuar →
     </button>
   </div>
-
-  <!-- PASO 2: CONFIRMACIÓN -->
   <div class="seccion paso2" id="paso2">
     <div class="seccion-titulo">⚠️ Confirma la operación</div>
-
     <div class="resumen-borrado">
       <div class="resumen-titulo">Se eliminarán TODOS los registros de:</div>
       <div id="listaResumen"></div>
     </div>
-
     <div class="campo-confirm" style="margin-bottom:20px;">
       <label>Escribe CONFIRMAR para continuar</label>
       <input type="text" id="inputConfirm" placeholder="CONFIRMAR"
              oninput="validarConfirm()" autocomplete="off" spellcheck="false">
     </div>
-
     <button class="btn-ejecutar" id="btnEjecutar" onclick="ejecutarReset()" disabled>
       🗑️ Ejecutar Reseteo
     </button>
     <button class="btn-cancelar" onclick="cancelar()">Cancelar</button>
   </div>
-
-  <!-- RESULTADO -->
   <div class="seccion resultado" id="resultado"></div>
-
 </div>
-
 <script src="auth-helper.js"></script>
 <script>
   verificarSesion();
   const rol = localStorage.getItem('rolActivo') || '';
   if (rol !== 'ADMINISTRADOR') window.location.href = 'dashboard.html';
-
   let tablasSeleccionadas = [];
-
   function actualizarItem(cb) {
     const item = document.getElementById(`item-${cb.value}`);
     if (cb.checked) {
@@ -318,62 +280,51 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     }
     document.getElementById('btnContinuar').disabled = tablasSeleccionadas.length === 0;
   }
-
   function seleccionarTodas() {
     document.querySelectorAll('.tabla-item input[type=checkbox]').forEach(cb => {
-      cb.checked = true;
-      actualizarItem(cb);
+      cb.checked = true; actualizarItem(cb);
     });
   }
-
   function deseleccionarTodas() {
     document.querySelectorAll('.tabla-item input[type=checkbox]').forEach(cb => {
-      cb.checked = false;
-      actualizarItem(cb);
+      cb.checked = false; actualizarItem(cb);
     });
   }
-
   const NOMBRES = {
-    reportes_disciplinarios: '📋 Reportes Disciplinarios',
-    evaluaciones_parciales:'📝 Evaluaciones Parciales',
-    expedientes_medicos:   '🏥 Expedientes Médicos',
-    visitas_enfermeria:    '🩺 Visitas a Enfermería',
-    justificantes_medicos: '📄 Justificantes Médicos',
-    asistencia:            '📝 Asistencia (Pase de Lista)',
-    logs_actividad:        '📊 Logs de Actividad',
-    calificaciones:        '🎓 Calificaciones Finales',
-    datos_socioeconomicos: '📁 Fichas Socioeconómicas',
+    reportes_disciplinarios:   '📋 Reportes Disciplinarios',
+    evaluaciones_parciales:    '📝 Evaluaciones Parciales',
+    expedientes_medicos:       '🏥 Expedientes Médicos',
+    visitas_enfermeria:        '🩺 Visitas a Enfermería',
+    justificantes_medicos:     '📄 Justificantes Médicos',
+    autorizacion_medicamentos: '💊 Autorizaciones de Medicamentos',
+    pases_salida:              '🚪 Pases de Salida',
+    asistencia:                '📝 Asistencia (Pase de Lista)',
+    logs_actividad:            '📊 Logs de Actividad',
+    calificaciones:            '🎓 Calificaciones Finales',
+    datos_socioeconomicos:     '📁 Fichas Socioeconómicas',
   };
-
   function irAPaso2() {
     if (tablasSeleccionadas.length === 0) return;
     document.getElementById('paso1').style.display = 'none';
     document.getElementById('paso2').style.display = 'block';
     document.getElementById('listaResumen').innerHTML =
-      tablasSeleccionadas.map(t =>
-        `<div class="resumen-item">${NOMBRES[t] || t}</div>`
-      ).join('');
+      tablasSeleccionadas.map(t => `<div class="resumen-item">${NOMBRES[t] || t}</div>`).join('');
     document.getElementById('inputConfirm').value = '';
     document.getElementById('btnEjecutar').disabled = true;
   }
-
   function validarConfirm() {
     const val = document.getElementById('inputConfirm').value.trim();
     const ok  = val === 'CONFIRMAR';
     document.getElementById('inputConfirm').classList.toggle('ok', ok);
     document.getElementById('btnEjecutar').disabled = !ok;
   }
-
   function cancelar() {
     document.getElementById('paso2').style.display = 'none';
     document.getElementById('paso1').style.display = 'block';
   }
-
   async function ejecutarReset() {
     const btn = document.getElementById('btnEjecutar');
-    btn.disabled = true;
-    btn.textContent = '⏳ Ejecutando...';
-
+    btn.disabled = true; btn.textContent = '⏳ Ejecutando...';
     try {
       const res  = await apiFetch('/api/dashboard?tipo=reset', {
         method: 'POST',
@@ -382,10 +333,8 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       });
       const data = await res.json();
       const cont = document.getElementById('resultado');
-
       document.getElementById('paso2').style.display = 'none';
       cont.style.display = 'block';
-
       if (data.exito || data.exitosas?.length > 0) {
         cont.className = 'seccion resultado resultado-ok';
         cont.innerHTML = `
@@ -393,7 +342,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           <div class="resultado-titulo">Reseteo completado</div>
           <div class="resultado-desc">
             Se limpiaron ${data.exitosas?.length || tablasSeleccionadas.length} tabla(s) correctamente.
-            ${data.errores?.length ? `<br>Con errores: ${data.errores.join(', ')}` : ''}
+            ${data.errores?.length ? '<br>Con errores: ' + data.errores.join(', ') : ''}
           </div>
           <a href="dashboard.html" class="btn-volver">← Volver al Dashboard</a>`;
       } else {
