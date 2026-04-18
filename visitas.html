@@ -406,6 +406,15 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   async function imprimirPase(d) {
     let cfg = {};
     try { const r = await apiFetch('/api/dashboard?tipo=config_institucional'); if(r) cfg = await r.json(); } catch(e){}
+    // Convertir nombre de "APELLIDO1 APELLIDO2 NOMBRE" a "NOMBRE APELLIDO1 APELLIDO2"
+    const invertirNombre = n => {
+      if (!n) return '';
+      const p = n.trim().split(/\s+/);
+      if (p.length <= 1) return n;
+      // Último token = primer nombre, resto = apellidos
+      return p[p.length-1] + ' ' + p.slice(0,-1).join(' ');
+    };
+    const firmaEmitidor = invertirNombre(d.emitidoPor);
     const logoIzq = cfg.logo_izquierdo ? '<img src="'+cfg.logo_izquierdo+'" style="max-height:55px;max-width:65px;">' : '';
     const logoDer = cfg.logo_derecho   ? '<img src="'+cfg.logo_derecho+'"   style="max-height:55px;max-width:65px;">' : '';
     const hoy = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
@@ -425,7 +434,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       '<div class="hdr">'+
         '<div style="width:70px;text-align:center;">'+logoIzq+'</div>'+
         '<div style="flex:1;text-align:center;"><div class="inst">'+(cfg.nombre_escuela||'ESCUELA SECUNDARIA')+'</div>'+
-        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div></div>'+
+        '<div class="sub">'+[cfg.clave_escuela,cfg.ciclo_activo].filter(Boolean).join(' · ')+'</div>'+(cfg.direccion_escuela?'<div class="sub">'+cfg.direccion_escuela+'</div>':'')+'</div>'+
         '<div style="width:70px;text-align:center;">'+logoDer+'</div>'+
       '</div>'+
       '<div class="titulo">Pase de Salida</div>'+
@@ -440,7 +449,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       '<div class="nota">El alumno(a) sale de las instalaciones bajo la responsabilidad del familiar o tutor que lo recoge. Se deberá presentar justificante médico a su regreso.</div>'+
       '<div style="text-align:center;font-size:10px;margin-bottom:6px;margin-top:16px;">ATENTAMENTE</div>'+
       '<div class="firmas">'+
-        '<div class="fb"><div class="fl"></div><div class="ft">'+d.emitidoPor+'<br>ÁREA DE ENFERMERÍA</div></div>'+
+        '<div class="fb"><div class="fl"></div><div class="ft">'+firmaEmitidor+'<br>ÁREA DE ENFERMERÍA</div></div>'+
         '<div class="fb"><div class="fl"></div><div class="ft">COORD. DE ASISTENCIA EDUCATIVA</div></div>'+
       '</div></body></html>';
     const win = window.open('','_blank');
