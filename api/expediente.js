@@ -18,6 +18,7 @@ module.exports = async (req, res) => {
     if (tipo === 'medico')               return handleMedico(req, res, usuario, id);
     if (tipo === 'visitas_enfermeria')   return handleVisitas(req, res, usuario, id);
     if (tipo === 'justificante')         return handleJustificante(req, res, usuario, id);
+    if (tipo === 'autorizacion_med')     return handleAutorizacionMed(req, res, usuario, id);
 
     // Historial de todos los expedientes médicos registrados
     if (req.method === 'GET' && tipo === 'medico_historial') {
@@ -235,6 +236,40 @@ async function handleVisitas(req, res, usuario, id) {
             motivo, tratamiento: tratamiento || null,
             registrado_por: usuario.nombre
         });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
+    return res.status(405).json({ error: 'Método no permitido' });
+}
+
+// ── AUTORIZACIÓN DE MEDICAMENTOS ────────────────────────────
+// GET  /api/expediente?tipo=autorizacion_med&id=X
+// POST /api/expediente?tipo=autorizacion_med  { id_alumno, ...campos }
+async function handleAutorizacionMed(req, res, usuario, id) {
+    const db = usuario._db || supabase;
+    const ROLES_AUTH = ['ADMINISTRADOR', 'ENFERMERIA'];
+    if (!ROLES_AUTH.includes(usuario.rol))
+        return res.status(403).json({ error: 'Sin acceso a autorización de medicamentos.' });
+
+    if (req.method === 'GET') {
+        const { data } = await db.from('autorizacion_medicamentos')
+            .select('*').eq('id_alumno', parseInt(id)).maybeSingle();
+        return res.json(data || {});
+    }
+    if (req.method === 'POST') {
+        const { id_alumno, ...campos } = req.body || {};
+        if (!id_alumno) return res.status(400).json({ error: 'Falta id_alumno' });
+        if (usuario.rol !== 'ENFERMERIA')
+            return res.status(403).json({ error: 'Solo enfermería puede registrar autorizaciones.' });
+        const ciclo = await getCicloActivo(db);
+        const { error } = await db.from('autorizacion_medicamentos')
+            .upsert({
+                ...campos,
+                id_alumno:       parseInt(id_alumno),
+                ciclo_escolar:   ciclo,
+                registrado_por:  usuario.nombre,
+                updated_at:      new Date().toISOString()
+            }, { onConflict: 'id_alumno,ciclo_escolar' });
         if (error) return res.status(400).json({ error: error.message });
         return res.json({ exito: true });
     }
