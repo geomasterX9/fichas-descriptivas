@@ -127,69 +127,13 @@ tr:hover td { background:#f8fafc; }
 .empty { text-align:center; padding:40px; color:var(--muted); }
 .empty-icono { font-size:40px; margin-bottom:10px; }
 
-/* FILTROS ALUMNOS */
-.filtros-alumnos {
-  display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;
-  margin-bottom:14px; padding:12px 16px;
-  background:#f8fafc; border-radius:10px; border:1px solid var(--borde);
-}
-.filtros-alumnos label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--muted); display:block; margin-bottom:4px; }
-.filtros-alumnos select, .filtros-alumnos input {
-  padding:7px 10px; border:1.5px solid var(--borde); border-radius:8px;
-  font-size:12px; font-family:'Outfit',sans-serif; color:var(--texto);
-  background:var(--blanco); outline:none;
-}
-.filtros-alumnos select:focus, .filtros-alumnos input:focus { border-color:var(--azul); }
-
-/* FIRMAS */
-.firmas {
-  display:flex; gap:40px; margin-top:40px; padding-top:20px;
-  border-top:1px solid var(--borde); display:none;
-}
-.firma-bloque { flex:1; text-align:center; }
-.firma-linea {
-  border-bottom:1.5px solid #1a2332; margin-bottom:8px;
-  height:40px;
-}
-.firma-nombre { font-size:11px; font-weight:700; color:var(--texto); }
-.firma-cargo  { font-size:10px; color:var(--muted); margin-top:2px; }
-
-/* HEADER INSTITUCIONAL PARA IMPRESIÓN */
-.print-header {
-  border-bottom:3px solid #1B4F8A; padding-bottom:10px; margin-bottom:14px;
-}
-.print-header-inner {
-  display:flex; align-items:center; justify-content:space-between;
-}
-.print-inst-nombre { font-size:13px; font-weight:800; color:#1B4F8A; text-align:center; }
-.print-inst-sub    { font-size:10px; color:#64748b; text-align:center; margin-top:2px; }
-.print-reporte-titulo { font-size:16px; font-weight:900; color:#1B4F8A; text-align:center; margin:10px 0 4px; }
-.print-meta { font-size:10px; color:#64748b; text-align:center; }
-.print-logo { width:60px; height:60px; object-fit:contain; }
-
-/* ── ESTILOS SOLO PANTALLA ── */
-.print-header { display:none; }
-
 @media print {
-  .header, .filtros, .btn-pdf, .graficas-grid,
-  .filtros-alumnos, .no-print { display:none !important; }
-  .print-header { display:block !important; }
+  .header, .filtros, .btn-pdf { display:none !important; }
   .contenido { padding:0; max-width:100%; }
-  .kpis { grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:12px; }
-  .kpi { padding:8px 10px; border-radius:0; box-shadow:none; border:1px solid #ccc; }
-  .kpi-num { font-size:20px; }
-  .kpi-label { font-size:9px; }
-  .seccion { box-shadow:none; border:1px solid #ccc; border-radius:0; padding:10px 12px; margin-bottom:10px; }
-  .seccion-titulo { font-size:11px; padding-bottom:6px; margin-bottom:8px; }
-  table { font-size:10px; }
-  th { font-size:9px; padding:5px 7px; }
-  td { padding:5px 7px; }
-  .barra-falta { display:none; }
-  .tendencia-label { display:none; }
-  .badge-faltas { font-size:9px; padding:1px 6px; }
-  .firmas { display:flex !important; }
-  body { background:white; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  @page { margin:1.2cm 1.5cm; size:letter portrait; }
+  .graficas-grid { grid-template-columns:1fr 1fr; }
+  .kpis { grid-template-columns:repeat(4,1fr); }
+  .seccion, .grafica-box, .kpi { box-shadow:none; border:1px solid #ccc; border-radius:0; }
+  body { background:white; }
 }
 @media (max-width:700px) {
   .kpis { grid-template-columns:1fr 1fr; }
@@ -272,54 +216,14 @@ tr:hover td { background:#f8fafc; }
     </div>
   </div>
 
-  <!-- HEADER INSTITUCIONAL (solo visible en impresión) -->
-  <div class="print-header" id="printHeader">
-    <div class="print-header-inner">
-      <img id="printLogoIzq" class="print-logo" src="" style="opacity:0;">
-      <div style="flex:1;text-align:center;">
-        <div class="print-inst-nombre" id="printNombreEsc">ESCUELA SECUNDARIA</div>
-        <div class="print-inst-sub" id="printClaveEsc"></div>
-        <div class="print-reporte-titulo">REPORTE DE ASISTENCIA ESCOLAR</div>
-        <div class="print-meta" id="printMeta"></div>
-      </div>
-      <img id="printLogoDer" class="print-logo" src="" style="opacity:0;">
-    </div>
-  </div>
-
   <!-- RANKING ALUMNOS -->
   <div class="seccion">
     <div class="seccion-titulo">🔴 <span>Alumnos con más faltas</span> en el período</div>
-    <div class="filtros-alumnos no-print" id="filtrosAlumnos">
-      <div>
-        <label>Mínimo de faltas</label>
-        <select id="filtroMinFaltas" onchange="filtrarTablaAlumnos()">
-          <option value="1">1 o más</option>
-          <option value="2">2 o más</option>
-          <option value="3" selected>3 o más</option>
-          <option value="5">5 o más</option>
-          <option value="10">10 o más</option>
-        </select>
-      </div>
-      <div>
-        <label>Filtrar por grupo</label>
-        <select id="filtroGrupoAlumnos" onchange="filtrarTablaAlumnos()">
-          <option value="">Todos los grupos</option>
-        </select>
-      </div>
-      <div>
-        <label>Ordenar por</label>
-        <select id="filtroOrdenAlumnos" onchange="filtrarTablaAlumnos()">
-          <option value="faltas">Mayor número de faltas</option>
-          <option value="nombre">Nombre A-Z</option>
-          <option value="grupo">Grupo</option>
-        </select>
-      </div>
-    </div>
     <div class="tabla-wrap">
       <table id="tablaAlumnos">
         <thead><tr>
           <th>#</th><th>Alumno</th><th>Grado / Grupo</th>
-          <th>Faltas</th><th>Frecuencia</th>
+          <th>Faltas</th><th>Fechas de inasistencia</th>
         </tr></thead>
         <tbody id="bodyAlumnos">
           <tr><td colspan="5" class="empty">Genera las estadísticas para ver el ranking</td></tr>
@@ -344,20 +248,6 @@ tr:hover td { background:#f8fafc; }
     </div>
   </div>
 
-  <!-- FIRMAS — solo visibles en impresión -->
-  <div class="firmas" id="seccionFirmas">
-    <div class="firma-bloque">
-      <div class="firma-linea"></div>
-      <div class="firma-nombre" id="firmaNombreGenerador">___________________________</div>
-      <div class="firma-cargo">Elaboró</div>
-    </div>
-    <div class="firma-bloque">
-      <div class="firma-linea"></div>
-      <div class="firma-nombre">___________________________</div>
-      <div class="firma-cargo">Coordinador de Asistencia Educativa</div>
-    </div>
-  </div>
-
 </div>
 
 <script src="auth-helper.js"></script>
@@ -367,65 +257,8 @@ tr:hover td { background:#f8fafc; }
   if (!['TRABAJO SOCIAL','DIRECTIVO','ADMINISTRADOR'].includes(rolActivo))
     window.location.href = 'inicio.html';
 
-  let chartTendencia   = null;
-  let chartGrupos      = null;
-  let rankingAlumnosAll = []; // cache para filtros
-  let diasTotal        = 1;
-
-  // ── CARGAR CONFIG INSTITUCIONAL PARA HEADER PDF ──
-  async function cargarConfigPrint() {
-    try {
-      const res = await apiFetch('/api/dashboard?tipo=config_institucional');
-      if (!res) return;
-      const cfg = await res.json();
-      document.getElementById('printNombreEsc').textContent = cfg.nombre_escuela || 'ESCUELA SECUNDARIA';
-      document.getElementById('printClaveEsc').textContent  =
-        [cfg.clave_escuela, cfg.ciclo_activo].filter(Boolean).join(' · ');
-      if (cfg.logo_izquierdo) {
-        const li = document.getElementById('printLogoIzq');
-        li.src = cfg.logo_izquierdo; li.style.opacity = '1';
-      }
-      if (cfg.logo_derecho) {
-        const ld = document.getElementById('printLogoDer');
-        ld.src = cfg.logo_derecho; ld.style.opacity = '1';
-      }
-    } catch(e) {}
-  }
-  cargarConfigPrint();
-
-  // ── FILTRAR TABLA ALUMNOS ──
-  function filtrarTablaAlumnos() {
-    const minF   = parseInt(document.getElementById('filtroMinFaltas').value) || 1;
-    const grpF   = document.getElementById('filtroGrupoAlumnos').value;
-    const orden  = document.getElementById('filtroOrdenAlumnos').value;
-
-    let lista = rankingAlumnosAll.filter(a =>
-      a.faltas >= minF && (!grpF || `${a.grado}-${a.grupo}` === grpF)
-    );
-
-    if (orden === 'nombre') lista.sort((a,b) => a.nombre.localeCompare(b.nombre));
-    else if (orden === 'grupo') lista.sort((a,b) => a.grado===b.grado ? a.grupo.localeCompare(b.grupo) : a.grado-b.grado);
-    else lista.sort((a,b) => b.faltas - a.faltas);
-
-    const maxF = lista[0]?.faltas || 1;
-    document.getElementById('bodyAlumnos').innerHTML = lista.length
-      ? lista.map((a, i) => {
-          const pct   = Math.round((a.faltas / diasTotal) * 100);
-          const nivel = a.faltas >= 5 ? 'f-alto' : a.faltas >= 3 ? 'f-medio' : 'f-bajo';
-          const ancho = Math.round((a.faltas / maxF) * 100);
-          return `<tr>
-            <td style="font-weight:700;color:var(--muted);">${i+1}</td>
-            <td style="font-weight:700;">${a.nombre}</td>
-            <td>${a.grado}° Grupo "${a.grupo}"</td>
-            <td><span class="badge-faltas ${nivel}">${a.faltas} falta(s)</span></td>
-            <td>
-              <div class="barra-falta"><div class="barra-fill" style="width:${ancho}%;background:${a.faltas>=5?'var(--rojo)':a.faltas>=3?'var(--naranja)':'var(--azul)'}"></div></div>
-              <div class="tendencia-label">${pct}% de los días</div>
-            </td>
-          </tr>`;
-        }).join('')
-      : '<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--muted);">Sin alumnos con ese filtro</td></tr>';
-  }
+  let chartTendencia = null;
+  let chartGrupos    = null;
 
   // ── INICIALIZAR FECHAS ──
   const hoy = new Date();
@@ -505,8 +338,9 @@ tr:hover td { background:#f8fafc; }
         const gp   = String(r.alumnos?.grupo || '');
         const key  = `${gr}-${gp}`;
 
-        faltasPorAlumno[idA] = faltasPorAlumno[idA] || { nombre: nom, grado: gr, grupo: gp, faltas: 0 };
+        faltasPorAlumno[idA] = faltasPorAlumno[idA] || { nombre: nom, grado: gr, grupo: gp, faltas: 0, fechas: [] };
         faltasPorAlumno[idA].faltas++;
+        faltasPorAlumno[idA].fechas.push(dia.fecha);
 
         faltasPorGrupo[key] = faltasPorGrupo[key] || { grado: gr, grupo: gp, faltas: 0, diasConFaltas: new Set() };
         faltasPorGrupo[key].faltas++;
@@ -519,19 +353,6 @@ tr:hover td { background:#f8fafc; }
     const alumnosCon3     = Object.values(faltasPorAlumno).filter(a => a.faltas >= 3).length;
     const grupoTop        = Object.entries(faltasPorGrupo).sort((a,b) => b[1].faltas - a[1].faltas)[0];
     const pctAsistencia   = Math.round(100 - (totalFaltas / (totalAlumnos * Math.max(dias.length, 1))) * 100);
-
-    // ── POBLAR SELECT GRUPOS ALUMNOS ──
-    const gruposUnicos = [...new Set(Object.values(faltasPorAlumno).map(a => `${a.grado}-${a.grupo}`))].sort();
-    const selGrpAlu = document.getElementById('filtroGrupoAlumnos');
-    selGrpAlu.innerHTML = '<option value="">Todos los grupos</option>' +
-      gruposUnicos.map(k => { const [gr,gp] = k.split('-'); return `<option value="${k}">${gr}° Grupo "${gp}"</option>`; }).join('');
-
-    // ── ACTUALIZAR META PARA PDF ──
-    const nombreGenerador = localStorage.getItem('nombreActivo') || '—';
-    const fechaHoy = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
-    document.getElementById('printMeta').innerHTML =
-      `Período: ${desde} al ${hasta} &nbsp;·&nbsp; Generado por: ${nombreGenerador} &nbsp;·&nbsp; Fecha: ${fechaHoy}`;
-    document.getElementById('firmaNombreGenerador').textContent = nombreGenerador;
 
     // ── KPIs ──
     document.getElementById('kpiTotalFaltas').textContent   = totalFaltas;
@@ -595,10 +416,32 @@ tr:hover td { background:#f8fafc; }
       }
     });
 
-    // ── TABLA RANKING ALUMNOS (via cache + filtros) ──
-    rankingAlumnosAll = Object.values(faltasPorAlumno);
-    diasTotal = Math.max(dias.length, 1);
-    filtrarTablaAlumnos();
+    // ── TABLA RANKING ALUMNOS ──
+    const rankingAlumnos = Object.values(faltasPorAlumno)
+      .sort((a,b) => b.faltas - a.faltas)
+      .slice(0, 30);
+    const maxFaltas = rankingAlumnos[0]?.faltas || 1;
+
+    document.getElementById('bodyAlumnos').innerHTML = rankingAlumnos.length
+      ? rankingAlumnos.map((a, i) => {
+          const pct   = Math.round((a.faltas / dias.length) * 100);
+          const nivel = a.faltas >= 5 ? 'f-alto' : a.faltas >= 3 ? 'f-medio' : 'f-bajo';
+          const ancho = Math.round((a.faltas / maxFaltas) * 100);
+          const fechasHtml = (a.fechas || [])
+            .sort()
+            .map(f => {
+              const [y,m,d] = f.split('-');
+              return `<span style="display:inline-block;background:#eff6ff;color:#1B4F8A;border:1px solid #bfdbfe;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;margin:2px;">${d}/${m}</span>`;
+            }).join('');
+          return `<tr>
+            <td style="font-weight:700;color:var(--muted);">${i+1}</td>
+            <td style="font-weight:700;">${a.nombre}</td>
+            <td>${a.grado}° Grupo "${a.grupo}"</td>
+            <td><span class="badge-faltas ${nivel}">${a.faltas} falta(s)</span></td>
+            <td style="line-height:1.8;">${fechasHtml || '—'}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">Sin faltas en este período</td></tr>';
 
     // ── TABLA POR GRUPO ──
     const alumnosPorGrupo = {};

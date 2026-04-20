@@ -96,8 +96,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 }
 .btn-desactivar:hover { background: #fecdd3; }
 .estado-vacio { text-align: center; padding: 32px 0; color: var(--muted); font-size: 14px; }
-
-/* Panel global de justificantes activos hoy */
 .panel-global {
   background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
   padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 24px;
@@ -107,8 +105,15 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   padding: 14px 16px; margin-bottom: 10px;
 }
 .just-alumno { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+/* Historial de pases por alumno */
+.pase-item {
+  padding: 12px 14px; border-radius: 10px; border: 1px solid #e9d5ff;
+  margin-bottom: 8px; background: #fdf4ff;
+}
+.pase-fecha  { font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 3px; }
+.pase-motivo { font-size: 13px; font-weight: 600; color: var(--texto); }
+.pase-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
 @media (max-width: 480px) { .campo-fila { grid-template-columns: 1fr; } }
-
 .filtros-grupo {
   display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
 }
@@ -128,7 +133,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   <div class="header-left">
     <a href="inicio.html" class="btn-back">←</a>
     <div>
-      <div class="header-title">📄 Justificantes Médicos</div>
+      <div class="header-title">📄 Justificantes y Pases</div>
       <div class="header-sub">EST 84 · Avisos a Docentes</div>
     </div>
   </div>
@@ -149,28 +154,28 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     <div id="listaPasesHoy"><div class="estado-vacio">Cargando...</div></div>
   </div>
 
-  <!-- Buscador para emitir nuevo justificante — solo ENFERMERIA/ADMIN -->
-  <div id="seccionEmitir">
+  <!-- Buscador por alumno — ENFERMERIA, TRABAJO SOCIAL, ADMIN, DIRECTIVO -->
+  <div id="seccionBuscar">
     <div class="buscador-box">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">Emitir Justificante — Buscar Alumno</div>
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;" id="tituloBuscador">Buscar Alumno</div>
       <div class="filtros-grupo">
-      <select id="filtroGrado" onchange="actualizarFiltros()">
-        <option value="">— Todos los grados —</option>
-        <option value="1">1° Grado</option>
-        <option value="2">2° Grado</option>
-        <option value="3">3° Grado</option>
-      </select>
-      <select id="filtroGrupo" onchange="actualizarFiltros()">
-        <option value="">— Todos los grupos —</option>
-        <option value="A">Grupo A</option>
-        <option value="B">Grupo B</option>
-        <option value="C">Grupo C</option>
-        <option value="D">Grupo D</option>
-        <option value="E">Grupo E</option>
-        <option value="F">Grupo F</option>
-      </select>
-    </div>
-    <input type="text" id="inputBuscar" placeholder="Nombre o apellido del alumno..." oninput="buscarAlumno()">
+        <select id="filtroGrado" onchange="actualizarFiltros()">
+          <option value="">— Todos los grados —</option>
+          <option value="1">1° Grado</option>
+          <option value="2">2° Grado</option>
+          <option value="3">3° Grado</option>
+        </select>
+        <select id="filtroGrupo" onchange="actualizarFiltros()">
+          <option value="">— Todos los grupos —</option>
+          <option value="A">Grupo A</option>
+          <option value="B">Grupo B</option>
+          <option value="C">Grupo C</option>
+          <option value="D">Grupo D</option>
+          <option value="E">Grupo E</option>
+          <option value="F">Grupo F</option>
+        </select>
+      </div>
+      <input type="text" id="inputBuscar" placeholder="Nombre o apellido del alumno..." oninput="buscarAlumno()">
       <div class="lista-resultados" id="listaResultados"></div>
     </div>
 
@@ -184,29 +189,42 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     </div>
 
     <div class="panel" id="panelJust">
-      <div class="panel-titulo">Emitir Justificante</div>
-      <div class="campo-fila">
-        <div class="campo">
-          <label>Fecha Inicio</label>
-          <input type="date" id="j-inicio">
-        </div>
-        <div class="campo">
-          <label>Fecha Fin</label>
-          <input type="date" id="j-fin">
-        </div>
-      </div>
-      <div class="campo">
-        <label>Motivo Médico</label>
-        <textarea id="j-motivo" placeholder="ej. fractura de muñeca, enfermedad respiratoria..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></textarea>
-      </div>
-      <button class="btn-guardar" onclick="emitirJustificante()" id="btnEmitirJust">Emitir Justificante</button>
-      <div class="msg-ok"    id="okJust">✅ Justificante emitido</div>
-      <div class="msg-error" id="errJust"></div>
 
-      <div style="margin-top:28px;">
-        <div class="panel-titulo">Historial del Alumno</div>
+      <!-- Formulario emitir — solo ENFERMERIA / ADMIN -->
+      <div id="seccionEmitir">
+        <div class="panel-titulo">Emitir Justificante</div>
+        <div class="campo-fila">
+          <div class="campo">
+            <label>Fecha Inicio</label>
+            <input type="date" id="j-inicio">
+          </div>
+          <div class="campo">
+            <label>Fecha Fin</label>
+            <input type="date" id="j-fin">
+          </div>
+        </div>
+        <div class="campo">
+          <label>Motivo Médico</label>
+          <textarea id="j-motivo" placeholder="ej. fractura de muñeca, enfermedad respiratoria..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></textarea>
+        </div>
+        <button class="btn-guardar" onclick="emitirJustificante()" id="btnEmitirJust">Emitir Justificante</button>
+        <div class="msg-ok"    id="okJust">✅ Justificante emitido</div>
+        <div class="msg-error" id="errJust"></div>
+        <div style="margin-top:24px; border-top:1px solid var(--borde);"></div>
+      </div>
+
+      <!-- Historial justificantes — todos los roles con acceso -->
+      <div style="margin-top:20px;">
+        <div class="panel-titulo">Historial de Justificantes</div>
         <div id="listaJustAlumno"><div class="estado-vacio">Sin justificantes registrados</div></div>
       </div>
+
+      <!-- Historial pases de salida — todos los roles con acceso -->
+      <div style="margin-top:24px; border-top:1px solid var(--borde); padding-top:20px;">
+        <div class="panel-titulo" style="color:#7c3aed;">🚪 Historial de Pases de Salida</div>
+        <div id="listaPasesAlumno"><div class="estado-vacio">Sin pases registrados</div></div>
+      </div>
+
     </div>
   </div>
 
@@ -219,11 +237,24 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   const nombre = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
   document.getElementById('headerNombre').textContent = nombre;
 
-  const PUEDE_EDITAR = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'].includes(rol);
+  // Puede emitir justificantes
+  const PUEDE_EMITIR  = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA'].includes(rol);
+  // Puede buscar alumno y ver historial
+  const PUEDE_BUSCAR  = ['ADMINISTRADOR', 'DIRECTIVO', 'ENFERMERIA', 'TRABAJO SOCIAL'].includes(rol);
 
-  // Docentes y prefectos solo ven lista global — no pueden emitir
-  if (!PUEDE_EDITAR) {
+  // Ocultar formulario de emisión para TS
+  if (!PUEDE_EMITIR) {
     document.getElementById('seccionEmitir').style.display = 'none';
+  }
+  // Ocultar buscador para docentes y prefectos
+  if (!PUEDE_BUSCAR) {
+    document.getElementById('seccionBuscar').style.display = 'none';
+  }
+  // Cambiar título del buscador según rol
+  if (rol === 'TRABAJO SOCIAL') {
+    document.getElementById('tituloBuscador').textContent = 'Consultar Historial por Alumno';
+  } else if (PUEDE_EMITIR) {
+    document.getElementById('tituloBuscador').textContent = 'Emitir Justificante — Buscar Alumno';
   }
 
   let alumnoActual = null;
@@ -255,11 +286,9 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     }
   }
   cargarPasesHoy();
-
-  // Cargar justificantes activos hoy
   cargarGlobal();
 
-  if (PUEDE_EDITAR) {
+  if (PUEDE_BUSCAR) {
     (async () => {
       try {
         const res = await apiFetch('/api/alumnos');
@@ -273,8 +302,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       const res  = await apiFetch('/api/expediente?tipo=justificante');
       let data   = await res.json();
       const cont = document.getElementById('listaGlobal');
-
-      // DOCENTE y PREFECTO: filtrar solo sus grupos asignados
       if (rol === 'DOCENTE' || rol === 'PREFECTO') {
         const gruposRaw = localStorage.getItem('gruposActivos') || '[]';
         const grupos = (() => { try { return JSON.parse(gruposRaw); } catch { return []; } })();
@@ -286,23 +313,17 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           });
         }
       }
-      // TRABAJO SOCIAL, ENFERMERIA, ADMIN, DIRECTIVO: ven todos
-
       cont.innerHTML = data.length ? data.map(j => `
         <div class="just-item-global">
           <div class="just-alumno">${j.alumnos?.apellidos} ${j.alumnos?.nombre} — ${j.alumnos?.grado}° "${j.alumnos?.grupo}"</div>
           <div class="just-fechas">Del ${j.fecha_inicio} al ${j.fecha_fin}</div>
           <div class="just-motivo">${j.motivo}</div>
-          ${PUEDE_EDITAR ? `<div style="margin-top:8px;"><button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar justificante</button></div>` : ''}
+          ${PUEDE_EMITIR ? `<div style="margin-top:8px;"><button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar justificante</button></div>` : ''}
         </div>`).join('') : '<div class="estado-vacio">Sin justificantes activos esta semana</div>';
     } catch(e) {}
   }
 
-  function actualizarFiltros() {
-    document.getElementById('inputBuscar').value = '';
-    mostrarFiltrados();
-  }
-
+  function actualizarFiltros() { document.getElementById('inputBuscar').value = ''; mostrarFiltrados(); }
   function buscarAlumno() { mostrarFiltrados(); }
 
   function mostrarFiltrados() {
@@ -334,6 +355,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     document.getElementById('chipAlumno').style.display = 'flex';
     document.getElementById('panelJust').style.display  = 'block';
     cargarJustAlumno();
+    cargarPasesAlumno();
   }
 
   function limpiarAlumno() {
@@ -356,8 +378,30 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
             <div class="just-fechas">Del ${j.fecha_inicio} al ${j.fecha_fin}</div>
             <div class="just-motivo">${j.motivo}</div>
           </div>
-          <button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar</button>
+          ${PUEDE_EMITIR ? `<button class="btn-desactivar" onclick="desactivarJust(${j.id})">Cerrar</button>` : ''}
         </div>`).join('') : '<div class="estado-vacio">Sin justificantes activos</div>';
+    } catch(e) {}
+  }
+
+  async function cargarPasesAlumno() {
+    if (!alumnoActual) return;
+    try {
+      const res  = await apiFetch(`/api/expediente?tipo=pase_salida&id=${alumnoActual.id_alumno}`);
+      const data = await res.json();
+      const cont = document.getElementById('listaPasesAlumno');
+      cont.innerHTML = data.length ? data.map(p => {
+        const badge = p.tipo === 'MEDICO'
+          ? '<span style="font-size:10px;background:#f3e8ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:6px;padding:2px 8px;font-weight:800;">MÉDICO</span>'
+          : '<span style="font-size:10px;background:#fef9c3;color:#854d0e;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;font-weight:800;">FAMILIAR</span>';
+        return `<div class="pase-item">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span class="pase-fecha">📅 ${p.fecha} ${p.hora_salida||''}</span>
+            ${badge}
+          </div>
+          <div class="pase-motivo">${p.motivo}</div>
+          <div class="pase-sub">Recoge: ${p.quien_recoge||'—'} (${p.parentesco||'—'}) · ${p.emitido_por||'—'}</div>
+        </div>`;
+      }).join('') : '<div class="estado-vacio">Sin pases registrados</div>';
     } catch(e) {}
   }
 
