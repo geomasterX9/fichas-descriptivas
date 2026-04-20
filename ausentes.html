@@ -10,12 +10,12 @@
   --azul: #1B4F8A; --azul-claro: #eff6ff;
   --rojo: #e63946; --rojo-claro: #fff0f1;
   --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --naranja: #f59e0b;
   --fondo: #f0f4f8; --blanco: #fff;
   --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 100vh; }
-
 .header {
   background: var(--azul); padding: 0 24px; height: 62px;
   display: flex; justify-content: space-between; align-items: center;
@@ -28,18 +28,15 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   color: white; font-size: 18px; display: flex; align-items: center;
   justify-content: center; text-decoration: none;
 }
-.header-title { font-size: 16px; font-weight: 800; color: white; }
-.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-title  { font-size: 16px; font-weight: 800; color: white; }
+.header-sub    { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
 .header-nombre { font-size: 13px; font-weight: 700; color: white; }
-
 .contenido { max-width: 680px; margin: 0 auto; padding: 24px 20px 60px; }
-
 .info-dia {
   background: var(--rojo-claro); border: 1.5px solid #fecdd3;
   border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
   font-size: 13px; font-weight: 700; color: var(--rojo);
 }
-
 .grupo-seccion {
   background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde);
   padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -53,21 +50,51 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800;
 }
 
+/* ALUMNO AUSENTE — EXPANDIBLE */
 .alumno-ausente {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
 }
 .alumno-ausente:last-child { border-bottom: none; }
-.ausente-icon { font-size: 20px; }
+.alumno-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 8px; cursor: pointer; border-radius: 8px;
+  transition: background 0.15s;
+}
+.alumno-row:hover { background: #fff5f5; }
+.ausente-icon { font-size: 18px; flex-shrink: 0; }
+.ausente-info { flex: 1; min-width: 0; }
 .ausente-nombre { font-size: 14px; font-weight: 700; color: var(--texto); }
+.ausente-fecha-hoy { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.ausente-derecha { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.badge-acum {
+  font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 20px;
+  border: 1px solid;
+}
+.acum-alto   { background: #fff0f1; color: var(--rojo);   border-color: #fecdd3; }
+.acum-medio  { background: #fffbeb; color: #92400e;        border-color: #fde68a; }
+.acum-bajo   { background: #eff6ff; color: var(--azul);    border-color: #bfdbfe; }
+.flecha-expand { font-size: 13px; color: var(--muted); transition: transform 0.2s; }
+.alumno-row.abierto .flecha-expand { transform: rotate(90deg); }
 
-.estado-vacio {
-  text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px;
+/* PANEL DE FECHAS */
+.fechas-panel {
+  display: none; padding: 8px 12px 12px 40px;
+  background: #fafbfc; border-radius: 0 0 8px 8px;
 }
-.estado-ok {
-  text-align: center; padding: 40px 20px; color: var(--verde); font-size: 15px; font-weight: 700;
+.fechas-panel.visible { display: block; }
+.fechas-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--muted); margin-bottom: 8px; }
+.fechas-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.fecha-chip {
+  background: #eff6ff; color: var(--azul); border: 1px solid #bfdbfe;
+  border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700;
 }
-.cargando { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+.fecha-chip.hoy { background: #fff0f1; color: var(--rojo); border-color: #fecdd3; }
+.fechas-loading { font-size: 12px; color: var(--muted); font-style: italic; }
+
+.estado-ok    { text-align:center; padding:40px 20px; color:var(--verde); font-size:15px; font-weight:700; }
+.estado-vacio { text-align:center; padding:40px; color:var(--muted); font-size:14px; }
+.cargando     { text-align:center; padding:40px; color:var(--muted); font-size:14px; }
 </style>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1B4F8A">
@@ -87,10 +114,8 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 </div>
 
 <div class="contenido">
-
   <div class="info-dia" id="infoDia">📅 Cargando...</div>
   <div id="contenidoAusentes"><div class="cargando">⏳ Cargando lista de ausentes...</div></div>
-
 </div>
 
 <script src="auth-helper.js"></script>
@@ -101,16 +126,22 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   document.getElementById('headerNombre').textContent = nombre;
 
   const hoy = new Date();
+  const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
   const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   document.getElementById('infoDia').textContent =
     `📅 ${diasSemana[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
 
+  // Cache de historial ya cargado: id_alumno → [fechas]
+  const cacheHistorial = {};
+  // Cache de totales acumulados cargados en background
+  const cacheTotales = {};
+
   async function cargarAusentes() {
     try {
       const res = await apiFetch('/api/dashboard?tipo=asistencia');
       let data  = await res.json();
-      if (!Array.isArray(data)) throw new Error(data?.error || 'Respuesta inesperada del servidor');
+      if (!Array.isArray(data)) throw new Error('Respuesta inesperada');
 
       // Filtrar por grupos asignados para DOCENTE/PREFECTO
       if (rol === 'DOCENTE' || rol === 'PREFECTO') {
@@ -126,7 +157,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       }
 
       const cont = document.getElementById('contenidoAusentes');
-
       if (!data.length) {
         cont.innerHTML = '<div class="estado-ok">✅ Sin ausencias registradas en tus grupos hoy</div>';
         return;
@@ -146,17 +176,110 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
             Grupo ${grupo}
             <span class="badge-ausentes">${alumnos.length} ausente(s)</span>
           </div>
-          ${alumnos.map(a => `
-            <div class="alumno-ausente">
-              <div class="ausente-icon">❌</div>
-              <div class="ausente-nombre">${a.alumnos?.apellidos || ''} ${a.alumnos?.nombre || ''}</div>
-            </div>`).join('')}
+          ${alumnos.map(a => {
+            const id = a.id_alumno;
+            return `
+            <div class="alumno-ausente" id="ausente-${id}">
+              <div class="alumno-row" onclick="toggleHistorial(${id})" id="row-${id}">
+                <div class="ausente-icon">❌</div>
+                <div class="ausente-info">
+                  <div class="ausente-nombre">${a.alumnos?.apellidos || ''} ${a.alumnos?.nombre || ''}</div>
+                  <div class="ausente-fecha-hoy">Hoy: ${hoyStr}</div>
+                </div>
+                <div class="ausente-derecha">
+                  <span class="badge-acum acum-bajo" id="badge-${id}">...</span>
+                  <span class="flecha-expand">›</span>
+                </div>
+              </div>
+              <div class="fechas-panel" id="panel-${id}">
+                <div class="fechas-loading">Cargando historial...</div>
+              </div>
+            </div>`;
+          }).join('')}
         </div>`).join('');
+
+      // Cargar totales en background para todos los alumnos
+      data.forEach(a => cargarTotalBackground(a.id_alumno));
 
     } catch(e) {
       document.getElementById('contenidoAusentes').innerHTML =
         '<div class="estado-vacio">Error al cargar. Intenta de nuevo.</div>';
     }
+  }
+
+  // Carga silenciosa del total acumulado para mostrar el badge
+  async function cargarTotalBackground(id) {
+    if (cacheTotales[id] !== undefined) {
+      actualizarBadge(id, cacheTotales[id]);
+      return;
+    }
+    try {
+      const res = await apiFetch(`/api/dashboard?tipo=faltas_alumno&id=${id}`, { silencioso: true });
+      if (!res) return;
+      const data = await res.json();
+      const total = data.total || 0;
+      cacheTotales[id] = { total, porMes: data.porMes || [], porSemana: data.porSemana || [] };
+      // Guardar fechas si ya vinieron (el endpoint faltas_alumno no las trae directamente)
+      actualizarBadge(id, cacheTotales[id]);
+    } catch(e) {}
+  }
+
+  function actualizarBadge(id, datos) {
+    const badge = document.getElementById(`badge-${id}`);
+    if (!badge) return;
+    const total = datos.total || 0;
+    const clase = total >= 5 ? 'acum-alto' : total >= 3 ? 'acum-medio' : 'acum-bajo';
+    badge.className = `badge-acum ${clase}`;
+    badge.textContent = `${total} falta(s)`;
+  }
+
+  // Toggle del panel de historial con lazy load de fechas
+  async function toggleHistorial(id) {
+    const panel = document.getElementById(`panel-${id}`);
+    const row   = document.getElementById(`row-${id}`);
+    if (!panel || !row) return;
+
+    const abierto = panel.classList.contains('visible');
+    panel.classList.toggle('visible', !abierto);
+    row.classList.toggle('abierto', !abierto);
+
+    if (!abierto && !cacheHistorial[id]) {
+      // Cargar fechas la primera vez que se abre
+      panel.innerHTML = '<div class="fechas-loading">⏳ Cargando fechas...</div>';
+      try {
+        const res = await apiFetch(`/api/expediente?tipo=faltas_fechas&id=${id}`, { silencioso: true });
+        if (res && res.ok) {
+          const fechas = await res.json();
+          cacheHistorial[id] = Array.isArray(fechas) ? fechas : [];
+        } else {
+          // Fallback: usar asistencia_fecha para construir historial parcial
+          // Si el endpoint no existe aún, mostrar al menos la de hoy
+          cacheHistorial[id] = [hoyStr];
+        }
+      } catch(e) {
+        cacheHistorial[id] = [hoyStr];
+      }
+      renderFechas(id);
+    } else if (!abierto) {
+      renderFechas(id);
+    }
+  }
+
+  function renderFechas(id) {
+    const panel = document.getElementById(`panel-${id}`);
+    if (!panel) return;
+    const fechas = cacheHistorial[id] || [hoyStr];
+    const fechasOrdenadas = [...new Set(fechas)].sort();
+
+    const chips = fechasOrdenadas.map(f => {
+      const esHoy = f === hoyStr;
+      const [y, m, d] = f.split('-');
+      return `<span class="fecha-chip${esHoy ? ' hoy' : ''}">${d}/${m}${esHoy ? ' ✦' : ''}</span>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="fechas-titulo">Fechas de inasistencia (${fechasOrdenadas.length})</div>
+      <div class="fechas-chips">${chips}</div>`;
   }
 
   cargarAusentes();

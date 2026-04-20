@@ -20,6 +20,7 @@ module.exports = async (req, res) => {
     if (tipo === 'justificante')         return handleJustificante(req, res, usuario, id);
     if (tipo === 'autorizacion_med')     return handleAutorizacionMed(req, res, usuario, id);
     if (tipo === 'pase_salida')          return handlePaseSalida(req, res, usuario, id);
+    if (tipo === 'faltas_fechas')         return handleFaltasFechas(req, res, usuario, id);
 
     // Historial de todos los expedientes médicos registrados
     if (req.method === 'GET' && tipo === 'medico_historial') {
@@ -241,6 +242,21 @@ async function handleVisitas(req, res, usuario, id) {
         return res.json({ exito: true });
     }
     return res.status(405).json({ error: 'Método no permitido' });
+}
+
+// ── FALTAS POR FECHAS ────────────────────────────────────────
+// GET /api/expediente?tipo=faltas_fechas&id=X  → array de fechas en que faltó el alumno
+async function handleFaltasFechas(req, res, usuario, id) {
+    const db = usuario._db || supabase;
+    if (!id) return res.status(400).json({ error: 'Falta id de alumno.' });
+    const { data } = await db
+        .from('asistencia')
+        .select('fecha')
+        .eq('id_alumno', parseInt(id))
+        .eq('presente', false)
+        .order('fecha', { ascending: true });
+    const fechas = (data || []).map(r => r.fecha);
+    return res.json(fechas);
 }
 
 // ── PASES DE SALIDA ─────────────────────────────────────────
