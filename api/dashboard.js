@@ -296,7 +296,7 @@ module.exports = async (req, res) => {
             const ciclo = await getCicloActivo(db);
             const { data: reportes } = await db
                 .from('reportes_disciplinarios')
-                .select('id_alumno, gravedad, estatus_seguimiento, seguimiento_por')
+                .select('id_alumno, gravedad')
                 .eq('ciclo_escolar', ciclo)
                 .neq('gravedad', 'Positiva');
             if (!reportes || reportes.length === 0) return res.json([]);
@@ -304,11 +304,9 @@ module.exports = async (req, res) => {
             // Agrupar por alumno
             const mapaAlumno = {};
             reportes.forEach(r => {
-                if (!mapaAlumno[r.id_alumno]) mapaAlumno[r.id_alumno] = { total: 0, graves: 0, atendidos: 0, solucionados: 0 };
+                if (!mapaAlumno[r.id_alumno]) mapaAlumno[r.id_alumno] = { total: 0, graves: 0 };
                 mapaAlumno[r.id_alumno].total++;
                 if (r.gravedad === 'Grave') mapaAlumno[r.id_alumno].graves++;
-                if (r.seguimiento_por) mapaAlumno[r.id_alumno].atendidos++;
-                if (r.estatus_seguimiento === 'Solucionado') mapaAlumno[r.id_alumno].solucionados++;
             });
 
             // Filtrar: falta grave O 3+ reportes
@@ -326,19 +324,11 @@ module.exports = async (req, res) => {
                 .eq('status', 'ACTIVO')
                 .order('apellidos', { ascending: true });
 
-            const lista = (alumnos || []).map(a => {
-                const m = mapaAlumno[a.id_alumno] || { total: 0, graves: 0, atendidos: 0, solucionados: 0 };
-                let estatus_seguimiento = 'Sin seguimiento';
-                if (m.atendidos > 0)
-                    estatus_seguimiento = m.solucionados >= m.atendidos ? 'Solucionado' : 'En proceso';
-                return {
-                    ...a,
-                    total_reportes:      m.total,
-                    reportes_graves:     m.graves,
-                    con_seguimiento:     m.atendidos,
-                    estatus_seguimiento,
-                };
-            });
+            const lista = (alumnos || []).map(a => ({
+                ...a,
+                total_reportes: mapaAlumno[a.id_alumno]?.total || 0,
+                reportes_graves: mapaAlumno[a.id_alumno]?.graves || 0,
+            }));
             return res.json(lista);
         }
 
@@ -575,8 +565,9 @@ module.exports = async (req, res) => {
 
             const TABLAS_PERMITIDAS = [
                 'reportes_disciplinarios', 'evaluaciones_parciales', 'expedientes_medicos',
-                'visitas_enfermeria', 'justificantes_medicos', 'asistencia',
-                'logs_actividad', 'calificaciones', 'datos_socioeconomicos', 'emergencias'
+                'visitas_enfermeria', 'justificantes_medicos', 'autorizacion_medicamentos',
+                'pases_salida', 'asistencia', 'logs_actividad', 'calificaciones',
+                'datos_socioeconomicos', 'emergencias'
             ];
 
             const tablasInvalidas = tablas.filter(t => !TABLAS_PERMITIDAS.includes(t));
