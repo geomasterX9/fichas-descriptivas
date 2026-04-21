@@ -294,7 +294,9 @@ tr:hover td { background:#f8fafc; }
 
     // Generar lista de días entre desde y hasta
     const dias = [];
-    for (let d = new Date(desde); d <= new Date(hasta); d.setDate(d.getDate()+1))
+    const dInicio = new Date(desde + 'T12:00:00');
+    const dFin    = new Date(hasta  + 'T12:00:00');
+    for (let d = new Date(dInicio); d <= dFin; d.setDate(d.getDate()+1))
       dias.push(fmtDate(new Date(d)));
 
     // Llamadas paralelas por día
@@ -319,6 +321,7 @@ tr:hover td { background:#f8fafc; }
     const diasData = resultados.map(d => ({
       fecha: d.fecha,
       ausentes: d.registros.filter(r =>
+        !r.presente &&
         (!grado || String(r.alumnos?.grado) === grado) &&
         (!grupo || r.alumnos?.grupo === grupo)
       )
