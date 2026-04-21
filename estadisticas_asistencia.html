@@ -291,30 +291,20 @@ tr:hover td { background:#f8fafc; }
     if (!desde || !hasta) { alert('Selecciona un rango de fechas.'); return; }
 
     document.getElementById('headerSub').textContent = `${desde} al ${hasta}`;
-    document.getElementById('kpiTotalFaltas').textContent    = '...';
-    document.getElementById('kpiAlumnosMasFaltas').textContent = '...';
-    document.getElementById('kpiGrupoMasFaltas').textContent   = '...';
-    document.getElementById('kpiPctAsistencia').textContent    = '...';
 
     // Generar lista de días entre desde y hasta
     const dias = [];
     for (let d = new Date(desde); d <= new Date(hasta); d.setDate(d.getDate()+1))
       dias.push(fmtDate(new Date(d)));
 
-    // Llamadas en lotes de 5 para evitar saturar la API
-    const resultados = [];
-    const LOTE = 5;
-    for (let i = 0; i < dias.length; i += LOTE) {
-      const lote = dias.slice(i, i + LOTE);
-      const resLote = await Promise.all(
-        lote.map(f =>
-          apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
-            .then(r => r ? r.json() : []).catch(() => [])
-            .then(data => ({ fecha: f, registros: Array.isArray(data) ? data : [] }))
-        )
-      );
-      resultados.push(...resLote);
-    }
+    // Llamadas paralelas por día
+    const resultados = await Promise.all(
+      dias.map(f =>
+        apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
+          .then(r => r ? r.json() : []).catch(() => [])
+          .then(data => ({ fecha: f, registros: Array.isArray(data) ? data : [] }))
+      )
+    );
 
     // Obtener total de alumnos para calcular % asistencia
     const resAlu = await apiFetch('/api/alumnos' + (grado ? `?grado=${grado}` : ''));
@@ -329,7 +319,6 @@ tr:hover td { background:#f8fafc; }
     const diasData = resultados.map(d => ({
       fecha: d.fecha,
       ausentes: d.registros.filter(r =>
-        !r.presente &&
         (!grado || String(r.alumnos?.grado) === grado) &&
         (!grupo || r.alumnos?.grupo === grupo)
       )
@@ -483,14 +472,8 @@ tr:hover td { background:#f8fafc; }
       : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted);">Sin datos en este período</td></tr>';
   }
 
-  // Auto-generar al cargar con pequeño delay para asegurar token listo
-  window.addEventListener('load', () => {
-    document.getElementById('bodyAlumnos').innerHTML =
-      '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);">⏳ Cargando estadísticas...</td></tr>';
-    document.getElementById('bodyGrupos').innerHTML =
-      '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);">⏳ Cargando...</td></tr>';
-    setTimeout(() => generarEstadisticas(), 300);
-  });
+  // Auto-generar al cargar
+  window.addEventListener('load', () => generarEstadisticas());
 </script>
 <script>
   if ('serviceWorker' in navigator) {

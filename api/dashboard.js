@@ -542,11 +542,15 @@ module.exports = async (req, res) => {
         if (tipo === 'asistencia_fecha') {
             const fecha = req.query.fecha;
             if (!fecha) return res.status(400).json({ error: 'Falta parámetro fecha.' });
-            const { data } = await db
+            // Solo ausentes para estadísticas — si se pide todos, usar ?todos=1
+            const soloAusentes = req.query.todos !== '1';
+            let query = db
                 .from('asistencia')
                 .select('*, alumnos(apellidos, nombre, grado, grupo)')
                 .eq('fecha', fecha)
                 .order('grado', { ascending: true });
+            if (soloAusentes) query = query.eq('presente', false);
+            const { data } = await query;
             return res.json(data || []);
         }
 
@@ -565,9 +569,8 @@ module.exports = async (req, res) => {
 
             const TABLAS_PERMITIDAS = [
                 'reportes_disciplinarios', 'evaluaciones_parciales', 'expedientes_medicos',
-                'visitas_enfermeria', 'justificantes_medicos', 'autorizacion_medicamentos',
-                'pases_salida', 'asistencia', 'logs_actividad', 'calificaciones',
-                'datos_socioeconomicos', 'emergencias'
+                'visitas_enfermeria', 'justificantes_medicos', 'asistencia',
+                'logs_actividad', 'calificaciones', 'datos_socioeconomicos', 'emergencias'
             ];
 
             const tablasInvalidas = tablas.filter(t => !TABLAS_PERMITIDAS.includes(t));
