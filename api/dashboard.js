@@ -376,9 +376,8 @@ module.exports = async (req, res) => {
 
         // ── ASISTENCIA ───────────────────────────────────────────
         if (tipo === 'asistencia') {
-            // Usar zona horaria de México (UTC-6) para evitar desfase al final del día
-            const ahoraCST = new Date(Date.now() - 6 * 60 * 60 * 1000);
-            const hoy = ahoraCST.toISOString().split('T')[0];
+            // Usar zona horaria de México (America/Mexico_City) — maneja CST y CDT automáticamente
+            const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
 
             if (req.method === 'GET') {
                 const grado = req.query.grado;
