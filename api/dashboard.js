@@ -376,7 +376,9 @@ module.exports = async (req, res) => {
 
         // ── ASISTENCIA ───────────────────────────────────────────
         if (tipo === 'asistencia') {
-            const hoy = new Date().toISOString().split('T')[0];
+            // Usar zona horaria de México (UTC-6) para evitar desfase al final del día
+            const ahoraCST = new Date(Date.now() - 6 * 60 * 60 * 1000);
+            const hoy = ahoraCST.toISOString().split('T')[0];
 
             if (req.method === 'GET') {
                 const grado = req.query.grado;
@@ -542,15 +544,11 @@ module.exports = async (req, res) => {
         if (tipo === 'asistencia_fecha') {
             const fecha = req.query.fecha;
             if (!fecha) return res.status(400).json({ error: 'Falta parámetro fecha.' });
-            // Solo ausentes para estadísticas — si se pide todos, usar ?todos=1
-            const soloAusentes = req.query.todos !== '1';
-            let query = db
+            const { data } = await db
                 .from('asistencia')
                 .select('*, alumnos(apellidos, nombre, grado, grupo)')
                 .eq('fecha', fecha)
                 .order('grado', { ascending: true });
-            if (soloAusentes) query = query.eq('presente', false);
-            const { data } = await query;
             return res.json(data || []);
         }
 
