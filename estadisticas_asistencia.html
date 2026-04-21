@@ -223,7 +223,7 @@ tr:hover td { background:#f8fafc; }
       <table id="tablaAlumnos">
         <thead><tr>
           <th>#</th><th>Alumno</th><th>Grado / Grupo</th>
-          <th>Faltas</th><th>Fechas de inasistencia</th>
+          <th>Faltas</th><th>Frecuencia</th>
         </tr></thead>
         <tbody id="bodyAlumnos">
           <tr><td colspan="5" class="empty">Genera las estadísticas para ver el ranking</td></tr>
@@ -291,20 +291,30 @@ tr:hover td { background:#f8fafc; }
     if (!desde || !hasta) { alert('Selecciona un rango de fechas.'); return; }
 
     document.getElementById('headerSub').textContent = `${desde} al ${hasta}`;
+    document.getElementById('kpiTotalFaltas').textContent    = '...';
+    document.getElementById('kpiAlumnosMasFaltas').textContent = '...';
+    document.getElementById('kpiGrupoMasFaltas').textContent   = '...';
+    document.getElementById('kpiPctAsistencia').textContent    = '...';
 
     // Generar lista de días entre desde y hasta
     const dias = [];
     for (let d = new Date(desde); d <= new Date(hasta); d.setDate(d.getDate()+1))
       dias.push(fmtDate(new Date(d)));
 
-    // Llamadas paralelas por día
-    const resultados = await Promise.all(
-      dias.map(f =>
-        apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
-          .then(r => r ? r.json() : []).catch(() => [])
-          .then(data => ({ fecha: f, registros: Array.isArray(data) ? data : [] }))
-      )
-    );
+    // Llamadas en lotes de 5 para evitar saturar la API
+    const resultados = [];
+    const LOTE = 5;
+    for (let i = 0; i < dias.length; i += LOTE) {
+      const lote = dias.slice(i, i + LOTE);
+      const resLote = await Promise.all(
+        lote.map(f =>
+          apiFetch(`/api/dashboard?tipo=asistencia_fecha&fecha=${f}`, { silencioso: true })
+            .then(r => r ? r.json() : []).catch(() => [])
+            .then(data => ({ fecha: f, registros: Array.isArray(data) ? data : [] }))
+        )
+      );
+      resultados.push(...resLote);
+    }
 
     // Obtener total de alumnos para calcular % asistencia
     const resAlu = await apiFetch('/api/alumnos' + (grado ? `?grado=${grado}` : ''));
@@ -338,9 +348,8 @@ tr:hover td { background:#f8fafc; }
         const gp   = String(r.alumnos?.grupo || '');
         const key  = `${gr}-${gp}`;
 
-        faltasPorAlumno[idA] = faltasPorAlumno[idA] || { nombre: nom, grado: gr, grupo: gp, faltas: 0, fechas: [] };
+        faltasPorAlumno[idA] = faltasPorAlumno[idA] || { nombre: nom, grado: gr, grupo: gp, faltas: 0 };
         faltasPorAlumno[idA].faltas++;
-        faltasPorAlumno[idA].fechas.push(dia.fecha);
 
         faltasPorGrupo[key] = faltasPorGrupo[key] || { grado: gr, grupo: gp, faltas: 0, diasConFaltas: new Set() };
         faltasPorGrupo[key].faltas++;
@@ -427,18 +436,15 @@ tr:hover td { background:#f8fafc; }
           const pct   = Math.round((a.faltas / dias.length) * 100);
           const nivel = a.faltas >= 5 ? 'f-alto' : a.faltas >= 3 ? 'f-medio' : 'f-bajo';
           const ancho = Math.round((a.faltas / maxFaltas) * 100);
-          const fechasHtml = (a.fechas || [])
-            .sort()
-            .map(f => {
-              const [y,m,d] = f.split('-');
-              return `<span style="display:inline-block;background:#eff6ff;color:#1B4F8A;border:1px solid #bfdbfe;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;margin:2px;">${d}/${m}</span>`;
-            }).join('');
           return `<tr>
             <td style="font-weight:700;color:var(--muted);">${i+1}</td>
             <td style="font-weight:700;">${a.nombre}</td>
             <td>${a.grado}° Grupo "${a.grupo}"</td>
             <td><span class="badge-faltas ${nivel}">${a.faltas} falta(s)</span></td>
-            <td style="line-height:1.8;">${fechasHtml || '—'}</td>
+            <td>
+              <div class="barra-falta"><div class="barra-fill" style="width:${ancho}%;background:${a.faltas>=5?'var(--rojo)':a.faltas>=3?'var(--naranja)':'var(--azul)'}"></div></div>
+              <div class="tendencia-label">${pct}% de los días</div>
+            </td>
           </tr>`;
         }).join('')
       : '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted);">Sin faltas en este período</td></tr>';
@@ -477,8 +483,14 @@ tr:hover td { background:#f8fafc; }
       : '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted);">Sin datos en este período</td></tr>';
   }
 
-  // Auto-generar al cargar
-  window.addEventListener('load', () => generarEstadisticas());
+  // Auto-generar al cargar con pequeño delay para asegurar token listo
+  window.addEventListener('load', () => {
+    document.getElementById('bodyAlumnos').innerHTML =
+      '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);">⏳ Cargando estadísticas...</td></tr>';
+    document.getElementById('bodyGrupos').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);">⏳ Cargando...</td></tr>';
+    setTimeout(() => generarEstadisticas(), 300);
+  });
 </script>
 <script>
   if ('serviceWorker' in navigator) {
