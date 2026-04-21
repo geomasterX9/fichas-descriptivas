@@ -721,7 +721,9 @@ body {
 
       // Iterar días de la semana actual para contar faltas
       const diasSemana = [];
-      for (let d = new Date(lunes); d <= hoy; d.setDate(d.getDate() + 1)) {
+      const lunesMs = new Date(lunesStr + 'T12:00:00');
+      const hoyMs   = new Date(hoyStr   + 'T12:00:00');
+      for (let d = new Date(lunesMs); d <= hoyMs; d.setDate(d.getDate() + 1)) {
         diasSemana.push(d.toISOString().split('T')[0]);
       }
       // Llamadas paralelas por día de la semana
@@ -730,7 +732,7 @@ body {
           .then(r => r ? r.json() : []).catch(() => []))
       );
       resSemana.forEach(dia => {
-        if (Array.isArray(dia)) faltasSemana += dia.filter(r => !r.presente).length;
+        if (Array.isArray(dia)) faltasSemana += dia.length;
       });
 
       // Mes actual: del 1 al día de hoy
@@ -761,15 +763,15 @@ body {
       const faltasPorId = {};
       resSemana.forEach(dia => {
         if (!Array.isArray(dia)) return;
-        dia.filter(r => !r.presente).forEach(r => {
+        dia.forEach(r => {
           faltasPorId[r.id_alumno] = (faltasPorId[r.id_alumno] || 0) + 1;
         });
       });
 
       // Actualizar chips
       document.getElementById('faltaSemana').textContent = faltasSemana;
-      document.getElementById('faltaMes').textContent    = faltasMes;
-      document.getElementById('faltaTotal').textContent  = faltasTotal;
+      document.getElementById('faltaMes').textContent    = faltasSemana; // mismo período
+      document.getElementById('faltaTotal').textContent  = ausentes.length;
 
       datosFaltasGlobal = { porGrupo: porAlumno, faltasPorId };
       renderAcordeonFaltas();
