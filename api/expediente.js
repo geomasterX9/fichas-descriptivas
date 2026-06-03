@@ -44,6 +44,35 @@ module.exports = async (req, res) => {
             .order('trimestre', { ascending: true });
         return res.json(data || []);
     }
+
+    if (req.method === 'POST' && tipo === 'calificaciones_manual') {
+        const ROLES_CAL = ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE'];
+        if (!ROLES_CAL.includes(usuario.rol))
+            return res.status(403).json({ error: 'Sin permiso para registrar calificaciones.' });
+
+        const { id_alumno, trimestre: trim, materias, promedio_trimestral } = req.body || {};
+        if (!id_alumno || !trim || !Array.isArray(materias) || materias.length === 0)
+            return res.status(400).json({ error: 'Faltan parámetros.' });
+
+        const cicloActivo = await getCicloActivo(db);
+        const idAlumno    = parseInt(id_alumno);
+        const trimestreN  = parseInt(trim);
+
+        await db.from('calificaciones').delete()
+            .eq('id_alumno', idAlumno)
+            .eq('trimestre', trimestreN)
+            .eq('ciclo_escolar', cicloActivo);
+
+        const { error } = await db.from('calificaciones').insert({
+            id_alumno:           idAlumno,
+            trimestre:           trimestreN,
+            ciclo_escolar:       cicloActivo,
+            materias,
+            promedio_trimestral: promedio_trimestral || null
+        });
+        if (error) return res.status(400).json({ error: error.message });
+        return res.json({ exito: true });
+    }
     if (req.method === 'GET' && tipo === 'ficha') {
         const { data } = await db.from('datos_socioeconomicos').select('*')
             .eq('id_alumno', parseInt(id))
