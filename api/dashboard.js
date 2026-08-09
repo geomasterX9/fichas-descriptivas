@@ -566,7 +566,8 @@ module.exports = async (req, res) => {
 
             const TABLAS_PERMITIDAS = [
                 'reportes_disciplinarios', 'evaluaciones_parciales', 'expedientes_medicos',
-                'visitas_enfermeria', 'justificantes_medicos', 'asistencia',
+                'visitas_enfermeria', 'justificantes_medicos', 'autorizacion_medicamentos',
+                'pases_salida', 'asistencia',
                 'logs_actividad', 'calificaciones', 'datos_socioeconomicos', 'emergencias'
             ];
 
