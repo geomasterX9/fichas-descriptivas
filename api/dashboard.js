@@ -699,6 +699,13 @@ async function handleCiclo(req, res, usuario, operacion) {
         await db.from('calificaciones').delete().in('id_alumno', ids);
         await db.from('reportes_disciplinarios').delete().in('id_alumno', ids);
         await db.from('datos_socioeconomicos').delete().in('id_alumno', ids);
+        await db.from('asistencia').delete().in('id_alumno', ids);
+        await db.from('evaluaciones_parciales').delete().in('id_alumno', ids);
+        await db.from('expedientes_medicos').delete().in('id_alumno', ids);
+        await db.from('visitas_enfermeria').delete().in('id_alumno', ids);
+        await db.from('pases_salida').delete().in('id_alumno', ids);
+        await db.from('autorizacion_medicamentos').delete().in('id_alumno', ids);
+        await db.from('justificantes_medicos').delete().in('id_alumno', ids);
         const { error: errDel } = await db.from('alumnos').delete().in('id_alumno', ids);
         if (errDel) return res.status(500).json({ error: errDel.message });
         await db.from('logs_actividad').insert([{
