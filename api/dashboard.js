@@ -717,12 +717,16 @@ async function handleCiclo(req, res, usuario, operacion) {
     }
 
     if (suboperacion === 'promover') {
-        const { de, a, ciclo } = req.body;
+        const { de, a, ciclo, nuevoCiclo } = req.body;
         if (!de || !a || !ciclo) return res.status(400).json({ error: 'Faltan parámetros' });
         if (![1, 2].includes(Number(de)) || ![2, 3].includes(Number(a)))
             return res.status(400).json({ error: 'Grados inválidos' });
+        if (nuevoCiclo && !/^\d{4}-\d{4}$/.test(nuevoCiclo))
+            return res.status(400).json({ error: 'Formato de nuevoCiclo inválido' });
+        const cambios = { grado: Number(a) };
+        if (nuevoCiclo) cambios.ciclo_escolar = nuevoCiclo;
         const { data: actualizados, error: errP } = await db
-            .from('alumnos').update({ grado: Number(a) })
+            .from('alumnos').update(cambios)
             .eq('grado', Number(de)).eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
         if (errP) return res.status(500).json({ error: errP.message });
         return res.json({ promovidos: actualizados?.length || 0 });

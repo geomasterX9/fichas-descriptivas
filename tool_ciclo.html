@@ -713,7 +713,7 @@ async function ejecutarCierre() {
     const res2 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ suboperacion: 'promover', de: 2, a: 3, ciclo: cicloActual })
+      body: JSON.stringify({ suboperacion: 'promover', de: 2, a: 3, ciclo: cicloActual, nuevoCiclo })
     });
     const d2 = await res2.json();
     if (!res2.ok) throw new Error(d2.error || 'Error al promover 2°→3°');
@@ -724,7 +724,7 @@ async function ejecutarCierre() {
     const res3 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ suboperacion: 'promover', de: 1, a: 2, ciclo: cicloActual })
+      body: JSON.stringify({ suboperacion: 'promover', de: 1, a: 2, ciclo: cicloActual, nuevoCiclo })
     });
     const d3 = await res3.json();
     if (!res3.ok) throw new Error(d3.error || 'Error al promover 1°→2°');
@@ -735,7 +735,7 @@ async function ejecutarCierre() {
     const res4 = await apiFetch('/api/dashboard?tipo=ciclo_op', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ suboperacion: 'resetear_fichas', ciclo: cicloActual })
+      body: JSON.stringify({ suboperacion: 'resetear_fichas', ciclo: nuevoCiclo })
     });
     const d4 = await res4.json();
     if (!res4.ok) throw new Error(d4.error || 'Error al resetear fichas');
