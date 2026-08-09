@@ -74,11 +74,14 @@ module.exports = async (req, res) => {
         return res.json({ exito: true });
     }
     if (req.method === 'GET' && tipo === 'ficha') {
+        // Solo existe una fila por alumno (upsert onConflict: id_alumno), así que
+        // si el ciclo guardado no es el activo, la ficha quedó pendiente de
+        // recapturar tras el cierre de ciclo; se muestra como referencia.
         const { data } = await db.from('datos_socioeconomicos').select('*')
             .eq('id_alumno', parseInt(id))
-            .eq('ciclo_escolar', ciclo)
-            .single();
+            .maybeSingle();
         if (!data) return res.json({});
+        if (data.ciclo_escolar !== ciclo) data.desactualizada = true;
 
         const ROLES_COMPLETOS = ['ADMINISTRADOR', 'DIRECTIVO', 'TRABAJO SOCIAL'];
         if (!ROLES_COMPLETOS.includes(usuario.rol)) {
