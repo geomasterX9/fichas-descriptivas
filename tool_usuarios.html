@@ -234,7 +234,7 @@
     </div>
     <div class="campo" id="campoPasswordWrap">
       <label>Contraseña</label>
-      <input type="password" id="campoPassword" placeholder="Mínimo 6 caracteres" maxlength="100">
+      <input type="password" id="campoPassword" placeholder="Mínimo 5 caracteres" maxlength="100">
     </div>
     <div class="campo">
       <label>Rol</label>
@@ -295,7 +295,7 @@
 
     <div class="campo">
       <label>Nueva contraseña</label>
-      <input type="password" id="campoClave1" placeholder="Mínimo 6 caracteres" maxlength="100">
+      <input type="password" id="campoClave1" placeholder="Mínimo 5 caracteres" maxlength="100">
     </div>
     <div class="campo">
       <label>Confirmar contraseña</label>
@@ -425,7 +425,7 @@
         let errores = [];
         if (!nombre)                              errores.push('Nombre vacío');
         if (!usuario || usuario.length < 3)       errores.push('Usuario inválido');
-        if (!password || password.length < 6)     errores.push('Contraseña < 6 chars');
+        if (!password || password.length < 5)     errores.push('Contraseña < 5 chars');
         if (!ROLES_VALIDOS_SET.has(rol))          errores.push(`Rol inválido: "${rol}"`);
         return { num: i+1, nombre, usuario, password, rol, errores, valido: errores.length === 0 };
       });
@@ -631,8 +631,8 @@
     const clave1 = document.getElementById('campoClave1').value;
     const clave2 = document.getElementById('campoClave2').value;
 
-    if (!clave1 || clave1.length < 6) {
-      alerta.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+    if (!clave1 || clave1.length < 5) {
+      alerta.textContent = 'La contraseña debe tener al menos 5 caracteres.';
       alerta.className = 'alerta error'; return;
     }
     if (clave1 !== clave2) {

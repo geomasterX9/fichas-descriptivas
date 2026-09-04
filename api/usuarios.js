@@ -56,8 +56,8 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Todos los campos son requeridos.' });
         if (!ROLES_VALIDOS.includes(rol.toUpperCase()))
             return res.status(400).json({ error: 'Rol no válido.' });
-        if (typeof password !== 'string' || password.length < 6)
-            return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+        if (typeof password !== 'string' || password.length < 5)
+            return res.status(400).json({ error: 'La contraseña debe tener al menos 5 caracteres.' });
         if (typeof user !== 'string' || user.length < 3 || user.length > 50)
             return res.status(400).json({ error: 'El usuario debe tener entre 3 y 50 caracteres.' });
 
@@ -102,7 +102,7 @@ module.exports = async (req, res) => {
         if (nombre_corto !== undefined) cambios.nombre_corto = nombre_corto ? sanitize(nombre_corto.trim()) : null;
         if (grupos !== undefined) cambios.grupos = Array.isArray(grupos) ? grupos : null;
         if (password) {
-            if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+            if (password.length < 5) return res.status(400).json({ error: 'La contraseña debe tener al menos 5 caracteres.' });
             cambios.password = await bcrypt.hash(password, 12);
             cambios.token_valido_desde = new Date().toISOString(); // Invalidar sesiones activas
         }
