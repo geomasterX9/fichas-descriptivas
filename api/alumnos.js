@@ -73,6 +73,42 @@ module.exports = async (req, res) => {
         const { data } = await query.order('apellidos', { ascending: true });
         return res.json(data || []);
     }
+    // ── Alta masiva (?bulk=1) → importar lista de alumnos desde xlsx, solo ADMINISTRADOR ──
+    if (req.method === 'POST' && req.query.bulk === '1') {
+        if (usuario.rol !== 'ADMINISTRADOR') return res.status(403).json({ error: 'Solo el administrador puede importar alumnos.' });
+        const lista = Array.isArray(req.body?.alumnos) ? req.body.alumnos : [];
+        if (lista.length === 0) return res.status(400).json({ error: 'No se recibieron alumnos.' });
+        if (lista.length > 1000) return res.status(400).json({ error: 'Demasiados registros en una sola importación.' });
+
+        const ciclo = await getCicloActivo(db);
+        const hoy = new Date().toISOString().split('T')[0];
+        const registros = [];
+        for (const a of lista) {
+            const grado    = parseInt(a.grado);
+            const grupo    = String(a.grupo || '').trim().toUpperCase();
+            const apellidos = String(a.apellidos || '').trim();
+            const nombre    = String(a.nombre || '').trim();
+            if (![1, 2, 3].includes(grado) || !grupo || !apellidos || !nombre) {
+                return res.status(400).json({ error: `Registro inválido: "${apellidos} ${nombre}" (grado ${a.grado}, grupo ${a.grupo})` });
+            }
+            registros.push(sanitizarCampos({
+                apellidos, nombre, grado, grupo,
+                status: 'ACTIVO', ciclo_escolar: ciclo, fecha_alta: hoy
+            }));
+        }
+
+        const { data, error } = await db.from('alumnos').insert(registros).select('id_alumno');
+        if (error) return res.status(400).json({ error: error.message });
+
+        await db.from('logs_actividad').insert([{
+            id_usuario: usuario.id, nombre_usuario: usuario.nombre, rol: usuario.rol,
+            accion: 'IMPORTAR_ALUMNOS', detalle: `Importación masiva: ${data.length} alumnos (ciclo ${ciclo})`,
+            ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown'
+        }]);
+
+        return res.json({ exito: true, insertados: data.length });
+    }
+
     // Solo ADMINISTRADOR puede crear/modificar alumnos
     if (req.method === 'POST') {
         if (usuario.rol !== 'ADMINISTRADOR') return res.status(403).json({ error: 'Solo el administrador puede crear alumnos.' });
