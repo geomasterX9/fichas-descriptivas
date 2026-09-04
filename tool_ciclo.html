@@ -401,6 +401,16 @@
 
   </div>
 
+  <!-- MANTENIMIENTO: reparar grupos si un cierre ya ejecutado los dejó desfasados -->
+  <div class="advertencia" style="margin-top:24px;">
+    <div class="advertencia-icono">🛠️</div>
+    <div>
+      <h3>Reparar asignación de grupos de docentes/prefectos</h3>
+      <p>Úsalo solo si, después de un cierre de ciclo, algún(a) docente o prefecto dejó de ver a sus alumnos en la app. Ajusta sus grupos asignados (ej. "1A" → "2A") para que coincidan con el grado ya promovido. No lo ejecutes más de una vez por cada cierre.</p>
+      <button class="btn-accion btn-secundario" style="margin-top:10px;" onclick="repararGruposDocentes(this)">🔧 Reparar grupos ahora</button>
+    </div>
+  </div>
+
   <!-- ÉXITO FINAL -->
   <div class="exito-final" id="exitoFinal">
     <div class="icono">🎉</div>
@@ -801,6 +811,27 @@ function log(tipo, msg) {
   const cls = tipo === 'ok' ? 'log-ok' : tipo === 'err' ? 'log-err' : 'log-inf';
   box.innerHTML += `<div class="${cls}">${msg}</div>`;
   box.scrollTop = box.scrollHeight;
+}
+
+async function repararGruposDocentes(btn) {
+  if (!confirm('¿Confirmas reparar los grupos asignados a docentes y prefectos?\n\nEsto asume que ya se ejecutó un cierre de ciclo y desplaza sus asignaciones (2°→3°, 1°→2°). No lo ejecutes si no acabas de cerrar un ciclo.')) return;
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Reparando...';
+  try {
+    const res = await apiFetch('/api/dashboard?tipo=ciclo_op', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suboperacion: 'reparar_grupos_docentes' })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'Error al reparar grupos');
+    alert('Listo. Los grupos de docentes y prefectos fueron actualizados.');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = textoOriginal;
 }
 </script>
     <script>

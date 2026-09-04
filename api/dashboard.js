@@ -607,6 +607,35 @@ module.exports = async (req, res) => {
 };
 
 
+// Al promover alumnos de grado (ej. 1→2), los grupos que DOCENTE/PREFECTO tienen asignados
+// en usuarios.grupos (ej. "1A") quedan desfasados respecto al grado real de sus alumnos,
+// dejándolos sin ver a nadie en toda la app (buscador, reportes, listas, etc. filtran por esto
+// en el cliente). Aquí se desplazan esas asignaciones junto con la promoción.
+async function shiftGruposDocentes(db, deGrado, aGrado) {
+    const { data: usuariosConGrupos } = await db
+        .from('usuarios').select('id_usuario, grupos')
+        .in('rol', ['DOCENTE', 'PREFECTO'])
+        .not('grupos', 'is', null);
+
+    for (const u of (usuariosConGrupos || [])) {
+        if (!Array.isArray(u.grupos) || u.grupos.length === 0) continue;
+        let cambio = false;
+        const nuevos = [];
+        for (const g of u.grupos) {
+            const m = /^(\d+)(.*)$/.exec(g);
+            if (!m) { nuevos.push(g); continue; }
+            const grado = Number(m[1]);
+            if (grado === deGrado) { nuevos.push(`${aGrado}${m[2]}`); cambio = true; }
+            else if (grado === aGrado) { cambio = true; } // ese grupo egresó/fue eliminado, se descarta
+            else nuevos.push(g);
+        }
+        if (cambio) {
+            const unicos = [...new Set(nuevos)];
+            await db.from('usuarios').update({ grupos: unicos.length ? unicos : null }).eq('id_usuario', u.id_usuario);
+        }
+    }
+}
+
 // ── OPERACIONES DE CIERRE DE CICLO ──────────────────────────
 async function handleCiclo(req, res, usuario, operacion) {
     const db = usuario._db || supabase;
@@ -730,7 +759,22 @@ async function handleCiclo(req, res, usuario, operacion) {
             .from('alumnos').update(cambios)
             .eq('grado', Number(de)).eq('ciclo_escolar', ciclo).eq('status', 'ACTIVO').select('id_alumno');
         if (errP) return res.status(500).json({ error: errP.message });
+        await shiftGruposDocentes(db, Number(de), Number(a));
         return res.json({ promovidos: actualizados?.length || 0 });
+    }
+
+    // Corrección manual única: recalcula usuarios.grupos de DOCENTE/PREFECTO como si
+    // se hubiera aplicado el desplazamiento 2°→3° y 1°→2° (la secuencia real de un cierre).
+    // Solo debe usarse si un cierre de ciclo ya ejecutado dejó desfasadas esas asignaciones.
+    if (suboperacion === 'reparar_grupos_docentes') {
+        await shiftGruposDocentes(db, 2, 3);
+        await shiftGruposDocentes(db, 1, 2);
+        await db.from('logs_actividad').insert([{
+            id_usuario: usuario.id, nombre_usuario: usuario.nombre, rol: usuario.rol,
+            accion: 'REPARAR_GRUPOS_DOCENTES', detalle: 'Corrección manual de grupos asignados a docentes/prefectos',
+            ip: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown', fecha: new Date().toISOString()
+        }]);
+        return res.json({ exito: true });
     }
 
     if (suboperacion === 'resetear_fichas') {
