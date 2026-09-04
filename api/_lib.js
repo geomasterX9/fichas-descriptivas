@@ -29,6 +29,7 @@ const PERMISOS = {
     reportes:                  ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL'],
     expediente:                ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'],
     personal:                  ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'],
+    chat:                      ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'],
     'foto-alumno':             ['ADMINISTRADOR', 'DIRECTIVO'],
     'importar-calificaciones': ['ADMINISTRADOR'],
 };

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mensajería — EST 84</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1B4F8A; --azul-hover: #163f6e; --azul-claro: #eff6ff;
+  --verde: #2d9b6f; --verde-claro: #f0fdf6;
+  --rojo: #e63946; --rojo-claro: #fff0f1;
+  --fondo: #f0f4f8; --blanco: #fff;
+  --texto: #1a2332; --muted: #64748b; --borde: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Outfit', sans-serif; background: var(--fondo); overflow: hidden; }
+.header {
+  background: var(--azul); padding: 0 24px; height: 62px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 12px rgba(27,79,138,0.25); position: relative; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.btn-back {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  color: white; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; text-decoration: none; transition: background 0.15s;
+}
+.btn-back:hover { background: rgba(255,255,255,0.25); }
+.header-title { font-size: 16px; font-weight: 800; color: white; }
+.header-sub   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.header-nombre { font-size: 13px; font-weight: 700; color: white; }
+
+.chat-wrap { display: flex; height: calc(100vh - 62px); }
+
+/* ── Panel de canales ── */
+.panel-canales {
+  width: 320px; min-width: 320px; background: var(--blanco);
+  border-right: 1px solid var(--borde); display: flex; flex-direction: column;
+}
+.canales-header {
+  padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--borde);
+}
+.canales-titulo { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+.btn-nuevo {
+  border: none; background: var(--azul-claro); color: var(--azul); font-weight: 700;
+  font-size: 12px; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: 'Outfit', sans-serif;
+}
+.btn-nuevo:hover { background: #dbeafe; }
+.lista-canales { flex: 1; overflow-y: auto; }
+.item-canal {
+  padding: 14px 18px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+  transition: background 0.12s;
+}
+.item-canal:hover { background: var(--azul-claro); }
+.item-canal.activo { background: var(--azul-claro); border-left: 3px solid var(--azul); }
+.canal-info { min-width: 0; flex: 1; }
+.canal-nombre { font-weight: 700; font-size: 14px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.canal-preview { font-size: 12px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.canal-badge {
+  background: var(--rojo); color: white; font-size: 11px; font-weight: 800;
+  border-radius: 999px; min-width: 20px; height: 20px; display: flex;
+  align-items: center; justify-content: center; padding: 0 6px; flex-shrink: 0;
+}
+.estado-vacio-canales { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
+
+/* ── Panel del hilo ── */
+.panel-hilo { flex: 1; display: flex; flex-direction: column; background: var(--fondo); min-width: 0; }
+.hilo-vacio { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
+.hilo-activo { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.hilo-header {
+  background: var(--blanco); padding: 14px 20px; border-bottom: 1px solid var(--borde);
+  display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px;
+}
+.btn-atras-movil { display: none; border: none; background: none; font-size: 18px; cursor: pointer; color: var(--azul); }
+.hilo-mensajes { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.msg-burbuja { max-width: 70%; padding: 10px 14px; border-radius: 14px; background: var(--blanco); border: 1px solid var(--borde); align-self: flex-start; }
+.msg-burbuja.propio { align-self: flex-end; background: var(--azul); color: white; border: none; }
+.msg-burbuja.urgente { border-left: 4px solid var(--rojo); }
+.msg-burbuja.propio.urgente { border-left: none; border-right: 4px solid #ffb3b8; }
+.msg-remitente { font-size: 11px; font-weight: 800; margin-bottom: 3px; opacity: 0.75; }
+.msg-texto { font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.msg-hora { font-size: 10px; opacity: 0.6; margin-top: 4px; text-align: right; }
+.msg-flag-urgente { font-size: 10px; font-weight: 800; color: var(--rojo); margin-bottom: 3px; }
+.msg-burbuja.propio .msg-flag-urgente { color: #ffd9db; }
+
+.hilo-compositor { background: var(--blanco); border-top: 1px solid var(--borde); padding: 12px 16px; }
+.chk-urgente { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--rojo); margin-bottom: 8px; cursor: pointer; }
+.compositor-fila { display: flex; gap: 10px; align-items: flex-end; }
+.compositor-fila textarea {
+  flex: 1; resize: none; height: 42px; max-height: 120px; padding: 10px 14px;
+  border: 1.5px solid var(--borde); border-radius: 10px; font-size: 14px;
+  font-family: 'Outfit', sans-serif; color: var(--texto); outline: none;
+}
+.compositor-fila textarea:focus { border-color: var(--azul); }
+.btn-enviar {
+  border: none; background: var(--azul); color: white; font-weight: 700; font-size: 14px;
+  padding: 11px 18px; border-radius: 10px; cursor: pointer; font-family: 'Outfit', sans-serif;
+}
+.btn-enviar:hover { background: var(--azul-hover); }
+.btn-enviar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Modal directorio ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.modal-overlay.visible { display: flex; }
+.modal-box { background: var(--blanco); border-radius: 16px; width: 100%; max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { padding: 18px 20px; border-bottom: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; }
+.modal-titulo { font-weight: 800; font-size: 15px; }
+.modal-cerrar { border: none; background: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+.modal-buscar { padding: 12px 20px; border-bottom: 1px solid var(--borde); }
+.modal-buscar input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 10px;
+  font-size: 14px; font-family: 'Outfit', sans-serif; outline: none;
+}
+.modal-lista { overflow-y: auto; }
+.item-directorio { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+.item-directorio:hover { background: var(--azul-claro); }
+.dir-nombre { font-weight: 700; font-size: 14px; }
+.dir-rol { font-size: 12px; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .panel-canales { width: 100%; min-width: 0; }
+  .chat-wrap.hilo-abierto .panel-canales { display: none; }
+  .panel-hilo { display: none; }
+  .chat-wrap.hilo-abierto .panel-hilo { display: flex; }
+  .btn-atras-movil { display: block; }
+  .msg-burbuja { max-width: 85%; }
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1B4F8A">
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="inicio.html" class="btn-back">←</a>
+    <div>
+      <div class="header-title">💬 Mensajería</div>
+      <div class="header-sub">EST 84 · Comunicación interna</div>
+    </div>
+  </div>
+  <div class="header-nombre" id="headerNombre">—</div>
+</div>
+
+<div class="chat-wrap" id="chatWrap">
+  <div class="panel-canales">
+    <div class="canales-header">
+      <span class="canales-titulo">Conversaciones</span>
+      <button class="btn-nuevo" onclick="abrirDirectorio()">+ Nuevo</button>
+    </div>
+    <div class="lista-canales" id="listaCanales">
+      <div class="estado-vacio-canales">Cargando...</div>
+    </div>
+  </div>
+
+  <div class="panel-hilo">
+    <div class="hilo-vacio" id="hiloVacio">Selecciona una conversación para empezar</div>
+    <div class="hilo-activo" id="hiloActivo" style="display:none;">
+      <div class="hilo-header">
+        <button class="btn-atras-movil" onclick="cerrarHilo()">←</button>
+        <span id="hiloTitulo">—</span>
+      </div>
+      <div class="hilo-mensajes" id="hiloMensajes"></div>
+      <div class="hilo-compositor">
+        <label class="chk-urgente" id="chkUrgenteWrap" style="display:none;">
+          <input type="checkbox" id="chkUrgente"> 🚨 Marcar como urgente
+        </label>
+        <div class="compositor-fila">
+          <textarea id="inputMensaje" placeholder="Escribe un mensaje..." onkeydown="onKeyMensaje(event)"></textarea>
+          <button class="btn-enviar" id="btnEnviar" onclick="enviarMensaje()">Enviar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalDirectorio">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-titulo">Iniciar conversación</span>
+      <button class="modal-cerrar" onclick="cerrarDirectorio()">×</button>
+    </div>
+    <div class="modal-buscar">
+      <input type="text" id="buscarDirectorio" placeholder="Buscar por nombre..." oninput="filtrarDirectorio()">
+    </div>
+    <div class="modal-lista" id="listaDirectorio"></div>
+  </div>
+</div>
+
+<script src="auth-helper.js"></script>
+<script>
+  verificarSesion();
+  const nombreCorto = localStorage.getItem('nombreCorto') || localStorage.getItem('nombreActivo') || '';
+  document.getElementById('headerNombre').textContent = nombreCorto;
+
+  function decodificarToken(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('')));
+  }
+  const miId = parseInt(decodificarToken(localStorage.getItem('authToken')).id);
+
+  let canales = [];
+  let directorio = [];
+  let canalAbierto = null;
+  let timerCanales = null;
+  let timerMensajes = null;
+
+  function fmtHora(iso) {
+    try { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
+    catch(e) { return ''; }
+  }
+
+  async function cargarCanales() {
+    const res = await apiFetch('/api/chat?tipo=canales', { silencioso: true });
+    if (!res) return;
+    canales = await res.json();
+    renderCanales();
+  }
+
+  function renderCanales() {
+    const cont = document.getElementById('listaCanales');
+    if (!Array.isArray(canales) || canales.length === 0) {
+      cont.innerHTML = '<div class="estado-vacio-canales">Sin conversaciones todavía</div>';
+      return;
+    }
+    cont.innerHTML = canales.map(c => {
+      const activo = canalAbierto && canalAbierto.id_canal === c.id_canal ? 'activo' : '';
+      const icono = c.tipo === 'ROL' ? '👥' : '💬';
+      const preview = c.ultimo_mensaje
+        ? `${c.ultimo_mensaje.urgente ? '🚨 ' : ''}${esc(c.ultimo_mensaje.mensaje)}`
+        : 'Sin mensajes aún';
+      const badge = c.no_leidos > 0 ? `<span class="canal-badge">${c.no_leidos > 9 ? '9+' : c.no_leidos}</span>` : '';
+      return `
+        <div class="item-canal ${activo}" onclick='abrirCanal(${c.id_canal})'>
+          <div class="canal-info">
+            <div class="canal-nombre">${icono} ${esc(c.etiqueta)}</div>
+            <div class="canal-preview">${preview}</div>
+          </div>
+          ${badge}
+        </div>`;
+    }).join('');
+  }
+
+  async function abrirCanal(idCanal) {
+    canalAbierto = canales.find(c => c.id_canal === idCanal);
+    if (!canalAbierto) return;
+    mostrarHilo();
+
+    renderCanales();
+    await cargarMensajes(); // también marca el canal como leído
+    cargarCanales();
+  }
+
+  // Conversación nueva sin mensajes todavía: no crea el canal hasta enviar el primero
+  function abrirBorradorDM(idUsuario, nombre) {
+    canalAbierto = { id_canal: null, tipo: 'DM', etiqueta: nombre, paraUsuario: idUsuario };
+    mostrarHilo();
+    renderMensajes([]);
+  }
+
+  function mostrarHilo() {
+    document.getElementById('chatWrap').classList.add('hilo-abierto');
+    document.getElementById('hiloVacio').style.display = 'none';
+    document.getElementById('hiloActivo').style.display = 'flex';
+    document.getElementById('hiloTitulo').textContent = (canalAbierto.tipo === 'ROL' ? '👥 ' : '💬 ') + canalAbierto.etiqueta;
+    document.getElementById('chkUrgenteWrap').style.display = canalAbierto.tipo === 'ROL' ? 'flex' : 'none';
+    document.getElementById('chkUrgente').checked = false;
+  }
+
+  function cerrarHilo() {
+    document.getElementById('chatWrap').classList.remove('hilo-abierto');
+  }
+
+  async function cargarMensajes() {
+    if (!canalAbierto || !canalAbierto.id_canal) return;
+    const res = await apiFetch(`/api/chat?tipo=mensajes&canal=${canalAbierto.id_canal}`, { silencioso: true });
+    if (!res) return;
+    const mensajes = await res.json();
+    renderMensajes(mensajes);
+    // El canal sigue abierto en pantalla: marcar como leído lo que vaya llegando
+    apiFetch('/api/chat?tipo=leido', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ canal: canalAbierto.id_canal }),
+      silencioso: true
+    });
+  }
+
+  function renderMensajes(mensajes) {
+    const cont = document.getElementById('hiloMensajes');
+    const cercaAbajo = (cont.scrollHeight - cont.scrollTop - cont.clientHeight) < 120;
+
+    cont.innerHTML = (mensajes || []).map(m => {
+      const propio = m.id_usuario === miId;
+      return `
+        <div class="msg-burbuja ${propio ? 'propio' : ''} ${m.urgente ? 'urgente' : ''}">
+          ${!propio ? `<div class="msg-remitente">${esc(m.nombre_usuario)}</div>` : ''}
+          ${m.urgente ? '<div class="msg-flag-urgente">🚨 URGENTE</div>' : ''}
+          <div class="msg-texto">${esc(m.mensaje)}</div>
+          <div class="msg-hora">${fmtHora(m.fecha)}</div>
+        </div>`;
+    }).join('') || '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">Sin mensajes todavía. ¡Escribe el primero!</div>';
+
+    if (cercaAbajo) cont.scrollTop = cont.scrollHeight;
+  }
+
+  function onKeyMensaje(ev) {
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      enviarMensaje();
+    }
+  }
+
+  async function enviarMensaje() {
+    if (!canalAbierto) return;
+    const input = document.getElementById('inputMensaje');
+    const texto = input.value.trim();
+    if (!texto) return;
+    const urgente = document.getElementById('chkUrgente').checked;
+    const btn = document.getElementById('btnEnviar');
+    btn.disabled = true;
+    try {
+      const body = canalAbierto.id_canal
+        ? { canal: canalAbierto.id_canal, mensaje: texto, urgente }
+        : { paraUsuario: canalAbierto.paraUsuario, mensaje: texto, urgente };
+      const res = await apiFetch('/api/chat?tipo=mensaje', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (res) {
+        const data = await res.json();
+        if (data.exito) {
+          input.value = '';
+          document.getElementById('chkUrgente').checked = false;
+          await cargarCanales();
+          await abrirCanal(data.mensaje.id_canal);
+        } else {
+          alert(data.error || 'No se pudo enviar el mensaje.');
+        }
+      }
+    } catch(e) { alert('Error de conexión.'); }
+    btn.disabled = false;
+    input.focus();
+  }
+
+  // ── Directorio (iniciar DM) ──
+  async function abrirDirectorio() {
+    document.getElementById('modalDirectorio').classList.add('visible');
+    document.getElementById('buscarDirectorio').value = '';
+    if (directorio.length === 0) {
+      const res = await apiFetch('/api/chat?tipo=directorio');
+      if (res) directorio = await res.json();
+    }
+    filtrarDirectorio();
+  }
+  function cerrarDirectorio() {
+    document.getElementById('modalDirectorio').classList.remove('visible');
+  }
+  function filtrarDirectorio() {
+    const q = document.getElementById('buscarDirectorio').value.trim().toUpperCase();
+    const filtrados = directorio.filter(u => !q || (u.nombre_completo || '').toUpperCase().includes(q));
+    const cont = document.getElementById('listaDirectorio');
+    cont.innerHTML = filtrados.length ? filtrados.map(u => `
+      <div class="item-directorio" onclick="iniciarDM(${u.id_usuario})">
+        <div class="dir-nombre">${esc(u.nombre_corto || u.nombre_completo)}</div>
+        <div class="dir-rol">${esc(u.rol)}</div>
+      </div>`).join('') : '<div style="padding:16px 20px;color:var(--muted);font-size:13px;">Sin resultados</div>';
+  }
+
+  function iniciarDM(idUsuario) {
+    cerrarDirectorio();
+    // Si ya existe una conversación con esta persona, ábrela en vez de crear un borrador
+    const existente = canales.find(c => c.tipo === 'DM' && c.id_canal && (
+      (c.usuario_a === miId && c.usuario_b === idUsuario) ||
+      (c.usuario_b === miId && c.usuario_a === idUsuario)
+    ));
+    if (existente) { abrirCanal(existente.id_canal); return; }
+
+    const persona = directorio.find(u => u.id_usuario === idUsuario);
+    abrirBorradorDM(idUsuario, (persona && (persona.nombre_corto || persona.nombre_completo)) || 'Usuario');
+    document.getElementById('inputMensaje').focus();
+  }
+
+  // ── Inicio + polling ──
+  cargarCanales();
+  timerCanales  = setInterval(cargarCanales, 8000);
+  timerMensajes = setInterval(() => { if (canalAbierto) cargarMensajes(); }, 5000);
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>
