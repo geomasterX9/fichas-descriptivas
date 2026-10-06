@@ -278,6 +278,12 @@
       </div>
     </div>
 
+    <div class="campo" id="campoMateriasWrap" style="display:none">
+      <label>Disciplina(s) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;">(materias que imparte)</span></label>
+      <div id="campoMaterias" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;"></div>
+      <div class="hint">Se usa para filtrar los reportes por disciplina y para la captura de recuperaciones</div>
+    </div>
+
     <div class="modal-acciones">
       <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
       <button class="btn-guardar" id="btnGuardar" onclick="guardarUsuario()">Guardar</button>
@@ -328,6 +334,7 @@
 </div>
 
 <script src="auth-helper.js"></script>
+<script src="reportes-comun.js"></script>
 <script>
   verificarSesion();
 
@@ -373,7 +380,7 @@
             <div class="avatar" style="background:${COLORES_ROL[u.rol] || '#64748b'};">${iniciales}</div>
             <div>
               <div class="nombre-txt">${esc(u.nombre_completo)} ${esYo ? '<span class="yo-badge">Tú</span>' : ''}</div>
-              <div class="usuario-txt">@${esc(u.usuario)}</div>
+              <div class="usuario-txt">@${esc(u.usuario)}${Array.isArray(u.materia) && u.materia.length ? ' · ' + esc(u.materia.map(nombreDisciplina).join(', ')) : ''}</div>
             </div>
           </div>
         </td>
@@ -510,6 +517,8 @@
     document.getElementById('campoNombreCorto').value = '';
     setGrupos([]);
     document.getElementById('campoGruposWrap').style.display = 'none';
+    setMaterias([]);
+    document.getElementById('campoMateriasWrap').style.display = 'none';
     document.getElementById('campoNombre').focus();
   }
 
@@ -527,6 +536,8 @@
     const rolActual = u.rol;
     document.getElementById('campoGruposWrap').style.display = (rolActual === 'DOCENTE' || rolActual === 'PREFECTO') ? 'block' : 'none';
     setGrupos(u.grupos || []);
+    document.getElementById('campoMateriasWrap').style.display = rolActual === 'DOCENTE' ? 'block' : 'none';
+    setMaterias(u.materia || []);
     document.getElementById('campoPasswordWrap').style.display = 'none';
     document.getElementById('modalAlerta').className = 'alerta';
     document.getElementById('modalUsuario').classList.add('open');
@@ -541,6 +552,27 @@
     const wrap = document.getElementById('campoGruposWrap');
     wrap.style.display = (rol === 'DOCENTE' || rol === 'PREFECTO') ? 'block' : 'none';
     if (rol !== 'DOCENTE' && rol !== 'PREFECTO') setGrupos([]);
+    document.getElementById('campoMateriasWrap').style.display = rol === 'DOCENTE' ? 'block' : 'none';
+    if (rol !== 'DOCENTE') setMaterias([]);
+  }
+
+  document.getElementById('campoMaterias').innerHTML = Object.entries(DISCIPLINAS).map(([sigla, nombre]) =>
+    `<label style="white-space:nowrap;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;"><input type="checkbox" value="${sigla}"> ${nombre}</label>`
+  ).join('');
+
+  // Siglas guardadas que no están en la lista de casillas: se conservan al guardar
+  let materiasExtra = [];
+
+  function getMaterias() {
+    return Array.from(document.querySelectorAll('#campoMaterias input[type=checkbox]:checked')).map(cb => cb.value)
+      .concat(materiasExtra);
+  }
+
+  function setMaterias(arr) {
+    materiasExtra = (Array.isArray(arr) ? arr : []).filter(m => !DISCIPLINAS[m]);
+    document.querySelectorAll('#campoMaterias input[type=checkbox]').forEach(cb => {
+      cb.checked = Array.isArray(arr) && arr.includes(cb.value);
+    });
   }
 
   function getGrupos() {
@@ -580,7 +612,9 @@
 
     const nombre_corto = document.getElementById('campoNombreCorto').value.trim();
     const grupos = getGrupos();
-    const body = { nombre_completo: nombre, usuario, rol, nombre_corto: nombre_corto || null, grupos: grupos.length > 0 ? grupos : null };
+    const materias = getMaterias();
+    const body = { nombre_completo: nombre, usuario, rol, nombre_corto: nombre_corto || null, grupos: grupos.length > 0 ? grupos : null,
+                   materia: materias.length > 0 ? materias : null };
     if (!modoEdicion) body.password = password;
 
     const metodo = modoEdicion ? 'PATCH' : 'POST';

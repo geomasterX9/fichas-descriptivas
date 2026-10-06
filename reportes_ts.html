@@ -52,6 +52,18 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
   border-radius:20px; padding:5px 14px; font-size:13px; font-weight:700;
   align-self:center;
 }
+.btn-imprimir-lista {
+  background:var(--azul); color:white; border:none; border-radius:10px;
+  padding:9px 16px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif;
+  cursor:pointer; align-self:flex-end;
+}
+.btn-imprimir-lista:hover { opacity:0.9; }
+.btn-imprimir-rep {
+  background:none; border:1.5px solid var(--borde); color:var(--texto);
+  border-radius:8px; padding:4px 10px; font-size:12px; font-weight:700;
+  font-family:'Outfit',sans-serif; cursor:pointer;
+}
+.btn-imprimir-rep:hover { border-color:var(--azul); color:var(--azul); }
 
 /* TARJETA REPORTE */
 .reporte-card {
@@ -193,12 +205,19 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
       <input type="date" id="filtroFechaHasta" onchange="filtrar()">
     </div>
     <div class="filtro-grupo">
+      <label>Disciplina</label>
+      <select id="filtroDisciplina" onchange="filtrar()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="filtro-grupo">
       <label>Reportado por</label>
       <select id="filtroDocente" onchange="filtrar()">
         <option value="">Todos</option>
       </select>
     </div>
     <span class="badge-conteo" id="conteo">— reportes</span>
+    <button class="btn-imprimir-lista" onclick="imprimirListado()">🖨️ Imprimir listado</button>
   </div>
 
   <div id="listaReportes">
@@ -208,6 +227,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
 </div>
 
 <script src="auth-helper.js"></script>
+<script src="reportes-comun.js"></script>
 <script>
   verificarSesion();
   const rolActivo = localStorage.getItem('rolActivo') || '';
@@ -216,6 +236,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
   if (rolActivo !== 'TRABAJO SOCIAL') window.location.href = 'inicio.html';
 
   let todosReportes = [];
+  let reportesFiltrados = [];
 
   function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -233,11 +254,8 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
         return;
       }
       todosReportes = data;
-      // Poblar select de docentes con los que reportaron
-      const docentes = [...new Set(data.map(r => r.nombre_reporta).filter(Boolean))].sort();
-      const selDoc = document.getElementById('filtroDocente');
-      selDoc.innerHTML = '<option value="">Todos</option>' +
-        docentes.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+      // Poblar selects de disciplina y docente con los que reportaron
+      poblarFiltrosReportes(data, document.getElementById('filtroDisciplina'), document.getElementById('filtroDocente'));
       filtrar();
     } catch(e) {
       document.getElementById('listaReportes').innerHTML =
@@ -253,6 +271,7 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
     const fechaDesde = document.getElementById('filtroFechaDesde').value;
     const fechaHasta = document.getElementById('filtroFechaHasta').value;
     const docente    = document.getElementById('filtroDocente').value;
+    const disciplina = document.getElementById('filtroDisciplina').value;
 
     let lista = todosReportes.filter(r => {
       const nombreCompleto = `${r.alumno_apellidos} ${r.alumno_nombre}`.toUpperCase();
@@ -263,8 +282,10 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
       if (fechaDesde && r.fecha < fechaDesde)            return false;
       if (fechaHasta && r.fecha > fechaHasta)            return false;
       if (docente    && r.nombre_reporta !== docente)    return false;
+      if (!coincideDisciplina(r, disciplina))             return false;
       return true;
     });
+    reportesFiltrados = lista;
 
     document.getElementById('conteo').textContent = `${lista.length} reporte(s)`;
 
@@ -295,11 +316,12 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
           <div class="reporte-badges">
             <span class="badge badge-${gravClass}">${esc(r.gravedad)}</span>
             <span class="badge ${badgeClass}">${badgeIcon} ${esc(estatus)}</span>
+            <button class="btn-imprimir-rep" onclick="imprimirUno('${r.id_reporte}')" title="Imprimir reporte">🖨️ Imprimir</button>
           </div>
         </div>
 
         <div class="reporte-motivo">${esc(r.motivo)}</div>
-        <div class="reporte-meta">📅 ${esc(r.fecha)} · Reportado por: ${esc(r.nombre_reporta||'—')}</div>
+        <div class="reporte-meta">📅 ${esc(r.fecha)} · Reportado por: ${esc(r.nombre_reporta||'—')}${disciplinasReporte(r) ? ` (${esc(disciplinasReporte(r))})` : ''}</div>
 
         <div class="seg-panel">
           <div class="seg-titulo">🤝 Seguimiento — Trabajo Social</div>
@@ -327,6 +349,26 @@ body { font-family:'Outfit',sans-serif; background:var(--fondo); min-height:100v
         </div>
       </div>`;
     }).join('');
+  }
+
+  function imprimirUno(id) {
+    const r = todosReportes.find(x => String(x.id_reporte) === String(id));
+    if (r) imprimirReporteIndividual(r);
+  }
+
+  function imprimirListado() {
+    const sel = id => document.getElementById(id);
+    const txtSel = id => sel(id).value ? sel(id).options[sel(id).selectedIndex].text.replace(/^[^A-Za-zÁÉÍÓÚÑ]+/, '') : '';
+    const filtros = [
+      sel('filtroDisciplina').value && `Disciplina: ${txtSel('filtroDisciplina')}`,
+      sel('filtroDocente').value    && `Reportado por: ${sel('filtroDocente').value}`,
+      sel('filtroGravedad').value   && `Gravedad: ${sel('filtroGravedad').value}`,
+      sel('filtroEstatus').value    && `Estatus: ${sel('filtroEstatus').value}`,
+      sel('filtroBuscar').value.trim() && `Alumno: ${sel('filtroBuscar').value.trim()}`,
+      sel('filtroFechaDesde').value && `Desde: ${sel('filtroFechaDesde').value}`,
+      sel('filtroFechaHasta').value && `Hasta: ${sel('filtroFechaHasta').value}`,
+    ].filter(Boolean);
+    imprimirListadoReportes(reportesFiltrados, filtros);
   }
 
   async function marcarSolucionado(id) {

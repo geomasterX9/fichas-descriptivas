@@ -27,11 +27,15 @@ module.exports = async (req, res) => {
 
                 if (!reportes || reportes.length === 0) return res.json([]);
 
-                const { data: usuariosDB } = await db.from('usuarios').select('id_usuario, nombre_completo');
+                const { data: usuariosDB } = await db.from('usuarios').select('id_usuario, nombre_completo, materia');
                 const { data: personal }   = await db.from('personal').select('id_personal, nombre_completo');
                 const mapaUsuarios = {};
+                const mapaMaterias = {};
                 const mapaPersonal = {};
-                (usuariosDB || []).forEach(u => { mapaUsuarios[u.id_usuario]  = u.nombre_completo; });
+                (usuariosDB || []).forEach(u => {
+                    mapaUsuarios[u.id_usuario] = u.nombre_completo;
+                    mapaMaterias[u.id_usuario] = Array.isArray(u.materia) ? u.materia : [];
+                });
                 (personal   || []).forEach(p => { mapaPersonal[p.id_personal] = p.nombre_completo; });
 
                 return res.json(reportes.map(r => ({
@@ -43,7 +47,9 @@ module.exports = async (req, res) => {
                     id_alumno:        r.alumnos?.id_alumno || r.id_alumno,
                     nombre_reporta:   r.id_usuario
                         ? (mapaUsuarios[r.id_usuario] || '—')
-                        : (mapaPersonal[r.id_personal] || '—')
+                        : (mapaPersonal[r.id_personal] || '—'),
+                    // Siglas de las disciplinas del docente que reportó (ej. ['MAT'])
+                    materia_reporta:  r.id_usuario ? (mapaMaterias[r.id_usuario] || []) : []
                 })));
             }
 

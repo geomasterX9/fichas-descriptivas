@@ -3,6 +3,16 @@ const bcrypt = require('bcryptjs');
 
 const ROLES_VALIDOS = ['ADMINISTRADOR', 'DIRECTIVO', 'DOCENTE', 'PREFECTO', 'TRABAJO SOCIAL', 'ENFERMERIA'];
 
+// Siglas de materia: texto corto en mayúsculas, sin repetir; null si queda vacío
+function limpiarMaterias(materia) {
+    if (!Array.isArray(materia)) return null;
+    const lista = [...new Set(materia
+        .filter(m => typeof m === 'string')
+        .map(m => sanitize(m.trim().toUpperCase()))
+        .filter(m => m.length > 0 && m.length <= 10))];
+    return lista.length ? lista : null;
+}
+
 module.exports = async (req, res) => {
     setSecurityHeaders(res, 'GET, POST, PATCH, DELETE, OPTIONS', req.headers.origin);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -50,7 +60,7 @@ module.exports = async (req, res) => {
 
     // ── POST: crear nuevo usuario ──
     if (req.method === 'POST') {
-        const { nombre_completo, usuario: user, password, rol, nombre_corto, grupos } = req.body || {};
+        const { nombre_completo, usuario: user, password, rol, nombre_corto, grupos, materia } = req.body || {};
 
         if (!nombre_completo || !user || !password || !rol)
             return res.status(400).json({ error: 'Todos los campos son requeridos.' });
@@ -78,6 +88,7 @@ module.exports = async (req, res) => {
             rol:             rol.toUpperCase(),
             nombre_corto:    nombre_corto ? sanitize(nombre_corto.trim()) : null,
             grupos:          Array.isArray(grupos) ? grupos : null,
+            materia:         limpiarMaterias(materia),
             token_valido_desde: new Date().toISOString()
         }]).select('id_usuario, nombre_completo, usuario, rol').single();
 
@@ -87,7 +98,7 @@ module.exports = async (req, res) => {
 
     // ── PATCH: editar usuario (nombre, rol o contraseña) — solo ADMINISTRADOR ──
     if (req.method === 'PATCH') {
-        const { id_usuario, nombre_completo, rol, password, usuario: user, nombre_corto, grupos } = req.body || {};
+        const { id_usuario, nombre_completo, rol, password, usuario: user, nombre_corto, grupos, materia } = req.body || {};
         if (!id_usuario || isNaN(parseInt(id_usuario)))
             return res.status(400).json({ error: 'ID de usuario inválido.' });
 
@@ -101,6 +112,7 @@ module.exports = async (req, res) => {
         if (rol && ROLES_VALIDOS.includes(rol.toUpperCase())) cambios.rol = rol.toUpperCase();
         if (nombre_corto !== undefined) cambios.nombre_corto = nombre_corto ? sanitize(nombre_corto.trim()) : null;
         if (grupos !== undefined) cambios.grupos = Array.isArray(grupos) ? grupos : null;
+        if (materia !== undefined) cambios.materia = limpiarMaterias(materia);
         if (password) {
             if (password.length < 5) return res.status(400).json({ error: 'La contraseña debe tener al menos 5 caracteres.' });
             cambios.password = await bcrypt.hash(password, 12);
