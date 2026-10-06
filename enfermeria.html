@@ -66,7 +66,14 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
   display: flex; align-items: center; gap: 12px;
 }
-.chip-avatar { font-size: 28px; }
+.chip-foto {
+  width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  border: 3px solid #bfdbfe; background: #e2e8f0;
+}
+.mini-foto {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  border: 1.5px solid var(--borde); background: #e2e8f0;
+}
 .chip-nombre { font-weight: 800; font-size: 15px; color: var(--azul); }
 .chip-sub    { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
@@ -151,6 +158,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 .historial-med-item {
   padding: 14px 16px; border-radius: 12px; border: 1px solid var(--borde);
   margin-bottom: 10px; background: #fafbfc; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: flex-start; gap: 12px;
 }
 .historial-med-item:hover { border-color: var(--azul); background: var(--azul-claro); }
 .historial-med-nombre { font-weight: 800; font-size: 14px; color: var(--texto); }
@@ -263,7 +271,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 
   <!-- CHIP ALUMNO SELECCIONADO -->
   <div class="chip-alumno" id="chipAlumno" style="display:none;">
-    <div class="chip-avatar">🎓</div>
+    <img class="chip-foto" id="chipFoto" alt="Foto del alumno">
     <div>
       <div class="chip-nombre" id="chipNombre">—</div>
       <div class="chip-sub"   id="chipSub">—</div>
@@ -446,8 +454,17 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   let alumnoActual = null;
   let todosAlumnos = [];
 
+  // Silueta genérica cuando el alumno no tiene foto o no carga
+  const FOTO_DEFAULT = 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#e2e8f0"/>' +
+    '<circle cx="32" cy="25" r="12" fill="#94a3b8"/><path d="M10 60c2-13 11-20 22-20s20 7 22 20z" fill="#94a3b8"/></svg>');
+  function fotoAlumno(a) { return (a && a['fotos-alumnos']) || FOTO_DEFAULT; }
+  function imgFoto(a, clase) {
+    return `<img class="${clase}" src="${esc(fotoAlumno(a))}" alt="" loading="lazy" onerror="this.onerror=null;this.src=FOTO_DEFAULT">`;
+  }
+
   // Cargar lista de alumnos al inicio
-  (async () => {
+  const alumnosListos = (async () => {
     try {
       const res = await apiFetch('/api/alumnos');
       if (res) {
@@ -478,8 +495,11 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     }).slice(0, 30);
     lista.innerHTML = filtrados.length ? filtrados.map(a => `
       <div class="item-alumno" onclick="seleccionarAlumno(${a.id_alumno})">
-        <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
-        <div class="alumno-grupo">${a.grado}° Grupo "${a.grupo}"</div>
+        ${imgFoto(a, 'mini-foto')}
+        <div>
+          <div class="alumno-nombre">${a.apellidos} ${a.nombre}</div>
+          <div class="alumno-grupo">${a.grado}° Grupo "${a.grupo}"</div>
+        </div>
       </div>`).join('') : '<div style="color:var(--muted);font-size:13px;padding:8px;">Sin resultados</div>';
   }
 
@@ -490,6 +510,9 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     document.getElementById('listaResultados').innerHTML = '';
     document.getElementById('chipNombre').textContent = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
     document.getElementById('chipSub').textContent    = `${alumnoActual.grado}° Grupo "${alumnoActual.grupo}"`;
+    const chipFoto = document.getElementById('chipFoto');
+    chipFoto.onerror = () => { chipFoto.onerror = null; chipFoto.src = FOTO_DEFAULT; };
+    chipFoto.src = fotoAlumno(alumnoActual);
     document.getElementById('chipAlumno').style.display = 'flex';
     document.getElementById('enfTabs').style.display    = 'flex';
     cambiarPanelEnf('medico');
@@ -525,6 +548,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       const res  = await apiFetch('/api/expediente?tipo=medico_historial');
       if (!res) return;
       const data = await res.json();
+      await alumnosListos; // las fotos vienen de la lista de alumnos
       const cont = document.getElementById('listaHistorial');
       if (!data || !data.length) {
         cont.innerHTML = '<div class="estado-vacio">Sin expedientes médicos registrados aún</div>';
@@ -537,9 +561,12 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         if (m.padecimientos) campos.push(`🏥 ${m.padecimientos}`);
         return `
         <div class="historial-med-item" onclick="seleccionarAlumnoById(${m.id_alumno})">
-          <div class="historial-med-nombre">${m.alumnos?.apellidos || ''} ${m.alumnos?.nombre || ''}</div>
-          <div class="historial-med-sub">${m.alumnos?.grado || ''}° Grupo "${m.alumnos?.grupo || ''}" · Actualizado por ${m.actualizado_por || '—'}</div>
-          ${campos.length ? `<div class="historial-med-datos">${campos.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+          ${imgFoto(todosAlumnos.find(a => a.id_alumno === m.id_alumno), 'mini-foto')}
+          <div>
+            <div class="historial-med-nombre">${m.alumnos?.apellidos || ''} ${m.alumnos?.nombre || ''}</div>
+            <div class="historial-med-sub">${m.alumnos?.grado || ''}° Grupo "${m.alumnos?.grupo || ''}" · Actualizado por ${m.actualizado_por || '—'}</div>
+            ${campos.length ? `<div class="historial-med-datos">${campos.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+          </div>
         </div>`;
       }).join('');
     } catch(e) {}
