@@ -283,7 +283,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   <div class="enf-tabs" id="enfTabs" style="display:none;">
     <button class="enf-tab activo" id="tabMedico"   onclick="cambiarPanelEnf('medico')">🩺 Expediente Médico</button>
     <button class="enf-tab"        id="tabAuthMed"  onclick="cambiarPanelEnf('authmed')">💊 Autorización Medicamentos</button>
-    <button class="enf-tab"        id="tabVisitas"  onclick="cambiarPanelEnf('visitas')">🏥 Visitas</button>
+    <button class="enf-tab"        id="tabVisitas"  onclick="irAVisitas()">🏥 Visitas</button>
     <button class="enf-tab"        id="tabJust"     onclick="cambiarPanelEnf('just')">📄 Justificantes</button>
   </div>
 
@@ -472,7 +472,16 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         mostrarFiltrados();
       }
     } catch(e) {}
+    // Al regresar desde Visitas a Enfermería, reabrir al mismo alumno
+    const idParam = parseInt(params.get('id_alumno'));
+    if (idParam && todosAlumnos.some(a => a.id_alumno === idParam)) seleccionarAlumno(idParam);
   })();
+
+  // Las visitas se registran en su propia pantalla; se lleva al alumno seleccionado
+  function irAVisitas() {
+    if (!alumnoActual) return;
+    window.location.href = `visitas.html?id_alumno=${alumnoActual.id_alumno}&from=enfermeria`;
+  }
 
   function actualizarFiltros() {
     document.getElementById('inputBuscar').value = '';
@@ -607,54 +616,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     btn.disabled = false; btn.textContent = 'Guardar Expediente Médico';
   }
 
-  // ── VISITAS ──
-  async function cargarVisitas() {
-    if (!alumnoActual) return;
-    document.getElementById('v-fecha').valueAsDate = new Date();
-    try {
-      const res  = await apiFetch(`/api/expediente?tipo=visitas_enfermeria&id=${alumnoActual.id_alumno}`);
-      const data = await res.json();
-      const cont = document.getElementById('historialVisitas');
-      cont.innerHTML = data.length ? data.map(v => `
-        <div class="historial-item">
-          <div class="historial-fecha">${v.fecha} · ${v.registrado_por}</div>
-          <div class="historial-motivo">${v.motivo}</div>
-          ${v.tratamiento ? `<div class="historial-trat">↳ ${v.tratamiento}</div>` : ''}
-        </div>`).join('') : '<div class="estado-vacio">Sin visitas registradas</div>';
-    } catch(e) {}
-  }
-
-  async function guardarVisita() {
-    if (!alumnoActual) return;
-    const btn = document.getElementById('btnGuardarVisita');
-    const motivo = document.getElementById('v-motivo').value.trim();
-    if (!motivo) return;
-    btn.disabled = true; btn.textContent = 'Guardando...';
-    try {
-      const res = await apiFetch('/api/expediente?tipo=visitas_enfermeria', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_alumno:   alumnoActual.id_alumno,
-          fecha:       document.getElementById('v-fecha').value,
-          motivo,
-          tratamiento: document.getElementById('v-tratamiento').value.trim()
-        })
-      });
-      const data = await res.json();
-      if (data.exito) {
-        document.getElementById('okVisita').style.display = 'block';
-        setTimeout(() => document.getElementById('okVisita').style.display = 'none', 3000);
-        document.getElementById('v-motivo').value = '';
-        document.getElementById('v-tratamiento').value = '';
-        cargarVisitas();
-      } else {
-        document.getElementById('errVisita').textContent = data.error;
-        document.getElementById('errVisita').style.display = 'block';
-      }
-    } catch(e) {}
-    btn.disabled = false; btn.textContent = 'Registrar Visita';
-  }
-
   // ── JUSTIFICANTES ──
   async function cargarJustificantes() {
     if (!alumnoActual) return;
@@ -783,7 +744,6 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     });
     if (panel === 'medico')  { document.getElementById('panelMedico').style.display='block';  document.getElementById('tabMedico').classList.add('activo');  cargarMedico(); }
     if (panel === 'authmed') { document.getElementById('panelAuthMed').style.display='block'; document.getElementById('tabAuthMed').classList.add('activo'); cargarAuthMed(); }
-    if (panel === 'visitas') { document.getElementById('tabVisitas').classList.add('activo'); cargarVisitas(); }
     if (panel === 'just')    { document.getElementById('tabJust').classList.add('activo');    cargarJustificantes(); }
   }
 

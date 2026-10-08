@@ -21,6 +21,8 @@ module.exports = async (req, res) => {
     if (tipo === 'autorizacion_med')     return handleAutorizacionMed(req, res, usuario, id);
     if (tipo === 'pase_salida')          return handlePaseSalida(req, res, usuario, id);
     if (tipo === 'faltas_fechas')         return handleFaltasFechas(req, res, usuario, id);
+    if (tipo === 'visitas_reporte')       return handleVisitasReporte(req, res, usuario);
+    if (tipo === 'justificantes_reporte') return handleJustificantesReporte(req, res, usuario);
 
     // Historial de todos los expedientes médicos registrados
     if (req.method === 'GET' && tipo === 'medico_historial') {
@@ -249,7 +251,10 @@ async function handleMedico(req, res, usuario, id) {
 
 // ── VISITAS A ENFERMERÍA ─────────────────────────────────────
 // GET  /api/expediente?tipo=visitas_enfermeria&id=X
-// POST /api/expediente?tipo=visitas_enfermeria  { id_alumno, fecha, motivo, tratamiento }
+// POST /api/expediente?tipo=visitas_enfermeria  { id_alumno, fecha, motivo, tratamiento,
+//      padres_notificados, notificacion_medio, notificacion_contacto, notificacion_hora }
+const MEDIOS_NOTIFICACION = ['LLAMADA', 'MENSAJE', 'PRESENCIAL', 'RECADO'];
+
 async function handleVisitas(req, res, usuario, id) {
     const db = usuario._db || supabase;
     if (!ROLES_MEDICO.includes(usuario.rol))
@@ -262,18 +267,74 @@ async function handleVisitas(req, res, usuario, id) {
         return res.json(data || []);
     }
     if (req.method === 'POST') {
-        const { id_alumno, fecha, motivo, tratamiento } = req.body || {};
+        const { id_alumno, fecha, motivo, tratamiento,
+                padres_notificados, notificacion_medio, notificacion_contacto, notificacion_hora } = req.body || {};
         if (!id_alumno || !motivo) return res.status(400).json({ error: 'Faltan parámetros.' });
+        const notificados = padres_notificados === true;
+        if (notificados && notificacion_medio && !MEDIOS_NOTIFICACION.includes(notificacion_medio))
+            return res.status(400).json({ error: 'Medio de notificación no válido.' });
+        if (notificados && notificacion_hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(notificacion_hora))
+            return res.status(400).json({ error: 'Hora de notificación no válida.' });
+        if (typeof notificacion_contacto === 'string' && notificacion_contacto.length > 100)
+            return res.status(400).json({ error: 'El contacto notificado no puede exceder 100 caracteres.' });
         const { error } = await db.from('visitas_enfermeria').insert({
             id_alumno: parseInt(id_alumno),
             fecha: fecha || new Date().toISOString().split('T')[0],
             motivo, tratamiento: tratamiento || null,
-            registrado_por: usuario.nombre
+            registrado_por: usuario.nombre,
+            padres_notificados:    notificados,
+            notificacion_medio:    notificados ? (notificacion_medio || null) : null,
+            notificacion_contacto: notificados && notificacion_contacto ? sanitize(notificacion_contacto.trim().toUpperCase()) : null,
+            notificacion_hora:     notificados ? (notificacion_hora || null) : null
         });
         if (error) return res.status(400).json({ error: error.message });
         return res.json({ exito: true });
     }
     return res.status(405).json({ error: 'Método no permitido' });
+}
+
+// ── REPORTE MENSUAL DE ENFERMERÍA ────────────────────────────
+// GET /api/expediente?tipo=visitas_reporte&mes=M&anio=AAAA
+// GET /api/expediente?tipo=justificantes_reporte&mes=M&anio=AAAA
+function rangoMesQuery(req) {
+    const mes  = parseInt(req.query.mes);
+    const anio = parseInt(req.query.anio);
+    if (!(mes >= 1 && mes <= 12) || !(anio >= 2000 && anio <= 2100)) return null;
+    const dd = n => String(n).padStart(2, '0');
+    const ultimo = new Date(anio, mes, 0).getDate();
+    return { inicio: `${anio}-${dd(mes)}-01`, fin: `${anio}-${dd(mes)}-${dd(ultimo)}` };
+}
+
+async function handleVisitasReporte(req, res, usuario) {
+    const db = usuario._db || supabase;
+    if (!ROLES_MEDICO.includes(usuario.rol))
+        return res.status(403).json({ error: 'Sin acceso a visitas de enfermería.' });
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Método no permitido' });
+    const rango = rangoMesQuery(req);
+    if (!rango) return res.status(400).json({ error: 'Mes o año inválido.' });
+    const { data, error } = await db.from('visitas_enfermeria')
+        .select('*, alumnos(apellidos, nombre, grado, grupo)')
+        .gte('fecha', rango.inicio).lte('fecha', rango.fin)
+        .order('fecha', { ascending: true });
+    if (error) return res.status(500).json({ error: 'Error al cargar visitas.' });
+    return res.json(data || []);
+}
+
+// Justificantes vigentes en algún día del mes (los cancelados no cuentan)
+async function handleJustificantesReporte(req, res, usuario) {
+    const db = usuario._db || supabase;
+    if (!ROLES_MEDICO.includes(usuario.rol))
+        return res.status(403).json({ error: 'Sin acceso a justificantes.' });
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Método no permitido' });
+    const rango = rangoMesQuery(req);
+    if (!rango) return res.status(400).json({ error: 'Mes o año inválido.' });
+    const { data, error } = await db.from('justificantes_medicos')
+        .select('*, alumnos(apellidos, nombre, grado, grupo)')
+        .eq('activo', true)
+        .lte('fecha_inicio', rango.fin).gte('fecha_fin', rango.inicio)
+        .order('fecha_inicio', { ascending: true });
+    if (error) return res.status(500).json({ error: 'Error al cargar justificantes.' });
+    return res.json(data || []);
 }
 
 // ── FALTAS POR FECHAS ────────────────────────────────────────

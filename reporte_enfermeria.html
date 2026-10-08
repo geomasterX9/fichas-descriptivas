@@ -309,9 +309,10 @@ tr:hover td { background: #fafbfc; }
       apiFetch(`/api/expediente?tipo=medico_historial`),
     ]);
 
-    const visitas      = resVisitas  ? await resVisitas.json()  : [];
-    const justificantes= resJust     ? await resJust.json()     : [];
-    const expedientes  = resExp      ? await resExp.json()      : [];
+    const comoLista = d => Array.isArray(d) ? d : [];
+    const visitas      = comoLista(resVisitas ? await resVisitas.json() : []);
+    const justificantes= comoLista(resJust    ? await resJust.json()    : []);
+    const expedientes  = comoLista(resExp     ? await resExp.json()     : []);
 
     // Filtrar expedientes por mes de actualización
     const expFiltrados = expedientes.filter(e => {
@@ -332,16 +333,19 @@ tr:hover td { background: #fafbfc; }
     document.getElementById('tablaVisitas').innerHTML = visitas.length ? `
       <table>
         <thead><tr>
-          <th>Fecha</th><th>Alumno</th><th>Grado/Grupo</th><th>Motivo</th><th>Tratamiento</th><th>Registrado por</th>
+          <th>Fecha</th><th>Alumno</th><th>Grado/Grupo</th><th>Motivo</th><th>Tratamiento</th><th>Padres notificados</th><th>Registrado por</th>
         </tr></thead>
         <tbody>${visitas.map(v => `
           <tr>
-            <td>${v.fecha}</td>
-            <td>${v.alumnos?.apellidos || ''} ${v.alumnos?.nombre || ''}</td>
-            <td>${v.alumnos?.grado || ''}° "${v.alumnos?.grupo || ''}"</td>
-            <td>${v.motivo || '—'}</td>
-            <td>${v.tratamiento || '—'}</td>
-            <td>${v.registrado_por || '—'}</td>
+            <td>${esc(v.fecha)}</td>
+            <td>${esc(v.alumnos?.apellidos || '')} ${esc(v.alumnos?.nombre || '')}</td>
+            <td>${esc(v.alumnos?.grado || '')}° "${esc(v.alumnos?.grupo || '')}"</td>
+            <td>${esc(v.motivo || '—')}</td>
+            <td>${esc(v.tratamiento || '—')}</td>
+            <td>${v.padres_notificados === true
+                  ? 'Sí' + ([v.notificacion_contacto, v.notificacion_hora].filter(Boolean).length ? ' — ' + esc([v.notificacion_contacto, v.notificacion_hora].filter(Boolean).join(' · ')) : '')
+                  : v.padres_notificados === false ? 'No' : '—'}</td>
+            <td>${esc(v.registrado_por || '—')}</td>
           </tr>`).join('')}
         </tbody>
       </table>` : '<div class="estado-vacio">Sin visitas en este período</div>';

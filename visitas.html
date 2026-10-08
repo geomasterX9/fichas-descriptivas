@@ -64,12 +64,27 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 .panel-titulo { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 20px; }
 .campo { margin-bottom: 18px; }
 .campo label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
-.campo input, .campo textarea {
+.campo input, .campo textarea, .campo select {
   width: 100%; padding: 11px 14px; border: 1.5px solid var(--borde);
   border-radius: 10px; font-size: 14px; font-family: 'Outfit', sans-serif;
   color: var(--texto); outline: none; transition: border-color 0.15s;
+  background: var(--blanco);
 }
-.campo input:focus, .campo textarea:focus { border-color: var(--azul); }
+.campo input:focus, .campo textarea:focus, .campo select:focus { border-color: var(--azul); }
+
+/* NOTIFICACIÓN A PADRES */
+.notif-box {
+  border: 1.5px solid var(--borde); border-radius: 12px; padding: 14px 16px;
+  margin-bottom: 18px; background: #f8fafc; transition: all 0.15s;
+}
+.notif-box.activo { border-color: #86efac; background: #f0fdf4; }
+.notif-check { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--texto); }
+.notif-check input { width: 20px; height: 20px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0; }
+.notif-detalle { display: none; margin-top: 14px; }
+.notif-detalle .campo:last-child { margin-bottom: 0; }
+.notif-badge { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; border-radius: 8px; padding: 4px 10px; }
+.notif-badge.ok { background: #dcfce7; color: #166534; }
+.notif-badge.no { background: #fef3c7; color: #92400e; }
 .campo textarea { resize: none; height: 80px; }
 .campo-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .btn-guardar {
@@ -126,7 +141,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 <body>
 <div class="header">
   <div class="header-left">
-    <a href="inicio.html" class="btn-back">←</a>
+    <a href="inicio.html" class="btn-back" id="btnBack">←</a>
     <div>
       <div class="header-title">🏥 Visitas a Enfermería</div>
       <div class="header-sub">EST 84 · Registro de Visitas</div>
@@ -183,7 +198,34 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     </div>
     <div class="campo">
       <label>Tratamiento / Indicaciones</label>
-      <textarea id="v-tratamiento" placeholder="ej. se dio paracetamol, se notificó al tutor..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;"></textarea>
+      <textarea id="v-tratamiento" placeholder="ej. se dio paracetamol, reposo 15 min..." oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;"></textarea>
+    </div>
+    <div class="notif-box" id="notifBox">
+      <label class="notif-check">
+        <input type="checkbox" id="v-notificados" onchange="toggleNotificacion()">
+        <span>Se notificó a padres o tutor de la atención médica</span>
+      </label>
+      <div class="notif-detalle" id="notifDetalle">
+        <div class="campo-fila">
+          <div class="campo">
+            <label>Medio</label>
+            <select id="v-notif-medio">
+              <option value="LLAMADA">📞 Llamada telefónica</option>
+              <option value="MENSAJE">💬 Mensaje / WhatsApp</option>
+              <option value="PRESENCIAL">🧑 En persona</option>
+              <option value="RECADO">📝 Recado escrito</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Hora</label>
+            <input type="time" id="v-notif-hora">
+          </div>
+        </div>
+        <div class="campo">
+          <label>¿A quién se notificó?</label>
+          <input type="text" id="v-notif-contacto" maxlength="100" placeholder="ej. MADRE - MARÍA LÓPEZ" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase;">
+        </div>
+      </div>
     </div>
     <button class="btn-guardar" onclick="guardarVisita()" id="btnGuardarVisita">Registrar Visita</button>
     <div class="msg-ok"    id="okVisita">✅ Visita registrada</div>
@@ -243,12 +285,20 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
   let alumnoActual = null;
   let todosAlumnos = [];
 
+  // Viene desde Enfermería con un alumno ya elegido: ?id_alumno=X&from=enfermeria
+  const params  = new URLSearchParams(window.location.search);
+  const idParam = parseInt(params.get('id_alumno'));
+  if (params.get('from') === 'enfermeria') {
+    document.getElementById('btnBack').href = 'enfermeria.html' + (idParam ? `?id_alumno=${idParam}` : '');
+  }
+
   (async () => {
     try {
       const res = await apiFetch('/api/alumnos');
       if (res) {
         todosAlumnos = await res.json();
         mostrarFiltrados();
+        if (idParam && todosAlumnos.some(a => a.id_alumno === idParam)) seleccionarAlumno(idParam);
       }
     } catch(e) {}
   })();
@@ -308,9 +358,10 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
       const cont = document.getElementById('historialVisitas');
       cont.innerHTML = data.length ? data.map(v => `
         <div class="historial-item">
-          <div class="historial-fecha">${v.fecha} · ${v.registrado_por}</div>
-          <div class="historial-motivo">${v.motivo}</div>
-          ${v.tratamiento ? `<div class="historial-trat">↳ ${v.tratamiento}</div>` : ''}
+          <div class="historial-fecha">${esc(v.fecha)} · ${esc(v.registrado_por)}</div>
+          <div class="historial-motivo">${esc(v.motivo)}</div>
+          ${v.tratamiento ? `<div class="historial-trat">↳ ${esc(v.tratamiento)}</div>` : ''}
+          ${textoNotificacion(v)}
         </div>`).join('') : '<div class="estado-vacio">Sin visitas registradas</div>';
     } catch(e) {}
   }
@@ -460,6 +511,36 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     setTimeout(()=>win.print(),600);
   }
 
+  const MEDIOS_NOTIF = { LLAMADA: 'Llamada', MENSAJE: 'Mensaje / WhatsApp', PRESENCIAL: 'En persona', RECADO: 'Recado escrito' };
+
+  // Visitas anteriores a este campo traen null: no se muestra nada
+  function textoNotificacion(v) {
+    if (v.padres_notificados === true) {
+      const det = [MEDIOS_NOTIF[v.notificacion_medio], v.notificacion_contacto, v.notificacion_hora].filter(Boolean).map(esc).join(' · ');
+      return `<div class="notif-badge ok">✅ Padres notificados${det ? ' — ' + det : ''}</div>`;
+    }
+    if (v.padres_notificados === false) return '<div class="notif-badge no">⚠️ Padres NO notificados</div>';
+    return '';
+  }
+
+  function toggleNotificacion() {
+    const on = document.getElementById('v-notificados').checked;
+    document.getElementById('notifDetalle').style.display = on ? 'block' : 'none';
+    document.getElementById('notifBox').classList.toggle('activo', on);
+    if (on && !document.getElementById('v-notif-hora').value) {
+      const d = new Date();
+      document.getElementById('v-notif-hora').value = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+  }
+
+  function limpiarNotificacion() {
+    document.getElementById('v-notificados').checked = false;
+    document.getElementById('v-notif-medio').value = 'LLAMADA';
+    document.getElementById('v-notif-hora').value = '';
+    document.getElementById('v-notif-contacto').value = '';
+    toggleNotificacion();
+  }
+
   async function guardarVisita() {
     if (!alumnoActual) return;
     const btn    = document.getElementById('btnGuardarVisita');
@@ -473,7 +554,11 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
           id_alumno:   alumnoActual.id_alumno,
           fecha:       document.getElementById('v-fecha').value,
           motivo: motivo.toUpperCase(),
-          tratamiento: document.getElementById('v-tratamiento').value.trim().toUpperCase()
+          tratamiento: document.getElementById('v-tratamiento').value.trim().toUpperCase(),
+          padres_notificados:    document.getElementById('v-notificados').checked,
+          notificacion_medio:    document.getElementById('v-notif-medio').value,
+          notificacion_contacto: document.getElementById('v-notif-contacto').value.trim(),
+          notificacion_hora:     document.getElementById('v-notif-hora').value
         })
       });
       const data = await res.json();
@@ -482,6 +567,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
         setTimeout(() => document.getElementById('okVisita').style.display = 'none', 3000);
         document.getElementById('v-motivo').value      = '';
         document.getElementById('v-tratamiento').value = '';
+        limpiarNotificacion();
         cargarVisitas();
       } else {
         document.getElementById('errVisita').textContent   = data.error;
