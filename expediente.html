@@ -73,7 +73,7 @@
             width: 80px; height: 80px; object-fit: cover;
             border-radius: 50%; border: 3px solid rgba(255,255,255,0.8);
             background: #e2e8f0; display: block;
-            pointer-events: none; user-select: none; -webkit-user-drag: none;
+            user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none;
         }
         .foto-restringida {
             width: 80px; height: 80px; border-radius: 50%;
@@ -411,6 +411,7 @@
 <input type="file" id="inputFotoAlumno" accept="image/*" style="display:none" onchange="subirFotoAlumno(this)">
 
 <script src="auth-helper.js"></script>
+<script src="foto-zoom.js"></script>
 <script>
     verificarSesion();
 
@@ -492,7 +493,7 @@
 
             document.getElementById('perfilDinamico').innerHTML = `
                 <div class="foto-wrapper">
-                    <img src='${fotoActualSrc}' class="foto-alumno" id="imgFotoAlumno">
+                    <img src='${fotoActualSrc}' class="foto-alumno" id="imgFotoAlumno" draggable="false" data-zoom-foto data-nombre="${esc(a.apellidos)} ${esc(a.nombre)}">
                     ${btnFotoHTML}
                 </div>
                 <div class="perfil-info">

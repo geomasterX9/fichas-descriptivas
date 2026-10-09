@@ -271,7 +271,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 
   <!-- CHIP ALUMNO SELECCIONADO -->
   <div class="chip-alumno" id="chipAlumno" style="display:none;">
-    <img class="chip-foto" id="chipFoto" alt="Foto del alumno">
+    <img class="chip-foto" id="chipFoto" alt="Foto del alumno" draggable="false" data-zoom-foto>
     <div>
       <div class="chip-nombre" id="chipNombre">—</div>
       <div class="chip-sub"   id="chipSub">—</div>
@@ -427,6 +427,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
 </div><!-- /contenido -->
 
 <script src="auth-helper.js"></script>
+<script src="foto-zoom.js"></script>
 <script>
   verificarSesion();
   const rol    = localStorage.getItem('rolActivo') || '';
@@ -460,7 +461,8 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     '<circle cx="32" cy="25" r="12" fill="#94a3b8"/><path d="M10 60c2-13 11-20 22-20s20 7 22 20z" fill="#94a3b8"/></svg>');
   function fotoAlumno(a) { return (a && a['fotos-alumnos']) || FOTO_DEFAULT; }
   function imgFoto(a, clase) {
-    return `<img class="${clase}" src="${esc(fotoAlumno(a))}" alt="" loading="lazy" onerror="this.onerror=null;this.src=FOTO_DEFAULT">`;
+    const nombre = a ? `${a.apellidos} ${a.nombre}` : '';
+    return `<img class="${clase}" src="${esc(fotoAlumno(a))}" alt="" loading="lazy" draggable="false" data-zoom-foto data-nombre="${esc(nombre)}" onerror="this.onerror=null;this.src=FOTO_DEFAULT">`;
   }
 
   // Cargar lista de alumnos al inicio
@@ -522,6 +524,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--fondo); min-height: 
     const chipFoto = document.getElementById('chipFoto');
     chipFoto.onerror = () => { chipFoto.onerror = null; chipFoto.src = FOTO_DEFAULT; };
     chipFoto.src = fotoAlumno(alumnoActual);
+    chipFoto.dataset.nombre = `${alumnoActual.apellidos} ${alumnoActual.nombre}`;
     document.getElementById('chipAlumno').style.display = 'flex';
     document.getElementById('enfTabs').style.display    = 'flex';
     cambiarPanelEnf('medico');

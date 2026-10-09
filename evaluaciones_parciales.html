@@ -231,6 +231,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="auth-helper.js"></script>
+<script src="foto-zoom.js"></script>
 <script>
     verificarSesion();
 
@@ -363,7 +364,7 @@
             const tieneRiesgo = evMaterias.length > 0 && evMaterias.some(m => m.calif !== null && m.calif !== '' && parseFloat(m.calif) <= 6);
             const fotoSrc = a['fotos-alumnos'] || a.foto_url;
             const foto = fotoSrc
-                ? `<img src="${fotoSrc}" class="alumno-foto" onerror="this.outerHTML='<div class=alumno-foto-placeholder>🎓</div>'">`
+                ? `<img src="${esc(fotoSrc)}" class="alumno-foto" draggable="false" data-zoom-foto data-nombre="${esc(a.apellidos)} ${esc(a.nombre)}" onerror="this.outerHTML='<div class=alumno-foto-placeholder>🎓</div>'">`
                 : `<div class="alumno-foto-placeholder">🎓</div>`;
 
             const inputs = materias.map(sig => {
