@@ -101,8 +101,12 @@ module.exports = async (req, res) => {
         }
 
         const ciclo = await getCicloActivo(db);
-        const { data: alumnos, error: errAlumnos } = await db.from('alumnos').select('*').eq('status', 'ACTIVO');
+        const { data: todosActivos, error: errAlumnos } = await db.from('alumnos').select('*').eq('status', 'ACTIVO');
         if (errAlumnos) throw new Error('Error leyendo alumnos: ' + errAlumnos.message);
+        // Solo los alumnos del grado y grupo seleccionados (el PDF es de un solo grupo)
+        const alumnos = todosActivos.filter(a =>
+            String(a.grado).trim() === String(gradoSeleccionado).trim() &&
+            String(a.grupo || '').trim().toUpperCase() === grupoSeleccionado);
         let contador      = 0;
         let noEncontrados = [];
         let errores       = [];
