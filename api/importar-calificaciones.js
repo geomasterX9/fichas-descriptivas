@@ -100,9 +100,12 @@ module.exports = async (req, res) => {
             }
         }
 
-        const { data: alumnos } = await db.from('alumnos').select('*').eq('status', 'ACTIVO');
+        const ciclo = await getCicloActivo(db);
+        const { data: alumnos, error: errAlumnos } = await db.from('alumnos').select('*').eq('status', 'ACTIVO');
+        if (errAlumnos) throw new Error('Error leyendo alumnos: ' + errAlumnos.message);
         let contador      = 0;
         let noEncontrados = [];
+        let errores       = [];
 
         for (const alumno of alumnos) {
             const posFinNombre = buscarAlumnoEnPDF(textoPDF, alumno);
@@ -136,19 +139,26 @@ module.exports = async (req, res) => {
             }
 
             if (materiasArr.length > 0) {
-                await db.from('calificaciones').delete().match({ id_alumno: alumno.id_alumno, trimestre });
-                await db.from('calificaciones').insert({
-                    id_alumno: alumno.id_alumno, trimestre,
+                await db.from('calificaciones').delete()
+                    .match({ id_alumno: alumno.id_alumno, trimestre, ciclo_escolar: ciclo });
+                const { error: errIns } = await db.from('calificaciones').insert({
+                    id_alumno: alumno.id_alumno, trimestre, ciclo_escolar: ciclo,
                     promedio_trimestral: promedioReal, materias: materiasArr
                 });
-                contador++;
+                if (errIns) {
+                    console.error('Error insertando calificaciones:', alumno.id_alumno, errIns.message);
+                    errores.push(`${alumno.apellidos} ${alumno.nombre}`);
+                } else {
+                    contador++;
+                }
             }
         }
 
         // Log con detalle de no encontrados para auditoría
-        const detalle = noEncontrados.length > 0
-            ? `${contador} sincronizados. No encontrados: ${noEncontrados.join(', ')}`
-            : `${contador} alumnos sincronizados correctamente`;
+        let detalle = noEncontrados.length > 0
+            ? `${contador} sincronizados (ciclo ${ciclo}). No encontrados: ${noEncontrados.join(', ')}`
+            : `${contador} alumnos sincronizados correctamente (ciclo ${ciclo})`;
+        if (errores.length > 0) detalle += `. Errores al guardar: ${errores.join(', ')}`;
 
         await db.from('logs_actividad').insert([{
             id_usuario:     usuario.id,
@@ -161,8 +171,10 @@ module.exports = async (req, res) => {
 
         res.json({
             exito: true,
-            mensaje: `Sincronizados ${contador} alumnos correctamente.`,
-            no_encontrados: noEncontrados
+            mensaje: `Sincronizados ${contador} alumnos correctamente.` +
+                (errores.length ? ` Fallaron ${errores.length} al guardar.` : ''),
+            no_encontrados: noEncontrados,
+            errores
         });
 
     } catch (e) {
